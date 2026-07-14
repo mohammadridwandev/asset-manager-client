@@ -1,0 +1,173 @@
+@import "tailwindcss";
+
+:root {
+  /* LIGHT MODE (Default) */
+  --bg-color: #ffffff;
+  --text-main: #292828;
+  --text-secondary: #ffffff;
+  --gray: #777777;
+  --brand: #225f7c;
+}
+
+.dark {
+  /* DARK MODE (Overrides) */
+  --bg-color: #161616;
+  --text-main: #ebe8e8;
+  --text-secondary: #f1ebeb;
+  --gray: #e7e6e6;
+  --brand: #73c8f0;
+}
+
+@theme {
+  --color-app-bg: var(--bg-color);
+  --color-app-text: var(--text-main);
+  --color-app-secondary: var(--text-secondary);
+  --color-app-gray: var(--gray);
+  --color-app-brand: var(--brand);
+  --variant-dark: .dark &;
+}
+
+body {
+  font-family: sans-serif;
+  background-color: var(--bg-color);
+  color: var(--text-main);
+  transition:
+    background-color 0.3s,
+    color 0.3s;
+}
+
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes scaleIn {
+  from {
+    opacity: 0;
+    transform: scale(0.96) translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+.animate-fadeIn {
+  animation: fadeIn 0.2s ease-out;
+}
+
+.animate-scaleIn {
+  animation: scaleIn 0.22s ease-out;
+}
+
+@layer base {
+  input:-webkit-autofill,
+  input:-webkit-autofill:hover,
+  input:-webkit-autofill:focus,
+  input:-webkit-autofill:active {
+    -webkit-text-fill-color: rgb(163, 162, 162) !important;
+    caret-color: inherit !important;
+
+    -webkit-box-shadow: 0 0 0px 1000px transparent inset !important;
+    box-shadow: 0 0 0px 1000px transparent inset !important;
+
+    background-color: transparent !important;
+    transition: background-color 9999s ease-in-out 0s;
+  }
+}
+
+
+
+/* =========================================================
+   DARKSTONE OFFICIAL PRINT SYSTEM
+   ========================================================= */
+
+/* =========================================
+   BASIC PRINT SYSTEM
+========================================= */
+
+.official-print-document {
+  position: relative;
+  width: 210mm;
+  min-height: 297mm;
+  margin: 0;
+  background: #ffffff;
+}
+
+.official-print-letterhead {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  display: block;
+  width: 210mm;
+  height: 297mm;
+  max-width: none;
+  object-fit: fill;
+  pointer-events: none;
+}
+
+.official-print-content {
+  position: relative;
+  z-index: 2;
+  width: 210mm;
+  min-height: 297mm;
+  padding: 67mm 16mm 38mm;
+  box-sizing: border-box;
+}
+
+@media print {
+  @page {
+    size: A4 portrait;
+    margin: 0;
+  }
+
+  html,
+  body {
+    width: 210mm !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    background: #ffffff !important;
+    overflow: visible !important;
+  }
+
+  .official-print-document {
+    position: relative !important;
+    width: 210mm !important;
+    min-height: 297mm !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    overflow: visible !important;
+  }
+
+  .official-print-letterhead {
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    z-index: 1 !important;
+    width: 210mm !important;
+    height: 297mm !important;
+    max-width: none !important;
+    object-fit: fill !important;
+  }
+
+  .official-print-content {
+    position: relative !important;
+    z-index: 2 !important;
+    width: 210mm !important;
+    min-height: 297mm !important;
+    margin: 0 !important;
+    padding: 67mm 16mm 38mm !important;
+    box-sizing: border-box !important;
+    overflow: visible !important;
+  }
+
+  * {
+    print-color-adjust: exact !important;
+    -webkit-print-color-adjust: exact !important;
+  }
+}
