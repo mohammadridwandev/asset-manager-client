@@ -10,6 +10,8 @@ export default function Print_Layout({
   children,
 }: PrintLayoutProps) {
   return (
+
+    
     <div className="official-print-document">
       {/* Full A4 letterhead background */}
       <img

@@ -205,6 +205,7 @@ export default function AssetPage() {
           <div className="transition-all duration-300">
             {assetOpen && <Add_Asset setAssetOpen={setAssetOpen} />}
           </div>
+          
         </div>
 
         <div>

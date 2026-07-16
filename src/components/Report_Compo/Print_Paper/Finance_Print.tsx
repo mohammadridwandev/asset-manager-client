@@ -21,23 +21,23 @@ function formatAmount(value: unknown) {
   });
 }
 
-function formatDate(value: unknown) {
-  if (!value) {
-    return "N/A";
-  }
+// function formatDate(value: unknown) {
+//   if (!value) {
+//     return "N/A";
+//   }
 
-  const date = new Date(value as string);
+//   const date = new Date(value as string);
 
-  if (Number.isNaN(date.getTime())) {
-    return "N/A";
-  }
+//   if (Number.isNaN(date.getTime())) {
+//     return "N/A";
+//   }
 
-  return date.toLocaleDateString("en-US", {
-    year: "numeric",
-    month: "long",
-    day: "2-digit",
-  });
-}
+//   return date.toLocaleDateString("en-US", {
+//     year: "numeric",
+//     month: "long",
+//     day: "2-digit",
+//   });
+// }
 
 function displayValue(value: unknown) {
   if (

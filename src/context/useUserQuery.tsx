@@ -1,7 +1,8 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import axiosInstance from "../config/axiosInstance";
+
 import Swal from "sweetalert2";
 import toast from "react-hot-toast";
+import axiosInstance from "../config/axiosInstance";
 
 interface UserType {
   id: string;
