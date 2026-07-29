@@ -12,23 +12,27 @@ import Licenses_view from "./Licenses_view";
 import { useUnassignLicenseAssignment } from "../../context/useLicenseAssignment";
 import { toast } from "react-hot-toast";
 
-// UPDATED: props type
 type LicensesCardProps = {
   licenses: any[];
+  totalLicenses?: number;
   isLoading: boolean;
   isError: boolean;
 };
 
 export default function LicensesCard({
   licenses,
+  totalLicenses,
   isLoading,
   isError,
 }: LicensesCardProps) {
-  const unassignLicenseMutation = useUnassignLicenseAssignment();
+  const unassignLicenseMutation =
+    useUnassignLicenseAssignment();
 
-  const API_BASE_URL = import.meta.env.VITE_BACKEND_URL_LINK;
+  const API_BASE_URL =
+    import.meta.env.VITE_BACKEND_URL_LINK;
 
-  const [selectedLicense, setSelectedLicense] = useState<any>(null);
+  const [selectedLicense, setSelectedLicense] =
+    useState<any>(null);
 
   const getImageUrl = (image?: string) => {
     if (!image) return "";
@@ -56,7 +60,6 @@ export default function LicensesCard({
     );
   }
 
-  // UPDATED: no result UI
   if (licenses.length === 0) {
     return (
       <p className="py-10 text-center font-medium text-app-gray">
@@ -65,42 +68,57 @@ export default function LicensesCard({
     );
   }
 
-  const handleUnassignLicense = (assignment: any) => {
-    unassignLicenseMutation.mutate(String(assignment.id), {
-      onSuccess: () => {
-        toast.success("License unassigned successfully!");
+  const handleUnassignLicense = (
+    assignment: any,
+  ) => {
+    unassignLicenseMutation.mutate(
+      String(assignment.id),
+      {
+        onSuccess: () => {
+          toast.success(
+            "License unassigned successfully!",
+          );
+        },
+
+        onError: () => {
+          toast.error(
+            "Failed to unassign license.",
+          );
+        },
       },
-      onError: () => {
-        toast.error("Failed to unassign license.");
-      },
-    });
+    );
   };
 
   return (
     <>
-    
-
-       <div className="pb-4">
-        {/* UPDATED: filtered হলে filtered count, না হলে total count */}
-        <h1 className="font-bold">Total Licenses: {licenses.length}</h1>
+      <div className="pb-4">
+        <h1 className="font-bold">
+          Total Licenses:{" "}
+          {totalLicenses ?? licenses.length}
+        </h1>
       </div>
 
-
-      <div className="grid grid-cols-1 md:grid-cols-2 2xl:grid-cols-3 gap-5">
+      <div className="grid grid-cols-1 gap-5 md:grid-cols-2 2xl:grid-cols-3">
         {licenses.map((license: any) => (
           <div
             key={license.id}
-            className="rounded-2xl border border-app-gray/10 bg-app-bg p-5 shadow-sm hover:shadow-md transition-all duration-300"
+            className="rounded-2xl border border-app-gray/10 bg-app-bg p-5 shadow-sm transition-all duration-300 hover:shadow-md"
           >
             <div className="flex items-start gap-4 border-b border-app-gray/10 pb-4">
-              <div className="h-13 w-13 shrink-0 overflow-hidden rounded-xl border border-app-gray/10 bg-app-brand/5 flex items-center justify-center">
+              <div className="flex h-13 w-13 shrink-0 items-center justify-center overflow-hidden rounded-xl border border-app-gray/10 bg-app-brand/5">
                 {license.image ? (
                   <img
-                    src={getImageUrl(license.image)}
-                    alt={license.softwareName || "License"}
+                    src={getImageUrl(
+                      license.image,
+                    )}
+                    alt={
+                      license.softwareName ||
+                      "License"
+                    }
                     className="h-full w-full object-cover"
                     onError={(e) => {
-                      e.currentTarget.style.display = "none";
+                      e.currentTarget.style.display =
+                        "none";
                     }}
                   />
                 ) : (
@@ -109,28 +127,36 @@ export default function LicensesCard({
               </div>
 
               <div className="min-w-0 flex-1">
-                <h3 className="text-base md:text-lg font-semibold text-app-text truncate">
-                  {license.softwareName || "Unnamed Software"}
+                <h3 className="truncate text-base font-semibold text-app-text md:text-lg">
+                  {license.softwareName ||
+                    "Unnamed Software"}
                 </h3>
 
-                <p className="mt-1 text-xs text-app-gray truncate">
-                  {license.vendorPublisher || "No Vendor"}
+                <p className="mt-1 truncate text-xs text-app-gray">
+                  {license.vendorPublisher ||
+                    "No Vendor"}
                 </p>
               </div>
             </div>
 
-            <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-2 text-sm">
+            <div className="mt-4 grid grid-cols-1 gap-2 text-sm sm:grid-cols-2">
               <InfoBox
                 icon={<FaHashtag />}
                 label="Quantity"
-                value={license.totalQuantity || 0}
+                value={
+                  license.totalQuantity || 0
+                }
               />
 
               <InfoBox
                 icon={<FaMoneyBillWave />}
                 label="Cost"
                 value={
-                  license.costs ? Number(license.costs).toLocaleString() : "N/A"
+                  license.costs
+                    ? Number(
+                        license.costs,
+                      ).toLocaleString()
+                    : "N/A"
                 }
               />
 
@@ -139,7 +165,9 @@ export default function LicensesCard({
                 label="Purchase Date"
                 value={
                   license.purchaseDate
-                    ? new Date(license.purchaseDate).toLocaleDateString()
+                    ? new Date(
+                        license.purchaseDate,
+                      ).toLocaleDateString()
                     : "N/A"
                 }
               />
@@ -147,7 +175,9 @@ export default function LicensesCard({
               <InfoBox
                 icon={<TbLicense />}
                 label="License Type"
-                value={license.licenseType || "N/A"}
+                value={
+                  license.licenseType || "N/A"
+                }
               />
             </div>
 
@@ -155,50 +185,75 @@ export default function LicensesCard({
               <Row
                 icon={<FaKey />}
                 label="License Key"
-                value={license.licenseKey || "N/A"}
+                value={
+                  license.licenseKey || "N/A"
+                }
               />
 
               <Row
                 icon={<FaStore />}
                 label="Vendor"
-                value={license.vendorPublisher || "N/A"}
+                value={
+                  license.vendorPublisher ||
+                  "N/A"
+                }
               />
             </div>
 
             <div className="mt-4 rounded-lg border border-app-gray/10 px-3 py-3">
-              <p className="text-xs font-medium text-app-gray">Notes</p>
-              <p className="mt-1 text-sm text-app-text line-clamp-2">
-                {license.notes || "No notes added"}
+              <p className="text-xs font-medium text-app-gray">
+                Notes
+              </p>
+
+              <p className="mt-1 line-clamp-2 text-sm text-app-text">
+                {license.notes ||
+                  "No notes added"}
               </p>
             </div>
 
-            {license.assignments?.length > 0 ? (
-              <div className="space-y-2 mt-2">
-                {license.assignments.map((assignment: any) => (
-                  <div
-                    key={assignment.id}
-                    className="flex items-center justify-between gap-3 rounded-md border border-app-gray/10 bg-app-brand/5 p-2"
-                  >
-                    <div className="min-w-0">
-                      <h5 className="text-sm font-semibold text-app-text truncate">
-                        {assignment.employee?.fullName}
-                      </h5>
-
-                      <p className="text-xs text-app-gray truncate">
-                        {assignment.employee?.email || "No email available"}
-                      </p>
-                    </div>
-
-                    <button
-                      onClick={() => handleUnassignLicense(assignment)}
-                      className="shrink-0 rounded-md border border-red-500/20 bg-red-500/10 px-3 py-1.5 text-xs font-semibold text-red-500 hover:bg-red-500/15 cursor-pointer"
+            {license.assignments?.length >
+            0 ? (
+              <div className="mt-2 space-y-2">
+                {license.assignments.map(
+                  (assignment: any) => (
+                    <div
+                      key={assignment.id}
+                      className="flex items-center justify-between gap-3 rounded-md border border-app-gray/10 bg-app-brand/5 p-2"
                     >
-                      {unassignLicenseMutation.isPending
-                        ? "Removing..."
-                        : "Unassign"}
-                    </button>
-                  </div>
-                ))}
+                      <div className="min-w-0">
+                        <h5 className="truncate text-sm font-semibold text-app-text">
+                          {
+                            assignment.employee
+                              ?.fullName
+                          }
+                        </h5>
+
+                        <p className="truncate text-xs text-app-gray">
+                          {assignment.employee
+                            ?.email ||
+                            "No email available"}
+                        </p>
+                      </div>
+
+                      <button
+                        type="button"
+                        disabled={
+                          unassignLicenseMutation.isPending
+                        }
+                        onClick={() =>
+                          handleUnassignLicense(
+                            assignment,
+                          )
+                        }
+                        className="shrink-0 cursor-pointer rounded-md border border-red-500/20 bg-red-500/10 px-3 py-1.5 text-xs font-semibold text-red-500 hover:bg-red-500/15 disabled:cursor-not-allowed disabled:opacity-50"
+                      >
+                        {unassignLicenseMutation.isPending
+                          ? "Removing..."
+                          : "Unassign"}
+                      </button>
+                    </div>
+                  ),
+                )}
               </div>
             ) : (
               <p className="mt-2 text-sm italic text-app-gray">
@@ -207,8 +262,11 @@ export default function LicensesCard({
             )}
 
             <button
-              onClick={() => setSelectedLicense(license)}
-              className="mt-5 w-full rounded-lg border border-app-brand/20 bg-app-brand/5 px-4 py-2.5 text-sm font-medium text-app-brand hover:bg-app-brand/10 transition-all"
+              type="button"
+              onClick={() =>
+                setSelectedLicense(license)
+              }
+              className="mt-5 w-full cursor-pointer rounded-lg border border-app-brand/20 bg-app-brand/5 px-4 py-2.5 text-sm font-medium text-app-brand transition-all hover:bg-app-brand/10"
             >
               Manage License
             </button>
@@ -219,7 +277,9 @@ export default function LicensesCard({
       {selectedLicense && (
         <Licenses_view
           license={selectedLicense}
-          onClose={() => setSelectedLicense(null)}
+          onClose={() =>
+            setSelectedLicense(null)
+          }
         />
       )}
     </>
@@ -245,7 +305,10 @@ const InfoBox = ({
         {icon}
         {label}
       </p>
-      <p className={`mt-1 truncate font-medium text-app-text ${className}`}>
+
+      <p
+        className={`mt-1 truncate font-medium text-app-text ${className}`}
+      >
         {value}
       </p>
     </div>
@@ -263,10 +326,11 @@ const Row = ({
 }) => {
   return (
     <div className="flex items-center justify-between gap-3">
-      <span className="flex items-center gap-2 text-app-gray shrink-0">
+      <span className="flex shrink-0 items-center gap-2 text-app-gray">
         {icon}
         {label}
       </span>
+
       <span className="truncate text-right font-medium text-app-text">
         {value}
       </span>

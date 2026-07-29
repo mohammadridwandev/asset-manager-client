@@ -100,7 +100,7 @@ export default function Asset_Update() {
           <form onSubmit={handlerAssetsUpdate} className="space-y-6">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6">
               <div className="space-y-2">
-                <label className="text-sm font-medium">Asset Name</label>
+                <label className="text-sm font-medium">Asset Name *</label>
                 <input
                   type="text"
                   name="assetName"
@@ -112,7 +112,7 @@ export default function Asset_Update() {
               </div>
 
               <div className="space-y-2">
-                <label className="text-sm font-medium">Type</label>
+                <label className="text-sm font-medium">Type *</label>
                 <input
                   type="text"
                   placeholder="Asset Type"
@@ -158,7 +158,7 @@ export default function Asset_Update() {
               </div>
 
               <div className="space-y-2">
-                <label className="text-sm font-medium">Purchase Date</label>
+                <label className="text-sm font-medium">Purchase Date *</label>
 
                 <DatePicker
                   selected={selectedDate}

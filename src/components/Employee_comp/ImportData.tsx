@@ -7,10 +7,15 @@ import { useCreateEmployee, useGetEmployee } from "../../context/useEmployee";
 export default function ImportData() {
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+
   const createEmployee = useCreateEmployee();
 
-  // UPDATED: existing employee check করার জন্য
-  const { data: employees = [] } = useGetEmployee();
+  const { data } = useGetEmployee(1, 1000);
+
+  const employees = data?.employees || [];
+
+
+  
 
   const handleChooseFile = () => {
     fileInputRef.current?.click();

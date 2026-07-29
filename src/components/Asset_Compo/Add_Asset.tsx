@@ -42,13 +42,7 @@ const Add_Asset = ({
   };
 
   return (
-
-
-    
-
-
     <div className="min-h-screen transition-all duration-300 py-4 bg-app-bg text-app-text">
-      
       <div className=" bg-app-bg border border-app-gray/10 rounded-xl shadow-sm p-6 md:p-8">
         {/* Title */}
         <h2 className="text-xl font-bold mb-4">Add New Asset</h2>
@@ -115,7 +109,6 @@ const Add_Asset = ({
 
             {/* Purchase Date */}
             <div className="space-y-2">
-              
               <label className="text-sm font-medium">Purchase Date *</label>
 
               <DatePicker
@@ -140,6 +133,8 @@ const Add_Asset = ({
                 type="number"
                 name="price"
                 placeholder="0"
+                min="0"
+                step="0.01"
                 required
                 className="w-full px-4 my-2 py-2.5 rounded-lg border border-app-gray/30 bg-transparent focus:outline-none focus:border-app-brand transition-colors"
               />
@@ -190,10 +185,8 @@ const Add_Asset = ({
               {useAssetsData.isPending ? "Adding..." : "Add Asset"}
             </button>
           </div>
-          
         </form>
       </div>
-
     </div>
   );
 };

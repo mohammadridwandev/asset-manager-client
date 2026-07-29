@@ -2,20 +2,29 @@ import { useEffect, useState } from "react";
 import DatePicker from "react-datepicker";
 import { useNavigate, useParams } from "react-router-dom";
 import Swal from "sweetalert2";
-import { useGetSingleLicense, useUpdateLicense } from "../../context/useLicenses";
+import {
+  useGetSingleLicense,
+  useUpdateLicense,
+} from "../../context/useLicenses";
 
+const MAX_FILE_SIZE = 2 * 1024 * 1024; // 2 MB
+
+const ALLOWED_FILE_TYPES = [
+  "image/jpeg",
+  "image/png",
+  "image/webp",
+];
 
 export default function Licenses_Update() {
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
   const [fileName, setFileName] = useState("No file chosen");
+  const [fileError, setFileError] = useState("");
 
   const { id } = useParams();
   const navigate = useNavigate();
 
   const { data: license, isLoading } = useGetSingleLicense(id);
-
   const updateLicenseMutation = useUpdateLicense();
-
 
   useEffect(() => {
     if (license?.purchaseDate) {
@@ -27,15 +36,46 @@ export default function Licenses_Update() {
     setSelectedDate(date);
   };
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileChange = (
+    e: React.ChangeEvent<HTMLInputElement>,
+  ) => {
     const file = e.target.files?.[0];
-    setFileName(file ? file.name : "No file chosen");
+
+    setFileError("");
+
+    if (!file) {
+      setFileName("No file chosen");
+      return;
+    }
+
+    if (!ALLOWED_FILE_TYPES.includes(file.type)) {
+      setFileError(
+        "Only JPG, JPEG, PNG and WebP images are allowed.",
+      );
+
+      setFileName("No file chosen");
+      e.target.value = "";
+      return;
+    }
+
+    if (file.size > MAX_FILE_SIZE) {
+      setFileError("Image size must not exceed 2 MB.");
+      setFileName("No file chosen");
+      e.target.value = "";
+      return;
+    }
+
+    setFileName(file.name);
   };
 
   const handlerLicenseUpdate = async (
     e: React.FormEvent<HTMLFormElement>,
   ) => {
     e.preventDefault();
+
+    if (fileError) {
+      return;
+    }
 
     const form = e.currentTarget;
 
@@ -50,17 +90,21 @@ export default function Licenses_Update() {
       cancelButtonText: "Cancel",
     });
 
-    if (!confirm.isConfirmed) return;
+    if (!confirm.isConfirmed) {
+      return;
+    }
 
     const formData = new FormData(form);
 
     if (selectedDate) {
       formData.set("purchaseDate", selectedDate.toISOString());
+    } else {
+      formData.delete("purchaseDate");
     }
 
-    const imageFile = formData.get("image") as File;
+    const imageFile = formData.get("image");
 
-    if (!imageFile || imageFile.size === 0) {
+    if (!(imageFile instanceof File) || imageFile.size === 0) {
       formData.delete("image");
     }
 
@@ -69,7 +113,6 @@ export default function Licenses_Update() {
         id: String(id),
         updateData: formData,
       },
-
       {
         onSuccess: () => {
           Swal.fire({
@@ -82,8 +125,19 @@ export default function Licenses_Update() {
 
           navigate("/dashboard/licenses");
         },
-      },
+        onError: (error: any) => {
+          const message =
+            error?.response?.data?.message ||
+            error?.response?.data?.error ||
+            "Failed to update license.";
 
+          Swal.fire({
+            title: "Update Failed",
+            text: message,
+            icon: "error",
+          });
+        },
+      },
     );
   };
 
@@ -92,81 +146,115 @@ export default function Licenses_Update() {
   }
 
   if (!license) {
-    return <p className="p-6 text-red-500">License not found!</p>;
+    return (
+      <p className="p-6 text-red-500">
+        License not found!
+      </p>
+    );
   }
 
-
-  
   return (
     <div>
-      <div className="py-5 bg-app-bg text-app-text transition-colors duration-300">
-        <div className="bg-app-bg border border-app-gray/10 rounded-md shadow-sm p-6 md:p-8">
-          <h2 className="text-xl font-bold mb-4">Update License</h2>
+      <div className="bg-app-bg py-5 text-app-text transition-colors duration-300">
+        <div className="rounded-md border border-app-gray/10 bg-app-bg p-6 shadow-sm md:p-8">
+          <h2 className="mb-4 text-xl font-bold">
+            Update License
+          </h2>
 
-          <form onSubmit={handlerLicenseUpdate} className="space-y-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-x-5 gap-y-5">
+          <form
+            onSubmit={handlerLicenseUpdate}
+            className="space-y-6"
+          >
+            <div className="grid grid-cols-1 gap-x-5 gap-y-5 md:grid-cols-2">
               <div className="space-y-2">
-                <label className="text-sm font-medium">Software Name</label>
+                <label className="text-sm font-medium">
+                  Software Name *
+                </label>
+
                 <input
                   type="text"
                   name="softwareName"
                   required
                   defaultValue={license.softwareName || ""}
                   placeholder="Software Name"
-                  className="w-full px-4 my-2 py-2.5 rounded-lg border border-app-gray/30 bg-transparent focus:outline-none focus:border-app-brand transition-colors"
+                  className="my-2 w-full rounded-lg border border-app-gray/30 bg-transparent px-4 py-2.5 transition-colors focus:border-app-brand focus:outline-none"
                 />
               </div>
 
               <div className="space-y-2">
-                <label className="text-sm font-medium">Vendor/Publisher</label>
+                <label className="text-sm font-medium">
+                  Vendor/Publisher
+                </label>
+
                 <input
                   type="text"
                   name="vendorPublisher"
                   defaultValue={license.vendorPublisher || ""}
                   placeholder="Vendor or Publisher"
-                  className="w-full px-4 my-2 py-2.5 rounded-lg border border-app-gray/30 bg-transparent focus:outline-none focus:border-app-brand transition-colors"
+                  className="my-2 w-full rounded-lg border border-app-gray/30 bg-transparent px-4 py-2.5 transition-colors focus:border-app-brand focus:outline-none"
                 />
               </div>
 
               <div className="space-y-2">
-                <label className="text-sm font-medium">License Key</label>
+                <label className="text-sm font-medium">
+                  License Key
+                </label>
+
                 <input
                   type="text"
                   name="licenseKey"
                   defaultValue={license.licenseKey || ""}
                   placeholder="License Key"
-                  className="w-full px-4 my-2 py-2.5 rounded-lg border border-app-gray/30 bg-transparent focus:outline-none focus:border-app-brand transition-colors"
+                  className="my-2 w-full rounded-lg border border-app-gray/30 bg-transparent px-4 py-2.5 transition-colors focus:border-app-brand focus:outline-none"
                 />
               </div>
 
               <div className="space-y-2">
-                <label className="text-sm font-medium">License Type</label>
+                <label className="text-sm font-medium">
+                  License Type *
+                </label>
+
                 <select
                   required
                   name="licenseType"
                   defaultValue={license.licenseType || ""}
-                  className="w-full px-4 my-2 py-2.5 rounded-lg border border-app-gray/30 bg-app-bg focus:outline-none focus:border-app-brand transition-colors appearance-none cursor-pointer"
+                  className="my-2 w-full cursor-pointer appearance-none rounded-lg border border-app-gray/30 bg-app-bg px-4 py-2.5 transition-colors focus:border-app-brand focus:outline-none"
                 >
-                  <option value="">Select Type</option>
-                  <option value="subscription">Subscription</option>
-                  <option value="one-time">One-time</option>
+                  <option value="">
+                    Select Type
+                  </option>
+
+                  <option value="subscription">
+                    Subscription
+                  </option>
+
+                  <option value="one-time">
+                    One-time
+                  </option>
                 </select>
               </div>
 
               <div className="space-y-2">
-                <label className="text-sm font-medium">Total Quantity</label>
+                <label className="text-sm font-medium">
+                  Total Quantity *
+                </label>
+
                 <input
                   type="number"
                   name="totalQuantity"
                   required
-                  defaultValue={license.totalQuantity || 0}
+                  min="1"
+                  step="1"
+                  defaultValue={license.totalQuantity || 1}
                   placeholder="0"
-                  className="w-full px-4 my-2 py-2.5 rounded-lg border border-app-gray/30 bg-transparent focus:outline-none focus:border-app-brand transition-colors"
+                  className="my-2 w-full rounded-lg border border-app-gray/30 bg-transparent px-4 py-2.5 transition-colors focus:border-app-brand focus:outline-none"
                 />
               </div>
 
               <div className="space-y-2">
-                <label className="text-sm font-medium">Purchase Date</label>
+                <label className="text-sm font-medium">
+                  Purchase Date
+                </label>
 
                 <DatePicker
                   selected={selectedDate}
@@ -177,45 +265,60 @@ export default function Licenses_Update() {
                   isClearable
                   popperPlacement="bottom-start"
                   dateFormat="yyyy-MM-dd"
-                  className="w-full px-4 my-2 py-2.5 rounded-lg border border-app-gray/30 bg-transparent focus:outline-none focus:border-app-brand transition-colors text-app-gray"
+                  className="my-2 w-full rounded-lg border border-app-gray/30 bg-transparent px-4 py-2.5 text-app-gray transition-colors focus:border-app-brand focus:outline-none"
                 />
               </div>
 
               <div className="space-y-2">
-                <label className="text-sm font-medium">Costs</label>
+                <label className="text-sm font-medium">
+                  Costs *
+                </label>
+
                 <input
                   type="number"
-                  placeholder="0"
                   name="costs"
                   required
+                  min="0"
+                  step="0.01"
                   defaultValue={license.costs || 0}
-                  className="w-full px-4 my-2 py-2.5 rounded-lg border border-app-gray/30 bg-transparent focus:outline-none focus:border-app-brand transition-colors"
+                  placeholder="0"
+                  className="my-2 w-full rounded-lg border border-app-gray/30 bg-transparent px-4 py-2.5 transition-colors focus:border-app-brand focus:outline-none"
                 />
               </div>
             </div>
 
-            <div className="space-y-2 mt-6">
-              <label className="text-sm font-medium">Notes</label>
+            <div className="mt-6 space-y-2">
+              <label className="text-sm font-medium">
+                Notes
+              </label>
+
               <textarea
                 rows={4}
                 name="notes"
                 defaultValue={license.notes || ""}
-                className="w-full px-4 my-2 py-2.5 rounded-lg border border-app-gray/30 bg-transparent focus:outline-none focus:border-app-brand transition-colors resize-y"
+                className="my-2 w-full resize-y rounded-lg border border-app-gray/30 bg-transparent px-4 py-2.5 transition-colors focus:border-app-brand focus:outline-none"
               />
             </div>
 
-            <div className="space-y-2 mt-6">
-              <label className="text-xs text-app-text font-medium">
+            <div className="mt-6 space-y-2">
+              <label className="text-xs font-medium text-app-text">
                 License Certificate / Image{" "}
                 <span className="opacity-70">
-                  (Optional - JPEG, PNG, WebP up to 5MB)
+                  (Optional - JPEG, PNG, WebP up to 2 MB)
                 </span>
               </label>
 
-              <div className="p-5 border border-dashed border-app-gray/30 rounded-xl bg-transparent">
-                <div className="flex items-center gap-3 mb-2">
-                  <label className="cursor-pointer bg-app-brand/20 text-app-brand px-4 py-1.5 rounded-md text-sm font-medium hover:bg-app-brand/50 transition-colors">
+              <div
+                className={`rounded-xl border border-dashed bg-transparent p-5 ${
+                  fileError
+                    ? "border-red-500"
+                    : "border-app-gray/30"
+                }`}
+              >
+                <div className="mb-2 flex flex-wrap items-center gap-3">
+                  <label className="cursor-pointer rounded-md bg-app-brand/20 px-4 py-1.5 text-sm font-medium text-app-brand transition-colors hover:bg-app-brand/50">
                     Choose File
+
                     <input
                       name="image"
                       type="file"
@@ -224,30 +327,48 @@ export default function Licenses_Update() {
                       className="hidden"
                     />
                   </label>
-                  <span className="text-sm text-app-text">{fileName}</span>
+
+                  <span className="max-w-full truncate text-sm text-app-text">
+                    {fileName}
+                  </span>
                 </div>
 
                 <p className="text-[11px] text-app-text opacity-80">
-                  Formats: JPG, PNG, WebP (max 5mb).
+                  Formats: JPG, JPEG, PNG and WebP. Maximum
+                  image size is 2 MB.
                 </p>
+
+                {fileError && (
+                  <p className="mt-2 text-sm font-medium text-red-500">
+                    {fileError}
+                  </p>
+                )}
               </div>
             </div>
 
-            <div className="flex justify-end gap-4 mt-10">
+            <div className="mt-10 flex justify-end gap-4">
               <button
-                onClick={() => navigate("/dashboard/licenses")}
                 type="button"
-                className="px-8 py-2 rounded-lg border border-app-gray/30 font-medium hover:bg-app-gray/5 transition-colors"
+                disabled={updateLicenseMutation.isPending}
+                onClick={() =>
+                  navigate("/dashboard/licenses")
+                }
+                className="rounded-lg border border-app-gray/30 px-8 py-2 font-medium transition-colors hover:bg-app-gray/5 disabled:cursor-not-allowed disabled:opacity-50"
               >
                 Cancel
               </button>
 
               <button
                 type="submit"
-                disabled={updateLicenseMutation.isPending}
-                className="px-8 py-2 rounded-lg bg-app-brand text-white font-medium hover:opacity-90 transition-opacity disabled:opacity-50"
+                disabled={
+                  updateLicenseMutation.isPending ||
+                  Boolean(fileError)
+                }
+                className="rounded-lg bg-app-brand px-8 py-2 font-medium text-white transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
               >
-                {updateLicenseMutation.isPending ? "Saving..." : "Save"}
+                {updateLicenseMutation.isPending
+                  ? "Saving..."
+                  : "Save"}
               </button>
             </div>
           </form>

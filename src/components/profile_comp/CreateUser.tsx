@@ -82,7 +82,7 @@ export default function CreateUser() {
                 </option>
 
                 <option value="ADMIN">Admin</option>
-                <option value="MANAGER">Manager</option>
+              
                 <option value="FINANCE">Finance</option>
                 <option value="IT">IT</option>
                 <option value="GUEST">Guest</option>

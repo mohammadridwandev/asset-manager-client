@@ -3,6 +3,7 @@ import { Link, useNavigate } from "react-router-dom";
 import axiosInstance from "../../config/axiosInstance";
 import toast from "react-hot-toast";
 import { useState } from "react";
+import { Helmet } from "react-helmet-async";
 
 export default function Register() {
   const navigate = useNavigate();
@@ -40,6 +41,13 @@ export default function Register() {
 
   return (
     <div className="flex items-center justify-center h-screen">
+
+
+  <Helmet>
+    <title>Asset Manager | Register</title>
+  </Helmet>
+
+
       <form
         onSubmit={handlerRegister}
         className=" max-w-85 w-full mx-4 md:p-6 p-4 py-8 text-left text-sm rounded-xl shadow-xs border border-app-gray/15"

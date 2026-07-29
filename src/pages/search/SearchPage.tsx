@@ -5,6 +5,7 @@ import { FiSearch } from "react-icons/fi";
 import { useSearchEmployeeProfile } from "../../context/useSearchQuery";
 import Search_Info from "../../components/SearchInfo/Search_Info";
 import Search_Instructions from "../../components/SearchInfo/Search_Instructions";
+import { Helmet } from "react-helmet-async";
 
 
 
@@ -33,6 +34,11 @@ export default function SearchPage() {
 
   return (
     <div>
+
+      
+  <Helmet>
+    <title>Asset Manager | Search</title>
+  </Helmet>
 
       <div className="py-4 md:py-8">
         {/* Header */}

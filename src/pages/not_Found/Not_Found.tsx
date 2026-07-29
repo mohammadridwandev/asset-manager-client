@@ -1,6 +1,7 @@
 import { FiArrowLeft, FiHome } from "react-icons/fi";
 import { useNavigate } from "react-router-dom";
 import imgCover from "../../assets/image/bg-image-2.jpg"
+import { Helmet } from "react-helmet-async";
 
 export default function Not_Found() {
   const navigate = useNavigate();
@@ -17,6 +18,11 @@ export default function Not_Found() {
   return (
     <div className="min-h-screen grid lg:grid-cols-2 bg-app-bg">
       {/* Left Side */}
+
+      
+  <Helmet>
+    <title>Asset Manager | Not Found</title>
+  </Helmet>
       
       <div className="flex items-center px-8 lg:px-20">
         <div className="max-w-lg">

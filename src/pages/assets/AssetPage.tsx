@@ -1,23 +1,37 @@
 import { FiMinus, FiPlus, FiSearch } from "react-icons/fi";
 import Add_Asset from "../../components/Asset_Compo/Add_Asset";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { MdKeyboardArrowRight } from "react-icons/md";
 import Asset_Card from "../../components/Asset_Compo/Asset_Card";
 import { useGetAssets } from "../../context/useAssets";
 import Asset_Import from "../../components/Asset_Compo/Asset_Import";
 import Asset_Export from "../../components/Asset_Compo/Asset_Export";
+import Asset_Pagination from "../../components/Asset_Compo/Asset_Pagination";
+import { Helmet } from "react-helmet-async";
 
 export default function AssetPage() {
   const [assetOpen, setAssetOpen] = useState(false);
-
   const [searchText, setSearchText] = useState("");
-
-  const { data: assets = [], isLoading, isError } = useGetAssets();
+  const [page, setPage] = useState(1);
 
   const [assetTypeOpen, setAssetTypeOpen] = useState(false);
-
-  // UPDATED: default label changed for all type filter
   const [selectedType, setSelectedType] = useState("All Types");
+
+  const [assignmentOpen, setAssignmentOpen] = useState(false);
+  const [selectedAssignment, setSelectedAssignment] = useState("All Status");
+
+  const assignmentTypes = ["Assigned", "Unassigned"];
+
+  const { data, isLoading, isError } = useGetAssets(
+    page,
+    10,
+    searchText,
+    selectedType,
+    selectedAssignment,
+  );
+
+  const assets = data?.assets || [];
+  const pagination = data?.pagination;
 
   const assetTypes: string[] = assets
     .map((asset: any) => String(asset.assetType || "").trim())
@@ -32,64 +46,44 @@ export default function AssetPage() {
     setAssetTypeOpen(false);
   };
 
-  const [assignmentOpen, setAssignmentOpen] = useState(false);
-
-  // UPDATED: default label changed for all assignment filter
-  const [selectedAssignment, setSelectedAssignment] = useState("All Status");
-
-  // UPDATED: Available changed to Unassigned
-  const assignmentTypes = ["Assigned", "Unassigned"];
-
   const handleAssignmentSelect = (assignmentType: string) => {
     setSelectedAssignment(assignmentType);
     setAssignmentOpen(false);
   };
 
-  const filteredAssets = assets.filter((asset: any) => {
-    const search = searchText.toLowerCase();
-
-    const matchSearch =
-      asset.assetName?.toLowerCase().includes(search) ||
-      asset.serialNumber?.toLowerCase().includes(search) ||
-      asset.invoiceNumber?.toLowerCase().includes(search) ||
-      asset.assetType?.toLowerCase().includes(search);
-
-    // UPDATED: dynamic All Types filter support
-    const matchType =
-      selectedType === "All Types" || asset.assetType === selectedType;
-
-    const isAssigned = asset.assignments?.length > 0;
-
-    // UPDATED: Assigned / Unassigned filter fixed
-    const matchAssignment =
-      selectedAssignment === "All Status" ||
-      (selectedAssignment === "Assigned" && isAssigned) ||
-      (selectedAssignment === "Unassigned" && !isAssigned);
-
-    return matchSearch && matchType && matchAssignment;
-  });
+  useEffect(() => {
+    setPage(1);
+  }, [searchText, selectedType, selectedAssignment]);
 
   return (
     <>
-      <div className="bg-app-bg mt-3 text-app-text transition-colors duration-300">
+    
+      <Helmet>
+        <title>Asset Manager | Assets</title>
+      </Helmet>
+
+      <div className="mt-3 bg-app-bg pb-16 text-app-text transition-colors duration-300">
         <div className="py-4">
-          <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6 mb-8">
+          <div className="mb-8 flex flex-col justify-between gap-6 lg:flex-row lg:items-center">
             <div>
               <h1 className="text-2xl font-bold tracking-tight">
                 Asset Management
               </h1>
-              <p className="text-app-gray opacity-80 text-sm mt-1">
+
+              <p className="mt-1 text-sm text-app-gray opacity-80">
                 Track and manage company assets
               </p>
             </div>
 
             <div className="flex flex-wrap items-center gap-2 md:gap-3">
-              <Asset_Export assets={filteredAssets} />
+              <Asset_Export assets={assets} />
+
               <Asset_Import />
 
               <button
+                type="button"
                 onClick={() => setAssetOpen(!assetOpen)}
-                className="flex w-full md:w-auto items-center justify-center gap-2 px-5 py-2.5 rounded-lg text-sm font-bold bg-app-brand text-white hover:opacity-90 transition-all shadow-md active:scale-95 cursor-pointer"
+                className="flex w-full cursor-pointer items-center justify-center gap-2 rounded-lg bg-app-brand px-5 py-2.5 text-sm font-bold text-white shadow-md transition-all hover:opacity-90 active:scale-95 md:w-auto"
               >
                 {assetOpen ? (
                   <>
@@ -106,9 +100,9 @@ export default function AssetPage() {
             </div>
           </div>
 
-          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 mb-8">
+          <div className="mb-8 flex flex-col items-stretch gap-3 sm:flex-row sm:items-center">
             <div className="relative flex-1">
-              <div className="absolute -top-1 inset-y-0 left-4 flex items-center pointer-events-none text-app-gray opacity-60">
+              <div className="pointer-events-none absolute inset-y-0 -top-1 left-4 flex items-center text-app-gray opacity-60">
                 <FiSearch size={18} />
               </div>
 
@@ -116,21 +110,19 @@ export default function AssetPage() {
                 type="text"
                 value={searchText}
                 onChange={(e) => setSearchText(e.target.value)}
-                placeholder="Search by asset name, serial number, invoice number or type..."
-                className="w-full border border-app-gray/30 rounded-md py-2.5 pl-12 outline-none focus:border-app-brand bg-transparent transition-all
-                text-sm placeholder:text-app-gray/50"
+                placeholder="Search by asset name, serial number, invoice number, type, employee name, email, or Iqama..."
+                className="w-full rounded-md border border-app-gray/30 bg-transparent py-2.5 pl-12 text-sm outline-none transition-all placeholder:text-app-gray/50 focus:border-app-brand"
               />
             </div>
 
-            {/* UPDATED: Dynamic Asset Type Dropdown */}
             <div className="relative">
               <button
                 type="button"
                 onClick={() => setAssetTypeOpen(!assetTypeOpen)}
-                className="w-full sm:w-48 text-left px-4 py-2.5 flex items-center justify-between border rounded-md bg-transparent border-app-gray/30 shadow-xs 
-                hover:bg-app-gray/5 focus:outline-none text-sm font-medium"
+                className="flex w-full items-center justify-between rounded-md border border-app-gray/30 bg-transparent px-4 py-2.5 text-left text-sm font-medium shadow-xs hover:bg-app-gray/5 focus:outline-none sm:w-48"
               >
                 <span>{selectedType}</span>
+
                 <MdKeyboardArrowRight
                   className={`transform transition-transform duration-200 ${
                     assetTypeOpen ? "rotate-90" : ""
@@ -140,10 +132,9 @@ export default function AssetPage() {
               </button>
 
               {assetTypeOpen && (
-                <ul className="absolute z-10 w-full sm:w-48 bg-app-bg border border-app-gray/20 rounded-lg shadow-md mt-1 py-1 text-sm ">
-                  {/* UPDATED: all types reset option */}
+                <ul className="absolute z-10 mt-1 w-full rounded-lg border border-app-gray/20 bg-app-bg py-1 text-sm shadow-md sm:w-48">
                   <li
-                    className="px-4 py-2 hover:bg-app-brand hover:text-white cursor-pointer transition-colors font-semibold"
+                    className="cursor-pointer px-4 py-2 font-semibold transition-colors hover:bg-app-brand hover:text-white"
                     onClick={() => handleSelect("All Types")}
                   >
                     All Types
@@ -152,7 +143,7 @@ export default function AssetPage() {
                   {assetTypes.map((assetType) => (
                     <li
                       key={assetType}
-                      className="px-4 py-2 hover:bg-app-brand hover:text-white cursor-pointer transition-colors"
+                      className="cursor-pointer px-4 py-2 transition-colors hover:bg-app-brand hover:text-white"
                       onClick={() => handleSelect(assetType)}
                     >
                       {assetType}
@@ -162,14 +153,14 @@ export default function AssetPage() {
               )}
             </div>
 
-            {/* UPDATED: Assigned / Unassigned Dropdown */}
             <div className="relative">
               <button
                 type="button"
                 onClick={() => setAssignmentOpen(!assignmentOpen)}
-                className="w-full sm:w-48 text-left px-4 py-2.5 flex items-center justify-between border rounded-md bg-transparent border-app-gray/30 shadow-xs hover:bg-app-gray/5 focus:outline-none text-sm font-medium"
+                className="flex w-full items-center justify-between rounded-md border border-app-gray/30 bg-transparent px-4 py-2.5 text-left text-sm font-medium shadow-xs hover:bg-app-gray/5 focus:outline-none sm:w-48"
               >
                 <span>{selectedAssignment}</span>
+
                 <MdKeyboardArrowRight
                   className={`transform transition-transform duration-200 ${
                     assignmentOpen ? "rotate-90" : ""
@@ -179,10 +170,9 @@ export default function AssetPage() {
               </button>
 
               {assignmentOpen && (
-                <ul className="absolute z-10 w-full sm:w-48 bg-app-bg border border-app-gray/20 rounded-lg shadow-md mt-1 py-1 text-sm">
-                  {/* UPDATED: all status reset option */}
+                <ul className="absolute z-10 mt-1 w-full rounded-lg border border-app-gray/20 bg-app-bg py-1 text-sm shadow-md sm:w-48">
                   <li
-                    className="px-4 py-2 hover:bg-app-brand hover:text-white cursor-pointer transition-colors font-semibold"
+                    className="cursor-pointer px-4 py-2 font-semibold transition-colors hover:bg-app-brand hover:text-white"
                     onClick={() => handleAssignmentSelect("All Status")}
                   >
                     All Status
@@ -191,7 +181,7 @@ export default function AssetPage() {
                   {assignmentTypes.map((assignmentType) => (
                     <li
                       key={assignmentType}
-                      className="px-4 py-2 hover:bg-app-brand hover:text-white cursor-pointer transition-colors"
+                      className="cursor-pointer px-4 py-2 transition-colors hover:bg-app-brand hover:text-white"
                       onClick={() => handleAssignmentSelect(assignmentType)}
                     >
                       {assignmentType}
@@ -205,14 +195,22 @@ export default function AssetPage() {
           <div className="transition-all duration-300">
             {assetOpen && <Add_Asset setAssetOpen={setAssetOpen} />}
           </div>
-          
         </div>
 
         <div>
           <Asset_Card
-            assets={filteredAssets}
+            assets={assets}
+            totalAssets={pagination?.totalData}
             isLoading={isLoading}
             isError={isError}
+          />
+
+          <Asset_Pagination
+            currentPage={pagination?.currentPage || 1}
+            totalPages={pagination?.totalPages || 1}
+            hasNextPage={pagination?.hasNextPage || false}
+            hasPreviousPage={pagination?.hasPreviousPage || false}
+            onPageChange={setPage}
           />
         </div>
       </div>

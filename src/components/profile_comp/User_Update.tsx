@@ -11,7 +11,7 @@ import { useUpdateUser } from "../../context/useUserQuery";
 import toast from "react-hot-toast";
 import { useAuth } from "../../context/AuthProvider";
 
-const USER_ROLES = ["ADMIN", "MANAGER", "FINANCE", "IT", "GUEST"] as const;
+const USER_ROLES = ["ADMIN", "FINANCE", "IT", "GUEST"] as const;
 
 const USER_STATUSES = [
   { label: "Active", value: "true" },
@@ -73,8 +73,8 @@ export default function User_Update({ user, onClose }: UserUpdateProps) {
         return;
       }
 
-      if (file.size > 5 * 1024 * 1024) {
-        toast.error("File size should be less than 5MB!");
+      if (file.size > 2 * 1024 * 1024) {
+        toast.error("File size should be less than 2MB!");
         e.target.value = "";
         return;
       }

@@ -144,7 +144,7 @@ export default function Update_Employee() {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-x-5 gap-y-5">
             <div className="space-y-2">
               <label className="text-sm text-app-text font-medium">
-                Full Name
+                Full Name *
               </label>
               <input
                 type="text"
@@ -158,7 +158,7 @@ export default function Update_Employee() {
 
             <div className="space-y-2">
               <label className="text-sm text-app-text font-medium">
-                Iqama/Passport
+                Iqama/Passport *
               </label>
               <input
                 type="text"
@@ -196,7 +196,7 @@ export default function Update_Employee() {
 
             <div className="space-y-2">
               <label className="text-sm text-app-text font-medium">
-                Department
+                Department *
               </label>
               <input
                 type="text"
@@ -210,7 +210,7 @@ export default function Update_Employee() {
 
             <div className="space-y-2">
               <label className="text-sm text-app-text font-medium">
-                Position
+                Position *
               </label>
               <input
                 type="text"

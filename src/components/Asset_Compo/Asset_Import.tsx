@@ -9,8 +9,12 @@ export default function Asset_Import() {
 
   const createAsset = useCreateAsset();
 
-  // UPDATED: existing assets check করার জন্য
-  const { data: assets = [] } = useGetAssets();
+const { data } = useGetAssets(1, 1000);
+
+const assets = data?.assets || [];
+
+
+
 
   const handleChooseFile = () => {
     fileInputRef.current?.click();

@@ -8,20 +8,29 @@ import { Toaster } from "react-hot-toast";
 import { AuthProvider } from "./context/AuthProvider";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { PrintProvider } from "./context/PrintContext";
+import { HelmetProvider } from "react-helmet-async";
 
 const queryClient = new QueryClient();
 
 createRoot(document.getElementById("root")!).render(
-  <StrictMode>
-    <ThemeProvider>
-      <QueryClientProvider client={queryClient}>
-        <AuthProvider>
-          <PrintProvider>
-            <RouterProvider router={router} />
-            <Toaster />
-          </PrintProvider>
-        </AuthProvider>
-      </QueryClientProvider>
-    </ThemeProvider>
+
+
+ <StrictMode>
+    <HelmetProvider>
+      <ThemeProvider>
+        <QueryClientProvider client={queryClient}>
+          <AuthProvider>
+            <PrintProvider>
+              <RouterProvider router={router} />
+              <Toaster />
+            </PrintProvider>
+          </AuthProvider>
+        </QueryClientProvider>
+      </ThemeProvider>
+    </HelmetProvider>
   </StrictMode>,
+
+
+
+
 );

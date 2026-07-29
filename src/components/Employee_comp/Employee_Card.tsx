@@ -1,5 +1,5 @@
 import { BiSolidUserCircle } from "react-icons/bi";
-import { useGetEmployee } from "../../context/useEmployee";
+
 import {
   FaEnvelope,
   FaPhone,
@@ -12,118 +12,106 @@ import { useState } from "react";
 import { Button } from "@heroui/react/button";
 import View_Employee from "./View_Employee";
 
-// UPDATED: employees props optional করা হয়েছে
+import Asset_Doc from "./Asset_Doc";
+
 export default function Employee_Card({
   employees: filteredEmployees,
+  totalEmployees,
 }: {
   employees?: any[];
+  totalEmployees?: number;
 }) {
-  
-  const {
-    data: allEmployees = [],
-    isLoading,
-    isError,
-  } = useGetEmployee();
-
-  // UPDATED: filtered data থাকলে সেটা দেখাবে, না হলে সব employee দেখাবে
-  const employees = filteredEmployees ?? allEmployees;
+  const employees = filteredEmployees || [];
 
   const [selectedEmployee, setSelectedEmployee] = useState<any>(null);
 
   const [isUpdateOpen] = useState(false);
 
-  const API_BASE_URL = import.meta.env.VITE_BACKEND_URL_LINK;
+  const API_BASE_URL = import.meta.env.VITE_BACKEND_URL_LINK || "";
 
   const getImageUrl = (image?: string) => {
     if (!image) return "";
 
-    if (image.startsWith("http")) {
+    if (image.startsWith("http://") || image.startsWith("https://")) {
       return image;
     }
 
-    return `${API_BASE_URL}${image}`;
+    return `${API_BASE_URL.replace(/\/$/, "")}/${image.replace(/^\//, "")}`;
   };
-
-  if (isLoading) {
-    return (
-      <div className="flex items-center justify-center min-h-75 text-lg font-medium text-app-brand">
-        Loading Employees...
-      </div>
-    );
-  }
-
-  if (isError) {
-    return (
-      <div className="flex items-center justify-center min-h-75 text-lg font-medium text-red-500">
-        Failed to load employee data!
-      </div>
-    );
-  }
-  
 
   return (
     <>
-
-
       <div>
-        {/* UPDATED: filtered হলে filtered count, না হলে total count */}
-        <h1 className="font-bold">Total Employee: {employees.length}</h1>
+        <h1 className="font-bold">
+          Total Employee: {totalEmployees ?? employees.length}
+        </h1>
       </div>
 
-      <div className="min-h-screen bg-app-bg text-app-text py-4 md:py-6 transition-colors duration-300">
-        {/* UPDATED: no result message */}
+      <div className="bg-app-bg py-4 text-app-text transition-colors duration-300 md:py-6">
         {employees.length === 0 ? (
-          <div className="flex items-center justify-center min-h-75 text-lg font-medium text-app-gray">
+          <div className="flex min-h-75 items-center justify-center text-lg font-medium text-app-gray">
             No employee found!
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 2xl:grid-cols-3 gap-5">
+          <div className="grid grid-cols-1 gap-5 md:grid-cols-2 2xl:grid-cols-3">
             {employees.map((employee: any) => (
               <div
                 key={employee.id}
-                className="rounded-2xl border border-app-gray/10 bg-app-bg p-5 shadow-sm hover:shadow-md transition-all duration-300"
+                className="rounded-2xl border border-app-gray/10 bg-app-bg p-5 shadow-sm transition-all duration-300 hover:shadow-md"
               >
-                <div className="flex justify-content-between items-center gap-3 border-b border-app-gray/10 pb-4">
-                  <div className="h-14 w-14 shrink-0 overflow-hidden rounded-full border border-app-brand/20 bg-app-brand/5 flex items-center justify-center">
+                <div className="flex items-start gap-3 border-b border-app-gray/10 pb-4">
+                  <div className="flex h-14 w-14 shrink-0 items-center justify-center overflow-hidden rounded-full border border-app-brand/20 bg-app-brand/5">
                     {employee.image ? (
                       <img
                         src={getImageUrl(employee.image)}
-                        onError={(e) => {
-                          e.currentTarget.style.display = "none";
+                        onError={(event) => {
+                          event.currentTarget.style.display = "none";
                         }}
                         alt={employee.fullName || "Employee"}
-                        className="h-full w-full rounded-full object-cover"
+                        className="h-full w-full rounded-full object-cover object-center"
                       />
                     ) : (
-                      <BiSolidUserCircle className="text-app-gray/40 text-5xl" />
+                      <BiSolidUserCircle className="text-5xl text-app-gray/40" />
                     )}
                   </div>
 
-                  <div className="flex items-center justify-between w-full">
-                    <div className="">
+                  <div className="flex min-w-0 flex-1 items-start justify-between gap-3">
+                    <div className="min-w-0 flex-1 ">
                       <h3
-                        className="text-base md:text-lg font-semibold text-app-text truncate"
-                        title={employee.fullName}
+                        className="block max-w-full truncate text-base font-semibold text-app-text md:text-lg"
+                        title={employee.fullName || "Not Available"}
                       >
                         {employee.fullName || "Not Available"}
                       </h3>
 
-                      <p className="mt-1 inline-flex rounded-full border border-app-brand/20 bg-app-brand/5 px-2.5 py-1 text-[10px] font-medium text-app-brand">
-                        {employee.position || "Not Available"}
-                      </p>
+                      <div className="mt-1 flex items-center gap-2">
+                        <p
+                          className=" inline-block max-w-full truncate rounded-full border border-app-brand/20 bg-app-brand/5 px-2.5 py-1 text-[10px] font-medium text-app-brand"
+                          title={employee.position || "Not Available"}
+                        >
+                          {employee.position || "Not Available"}
+                        </p>
+
+                        {/* Asset Document */}
+                        <Asset_Doc
+                          employeeId={employee.id}
+                          initialDocuments={employee.assetDocuments || []}
+                        />
+
+                      </div>
                     </div>
 
                     <span
-                      className={`rounded-full px-3 py-1 text-xs font-normal capitalize ${
+                      className={`shrink-0 rounded-full px-3 py-1 text-xs font-normal capitalize ${
                         employee.status === "ACTIVE"
-                          ? "bg-green-500/10 text-green-600 border border-green-500/20"
+                          ? "border border-green-500/20 bg-green-500/10 text-green-600"
                           : employee.status === "ON_LEAVE"
-                            ? "bg-yellow-500/10 text-yellow-600 border border-yellow-500/20"
+                            ? "border border-yellow-500/20 bg-yellow-500/10 text-yellow-600"
                             : employee.status === "VACATION"
-                              ? "bg-blue-500/10 text-blue-600 border border-blue-500/20"
+                              ? "border border-blue-500/20 bg-blue-500/10 text-blue-600"
                               : employee.status === "RESIGNED"
-                                ? "bg-red-500/10 text-red-600 border border-red-500/20"
-                                : "bg-red-500/10 text-red-600 border border-gray-500/20"
+                                ? "border border-red-500/20 bg-red-500/10 text-red-600"
+                                : "border border-gray-500/20 bg-red-500/10 text-red-600"
                       }`}
                     >
                       {employee.status?.replace("_", " ") || "ACTIVE"}
@@ -182,12 +170,11 @@ export default function Employee_Card({
 
                 <Button
                   onClick={() => setSelectedEmployee(employee)}
-                  className="mt-5 cursor-pointer w-full rounded-lg border border-app-brand/20 bg-app-brand/5 px-4 py-2.5 text-sm font-medium text-app-brand hover:bg-app-brand/10 transition-all flex items-center justify-center gap-2"
+                  className="mt-5 flex w-full cursor-pointer items-center justify-center gap-2 rounded-lg border border-app-brand/20 bg-app-brand/5 px-4 py-2.5 text-sm font-medium text-app-brand transition-all hover:bg-app-brand/10"
                 >
                   <FaEye />
                   View Profile
                 </Button>
-                
               </div>
             ))}
           </div>
@@ -215,12 +202,15 @@ const InfoRow = ({
 }) => {
   return (
     <div className="flex items-center justify-between gap-3 rounded-lg border border-app-gray/7 px-3 py-2.5">
-      <span className="flex items-center gap-2 text-app-gray shrink-0">
+      <span className="flex shrink-0 items-center gap-2 text-app-gray">
         {icon}
         {label}
       </span>
 
-      <span className="font-medium text-app-text text-right truncate">
+      <span
+        className="min-w-0 truncate text-right font-medium text-app-text"
+        title={value}
+      >
         {value}
       </span>
     </div>
@@ -231,6 +221,7 @@ const StatBox = ({ label, value }: { label: string; value: number }) => {
   return (
     <div className="rounded-lg border border-app-gray/7 p-3 text-center">
       <p className="text-base font-semibold text-app-text">{value}</p>
+
       <p className="text-xs text-app-gray">{label}</p>
     </div>
   );

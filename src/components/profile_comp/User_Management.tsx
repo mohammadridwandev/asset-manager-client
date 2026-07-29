@@ -5,6 +5,7 @@ import Swal from "sweetalert2";
 
 import { useState } from "react";
 import User_Update from "./User_Update";
+import { useAuth } from "../../context/AuthProvider";
 
 export default function User_Management() {
   const [isEditOpen, setIsEditOpen] = useState(false);
@@ -12,6 +13,8 @@ export default function User_Management() {
 
   // 🎯 Search State
   const [searchQuery, setSearchQuery] = useState("");
+
+  const { user: loggedInUser } = useAuth();
 
   const [selectedRole, setSelectedRole] = useState("ALL");
   const [selectedStatus, setSelectedStatus] = useState("ALL");
@@ -76,13 +79,6 @@ export default function User_Management() {
     return sortBy === "Newest First" ? dateB - dateA : dateA - dateB;
   });
 
-
-
-
-
-
-
-
   return (
     <div className="w-full my-16 bg-app-bg text-app-text p-4 md:p-6 border border-app-gray/20 rounded-xl shadow-xs transition-colors duration-300">
       <div className="flex justify-between items-center mb-6">
@@ -119,7 +115,6 @@ export default function User_Management() {
           <option value="FINANCE">Finance</option>
           <option value="IT">IT</option>
           <option value="GUEST">Guest</option>
-          
         </select>
 
         <select
@@ -130,8 +125,6 @@ export default function User_Management() {
           <option value="ALL">All Statuses</option>
           <option value="ACTIVE">Active</option>
           <option value="INACTIVE">Inactive</option>
-          
-          
         </select>
 
         <select
@@ -246,23 +239,55 @@ export default function User_Management() {
 
                   {/* Actions Column */}
                   <td className="p-4 text-center pr-6 whitespace-nowrap">
-                    <button
-                      onClick={() => handlerUserEdit(user)}
-                      type="button"
-                      className="p-2 mx-1 bg-app-brand rounded-md cursor-pointer text-app-secondary transition-all hover:opacity-90 inline-flex items-center justify-center"
-                    >
-                      <FaRegEdit size={15} />
-                    </button>
+
+
+<button
+  onClick={() => {
+    if (loggedInUser?.id === user.id) {
+      Swal.fire({
+        icon: "warning",
+        title: "Not Allowed",
+        text: "You cannot edit your own account.",
+      });
+      return;
+    }
+
+    handlerUserEdit(user);
+  }}
+  type="button"
+  className="p-2 mx-1 bg-app-brand rounded-md cursor-pointer text-app-secondary transition-all hover:opacity-90 inline-flex items-center justify-center"
+>
+  <FaRegEdit size={15} />
+</button>
+
+
+
+
+
+
 
                     <button
-                      onClick={() => handleDeleteUser(user.id)}
+                      onClick={() => {
+                        if (loggedInUser?.id === user.id) {
+                          Swal.fire({
+                            icon: "warning",
+                            title: "Not Allowed",
+                            text: "You cannot delete your own account.",
+                          });
+                          return;
+                        }
+
+                        handleDeleteUser(user.id);
+                      }}
                       type="button"
                       className="p-2 mx-1 bg-red-500 rounded-md cursor-pointer text-app-secondary transition-all hover:bg-red-600 inline-flex items-center justify-center"
                     >
                       <FiTrash2 size={15} />
                     </button>
+
+
+
                   </td>
-                  
                 </tr>
               ))
             )}

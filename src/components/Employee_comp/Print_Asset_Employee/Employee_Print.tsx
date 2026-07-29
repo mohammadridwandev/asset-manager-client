@@ -178,12 +178,12 @@ export default function Employee_Print({
                 </span>
               </div>
 
-              <div className="grid grid-cols-[30mm_1fr] gap-[3mm]">
+              <div className="grid lowercase grid-cols-[30mm_1fr] gap-[3mm]">
                 <span className={labelClass}>
                   Email Address:
                 </span>
 
-                <span className={valueClass}>
+                <span className={`${valueClass} lowercase`}>
                   {displayValue(employee?.email)}
                 </span>
               </div>
@@ -197,6 +197,11 @@ export default function Employee_Print({
                   {formatDate(employee?.joinDate)}
                 </span>
               </div>
+
+
+
+
+
             </div>
           </section>
 
@@ -272,6 +277,25 @@ export default function Employee_Print({
                   )}
                 </span>
               </div>
+
+              <div className="grid grid-cols-[30mm_1fr] gap-[3mm]">
+                <span className={labelClass}>
+                  Asset Note
+                </span>
+
+                <span className={valueClass}>
+                  {displayValue(
+                    assignment?.notes ||
+                      asset?.notes,
+                  )}
+                </span>
+              </div>
+
+
+
+
+
+
             </div>
           </section>
 
@@ -336,19 +360,8 @@ export default function Employee_Print({
             </div>
           </section>
 
-          {/* Footer Note */}
-          <section className="mt-[5mm] border-t border-slate-300 pt-[3mm] text-center text-[8pt] leading-[1.5] text-slate-500 break-inside-avoid [page-break-inside:avoid]">
-            <p className="m-0">
-              This is an official document. Please
-              keep a copy for your records.
-            </p>
+        
 
-            <p className="m-0">
-              For device issues or technical
-              support, contact IT Department
-              immediately.
-            </p>
-          </section>
         </section>
 
         {/* PAGE 2 AND PAGE 3 */}

@@ -120,7 +120,7 @@ const allowedNavItems = navItems.filter((item) =>
         </Link>
 
         {/* Desktop Menu */}
-        <div className="hidden md:flex items-center bg-app-bg  rounded-full px-1.5 py-1.5 gap-1">
+        <div className="hidden md:flex items-center bg-app-bg  rounded-full  py-1.5 gap-1">
 
 
     
@@ -132,7 +132,7 @@ const allowedNavItems = navItems.filter((item) =>
               className={({
                 isActive,
               }) => `flex items-center hover:text-app-brand gap-2 px-4 py-1.5 rounded-full text-sm font-medium transition-all
-                ${isActive ? "text-app-brand font-bold" : ""}
+                ${isActive ? "text-app-brand font-bold border border-app-brand/10 bg-app-brand/10" : ""}
               `}
             >
               {item.icon}

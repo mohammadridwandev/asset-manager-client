@@ -2,7 +2,18 @@ import { useMemo } from "react";
 import { useGetEmployee } from "../../context/useEmployee";
 
 export default function Allocation_Report() {
-  const { data: employees = [], isLoading } = useGetEmployee();
+  const { data: employeeData, isLoading } = useGetEmployee(
+    1,
+    100,
+    "",
+    "",
+    "",
+    "",
+  );
+
+  const employees = Array.isArray(employeeData?.employees)
+    ? employeeData.employees
+    : [];
 
   const reportData = useMemo(() => {
     const departments: Record<string, any> = {};
@@ -49,8 +60,9 @@ export default function Allocation_Report() {
         assetValue + licenseValue;
     });
 
-    return Object.values(departments).sort((a: any, b: any) =>
-      a.department.localeCompare(b.department),
+    return Object.values(departments).sort(
+      (a: any, b: any) =>
+        a.department.localeCompare(b.department),
     );
   }, [employees]);
 
@@ -83,7 +95,7 @@ export default function Allocation_Report() {
   }
 
   return (
-    <div className="w-full my-10 rounded-xl border border-app-gray/20 bg-app-bg p-4 text-app-text shadow-xs transition-colors duration-300 md:p-6">
+    <div className="my-10 w-full rounded-xl border border-app-gray/20 bg-app-bg p-4 text-app-text shadow-xs transition-colors duration-300 md:p-6">
       <div className="mb-6">
         <h2 className="text-base font-bold tracking-tight">
           Asset Allocation Report
@@ -91,21 +103,25 @@ export default function Allocation_Report() {
       </div>
 
       <div className="w-full overflow-x-auto rounded-lg border border-app-gray/10">
-        <table className="min-w-175 w-full border-collapse text-sm">
+        <table className="w-full min-w-175 border-collapse text-sm">
           <thead>
             <tr className="border-b border-app-gray/10 bg-app-brand/10 font-bold text-app-text">
               <th className="w-[25%] p-4 pl-6 text-left">
                 Department
               </th>
+
               <th className="w-[18%] p-4 text-center">
                 Employees
               </th>
+
               <th className="w-[18%] p-4 text-center">
                 Assets
               </th>
+
               <th className="w-[18%] p-4 text-center">
                 Licenses
               </th>
+
               <th className="w-[21%] p-4 pr-6 text-right">
                 Total Value
               </th>
@@ -113,32 +129,43 @@ export default function Allocation_Report() {
           </thead>
 
           <tbody className="divide-y divide-app-gray/10">
-            {reportData.map((row: any) => (
-              <tr
-                key={row.department}
-                className="transition-colors hover:bg-app-gray/5"
-              >
-                <td className="p-4 pl-6 font-medium">
-                  {row.department}
-                </td>
+            {reportData.length > 0 ? (
+              reportData.map((row: any) => (
+                <tr
+                  key={row.department}
+                  className="transition-colors hover:bg-app-gray/5"
+                >
+                  <td className="p-4 pl-6 font-medium">
+                    {row.department}
+                  </td>
 
-                <td className="p-4 text-center font-medium text-app-gray">
-                  {row.employees}
-                </td>
+                  <td className="p-4 text-center font-medium text-app-gray">
+                    {row.employees}
+                  </td>
 
-                <td className="p-4 text-center font-medium text-app-gray">
-                  {row.assets}
-                </td>
+                  <td className="p-4 text-center font-medium text-app-gray">
+                    {row.assets}
+                  </td>
 
-                <td className="p-4 text-center font-medium text-app-gray">
-                  {row.licenses}
-                </td>
+                  <td className="p-4 text-center font-medium text-app-gray">
+                    {row.licenses}
+                  </td>
 
-                <td className="p-4 pr-6 text-right">
-                  {row.totalValue.toFixed(2)}
+                  <td className="p-4 pr-6 text-right">
+                    {row.totalValue.toFixed(2)}
+                  </td>
+                </tr>
+              ))
+            ) : (
+              <tr>
+                <td
+                  colSpan={5}
+                  className="p-8 text-center text-app-gray"
+                >
+                  No allocation data found.
                 </td>
               </tr>
-            ))}
+            )}
 
             <tr className="border-t-2 border-app-gray/20 bg-app-gray/5 font-bold">
               <td className="p-4 pl-6 uppercase">

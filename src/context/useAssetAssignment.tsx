@@ -24,7 +24,7 @@ export const useCreateAssetAssignment = () => {
         queryKey: ["employees"],
       });
 
-      toast.success("Asset assigned successfully!");
+      // toast.success("Asset assigned successfully!");
     },
 
     onError: (error: any) => {

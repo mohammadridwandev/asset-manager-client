@@ -3,6 +3,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import toast from "react-hot-toast";
 import axiosInstance from "../config/axiosInstance";
 
+
 // CREATE EMPLOYEE HERE
 export const useCreateEmployee = () => {
   const queryClient = useQueryClient();
@@ -49,15 +50,44 @@ export const useGetSingleEmployee = (id?: string) => {
   });
 };
 
-// GET ALL DATA:
-export const useGetEmployee = () => {
+// GET ALL EMPLOYEE WITH PAGINATION + SEARCH
+export const useGetEmployee = (
+  page: number = 1,
+  limit: number = 10,
+  search: string = "",
+  department: string = "",
+  position: string = "",
+  status: string = "",
+) => {
   return useQuery({
-    queryKey: ["employees"],
+    queryKey: ["employees", page, limit, search, department, position, status],
+
     queryFn: async () => {
-      const response = await axiosInstance.get("/employees");
-      console.log("this is get all employee data", response);
-      return response.data?.data || response.data;
+      const response = await axiosInstance.get("/employees", {
+        params: {
+          page,
+          limit,
+          search,
+          department,
+          position,
+          status,
+        },
+      });
+
+      return {
+        employees: response.data?.employees || [],
+        pagination: response.data?.pagination || {
+          currentPage: page,
+          limit,
+          totalData: 0,
+          totalPages: 0,
+          hasNextPage: false,
+          hasPreviousPage: false,
+        },
+      };
     },
+
+    placeholderData: (previousData) => previousData,
   });
 };
 
@@ -96,7 +126,6 @@ export const useUpdateEmployee = () => {
   });
 };
 
-
 export const useDeleteEmployee = () => {
   const queryClient = useQueryClient();
 
@@ -130,7 +159,6 @@ export const useDeleteEmployee = () => {
       // ========================= UPDATED: Show actual backend message to user =========================
       // toast.error("Failed to delete employee: ");
       console.log("Delete Employee Error Message:", errorMessage);
-
     },
   });
 };

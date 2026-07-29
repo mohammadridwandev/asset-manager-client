@@ -24,7 +24,7 @@ export const useCreateLicenseAssignment = () => {
         queryKey: ["employees"],
       });
 
-      toast.success("License assigned successfully!");
+      // toast.success("License assigned successfully!");
     },
 
     onError: (error: any) => {

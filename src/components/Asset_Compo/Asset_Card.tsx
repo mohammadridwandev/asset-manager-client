@@ -14,17 +14,28 @@ import { useState } from "react";
 import Swal from "sweetalert2";
 import { useUnassignAssetAssignment } from "../../context/useAssetAssignment";
 
-// UPDATED: props type
+
+
 type AssetCardProps = {
   assets: any[];
+  totalAssets?: number;
   isLoading: boolean;
   isError: boolean;
 };
 
+
+
+
+
 export default function Asset_Card({
-  assets,
+  
+   assets,
+  totalAssets,
   isLoading,
   isError,
+
+
+
 }: AssetCardProps) {
   const [selectedAsset, setSelectedAsset] = useState<any>(null);
 
@@ -76,12 +87,17 @@ export default function Asset_Card({
     );
   }
 
+
+
   return (
     <>
 
-      <div className="pb-4">
+      <div className="pb-4 ">
         {/* UPDATED: filtered হলে filtered count, না হলে total count */}
-        <h1 className="font-bold">Total Assets: {assets.length}</h1>
+        <h1 className="font-bold">Total Assets: {totalAssets ?? assets.length}</h1>
+
+        
+
       </div>
 
 
@@ -259,6 +275,7 @@ const Row = ({
   value: any;
 }) => {
   return (
+
     <p className="flex items-center justify-between gap-3">
       <span className="flex items-center gap-2 text-app-gray">
         {icon}
@@ -266,5 +283,6 @@ const Row = ({
       </span>
       <span className="font-semibold text-app-text">{value}</span>
     </p>
+
   );
 };

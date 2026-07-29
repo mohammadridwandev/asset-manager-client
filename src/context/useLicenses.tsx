@@ -57,16 +57,54 @@ export const useGetSingleLicense = (id?: string) => {
 };
 
 // Custom hook to fetch all licenses
-export const useLicenses = () => {
+// Custom hook to fetch paginated licenses
+export const useLicenses = (
+  page: number = 1,
+  limit: number = 10,
+  search: string = "",
+  licenseType: string = "",
+) => {
   return useQuery({
-    queryKey: ["licenses"],
+    queryKey: [
+      "licenses",
+      page,
+      limit,
+      search,
+      licenseType,
+    ],
+
     queryFn: async () => {
-      const response = await axiosInstance.get("/licenses");
-      console.log("this is from license ", response);
-      return response.data?.data || response.data;
+      const response = await axiosInstance.get("/licenses", {
+        params: {
+          page,
+          limit,
+          search,
+          licenseType,
+        },
+      });
+
+      return {
+        licenses: response.data?.licenses || [],
+
+        pagination: response.data?.pagination || {
+          currentPage: page,
+          limit,
+          totalData: 0,
+          totalPages: 0,
+          hasNextPage: false,
+          hasPreviousPage: false,
+        },
+      };
     },
+
+    placeholderData: (previousData) => previousData,
   });
 };
+
+
+
+
+
 
 // UPDATE LICENSE
 export const useUpdateLicense = () => {

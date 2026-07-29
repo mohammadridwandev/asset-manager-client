@@ -36,8 +36,8 @@ const Add_Employee = ({
       return;
     }
 
-    if (file.size > 5 * 1024 * 1024) {
-      toast.error("File size should be less than 5MB!");
+    if (file.size > 2 * 1024 * 1024) {
+      toast.error("File size should be less than 2MB!");
       e.target.value = "";
       return;
     }
@@ -228,7 +228,7 @@ const Add_Employee = ({
                 </span>
               </div>
               <p className="text-[11px] text-app-gray">
-                | jpg | jpeg | png | webp | Max 5MB
+                | jpg | jpeg | png | webp | Max 2MB
               </p>
             </div>
           </div>

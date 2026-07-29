@@ -47,17 +47,60 @@ export const useGetSingleAsset = (id?: string) => {
   });
 };
 
-// get all assets:
-export const useGetAssets = () => {
+
+export const useGetAssets = (
+  page: number = 1,
+  limit: number = 10,
+  search: string = "",
+  assetType: string = "",
+  assignmentStatus: string = "",
+) => {
   return useQuery({
-    queryKey: ["assets"],
+    queryKey: [
+      "assets",
+      page,
+      limit,
+      search,
+      assetType,
+      assignmentStatus,
+    ],
+
     queryFn: async () => {
-      const response = await axiosInstance.get("/assets");
-      console.log("this is get all employee data", response);
-      return response.data?.data || response.data;
+      const response = await axiosInstance.get("/assets", {
+        params: {
+          page,
+          limit,
+          search,
+          assetType,
+          assignmentStatus,
+        },
+      });
+
+      return {
+        assets: response.data?.data || [],
+        pagination: response.data?.pagination || {
+          currentPage: page,
+          limit,
+          totalData: 0,
+          totalPages: 0,
+          hasNextPage: false,
+          hasPreviousPage: false,
+        },
+      };
     },
+
+    placeholderData: (previousData) => previousData,
   });
 };
+
+
+
+
+
+
+
+
+
 
 // UPDATE ASSET
 export const useUpdateAsset = () => {

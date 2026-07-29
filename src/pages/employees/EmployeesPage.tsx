@@ -1,105 +1,143 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { FiPlus, FiSearch, FiMinus } from "react-icons/fi";
-import { MdKeyboardArrowRight } from "react-icons/md"; // UPDATED: dropdown icon
+import { MdKeyboardArrowRight } from "react-icons/md";
 import Add_Employee from "../../components/Employee_comp/Add_Employee";
 import Employee_Card from "../../components/Employee_comp/Employee_Card";
 import { useGetEmployee } from "../../context/useEmployee";
 import ExportData from "../../components/Employee_comp/ExportData";
 import ImportData from "../../components/Employee_comp/ImportData";
+import Pagination_Employee from "../../components/Employee_comp/Pagination_Employee";
+import { Helmet } from "react-helmet-async";
 
 const EmployeesPage = () => {
   const [openEmployee, setOpenEmployee] = useState(false);
-
   const [searchText, setSearchText] = useState("");
 
-  // UPDATED: department filter state
   const [departmentOpen, setDepartmentOpen] = useState(false);
   const [selectedDepartment, setSelectedDepartment] =
     useState("All Departments");
 
-  // UPDATED: position filter state
   const [positionOpen, setPositionOpen] = useState(false);
-  const [selectedPosition, setSelectedPosition] = useState("All Positions");
+  const [selectedPosition, setSelectedPosition] =
+    useState("All Positions");
 
-  // UPDATED: status filter state
   const [statusOpen, setStatusOpen] = useState(false);
-  const [selectedStatus, setSelectedStatus] = useState("All Status");
+  const [selectedStatus, setSelectedStatus] =
+    useState("All Status");
 
-  const { data: employees = [] } = useGetEmployee();
+  const [page, setPage] = useState(1);
 
-  // UPDATED: dynamic departments from employees
+  const { data, isLoading, isError } = useGetEmployee(
+    page,
+    10,
+    searchText,
+    selectedDepartment,
+    selectedPosition,
+    selectedStatus,
+  );
+
+  const employees = data?.employees || [];
+  const pagination = data?.pagination;
+
   const departments: string[] = employees
-    .map((employee: any) => String(employee.department || "").trim())
+    .map((employee: any) =>
+      String(employee.department || "").trim(),
+    )
     .filter((department: string) => department.length > 0)
-    .filter((department: string, index: number, array: string[]) => {
-      return array.indexOf(department) === index;
-    })
+    .filter(
+      (
+        department: string,
+        index: number,
+        array: string[],
+      ) => array.indexOf(department) === index,
+    )
     .sort();
 
-  // UPDATED: dynamic positions from employees
   const positions: string[] = employees
-    .map((employee: any) => String(employee.position || "").trim())
+    .map((employee: any) =>
+      String(employee.position || "").trim(),
+    )
     .filter((position: string) => position.length > 0)
-    .filter((position: string, index: number, array: string[]) => {
-      return array.indexOf(position) === index;
-    })
+    .filter(
+      (
+        position: string,
+        index: number,
+        array: string[],
+      ) => array.indexOf(position) === index,
+    )
     .sort();
 
- 
   const employeeStatuses = [
-    { label: "Active", value: "ACTIVE" },
-    { label: "Inactive", value: "INACTIVE" },
+    {
+      label: "Active",
+      value: "ACTIVE",
+    },
+    {
+      label: "Inactive",
+      value: "INACTIVE",
+    },
   ];
 
+  useEffect(() => {
+    setPage(1);
+  }, [
+    searchText,
+    selectedDepartment,
+    selectedPosition,
+    selectedStatus,
+  ]);
 
-  // UPDATED: dynamic search + dropdown filters
-  const filteredEmployees = employees.filter((employee: any) => {
-    const search = searchText.toLowerCase();
+  if (isLoading) {
+    return (
+      <div className="flex min-h-75 items-center justify-center text-lg font-medium text-app-brand">
+        Loading Employees...
+      </div>
+    );
+  }
 
-    const matchSearch =
-      employee.fullName?.toLowerCase().includes(search) ||
-      employee.email?.toLowerCase().includes(search) ||
-      employee.phoneNumber?.toLowerCase().includes(search) ||
-      employee.iqamaNumber?.toLowerCase().includes(search) ||
-      employee.department?.toLowerCase().includes(search) ||
-      employee.position?.toLowerCase().includes(search);
+  if (isError) {
+    return (
+      <div className="flex min-h-75 items-center justify-center text-lg font-medium text-red-500">
+        Failed to load employee data!
+      </div>
+    );
+  }
 
-    const matchDepartment =
-      selectedDepartment === "All Departments" ||
-      employee.department === selectedDepartment;
-
-    const matchPosition =
-      selectedPosition === "All Positions" ||
-      employee.position === selectedPosition;
-
-    const matchStatus =
-      selectedStatus === "All Status" || employee.status === selectedStatus;
-
-    return matchSearch && matchDepartment && matchPosition && matchStatus;
-  });
-
-  
   return (
     <>
+
+
+ <Helmet>
+        <title>Asset Manager | Employees</title>
+      </Helmet>
+
+
       <div>
         <div className="py-4 md:py-8">
-          <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6 mb-8">
+          <div className="mb-8 flex flex-col justify-between gap-6 lg:flex-row lg:items-center">
             <div>
               <h1 className="text-2xl font-bold tracking-tight">
                 Employee Management
               </h1>
-              <p className="opacity-60 text-sm mt-1">
+
+              <p className="mt-1 text-sm opacity-60">
                 Manage employee profiles and assets
               </p>
             </div>
 
             <div className="flex flex-wrap items-center gap-2 md:gap-3">
               <ExportData employees={employees} />
+
               <ImportData />
 
               <button
-                onClick={() => setOpenEmployee(!openEmployee)}
-                className="flex w-full md:w-auto items-center justify-center gap-2 px-5 py-2.5 bg-app-brand text-app-secondary rounded-md text-sm font-bold hover:opacity-90 transition-all shadow-md active:scale-95 cursor-pointer"
+                type="button"
+                onClick={() =>
+                  setOpenEmployee(
+                    (previous) => !previous,
+                  )
+                }
+                className="flex w-full cursor-pointer items-center justify-center gap-2 rounded-md bg-app-brand px-5 py-2.5 text-sm font-bold text-app-secondary shadow-md transition-all hover:opacity-90 active:scale-95 md:w-auto"
               >
                 {openEmployee ? (
                   <>
@@ -116,89 +154,110 @@ const EmployeesPage = () => {
             </div>
           </div>
 
-          {/* UPDATED: Search + dropdown filters */}
-          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
+          <div className="flex flex-col items-stretch gap-3 sm:flex-row sm:items-center">
             <div className="relative flex-1">
-              <div className="absolute inset-y-0 left-4 flex items-center pointer-events-none">
+              <div className="pointer-events-none absolute inset-y-0 left-4 flex items-center">
                 <FiSearch size={18} />
               </div>
 
               <input
                 type="text"
                 value={searchText}
-                onChange={(e) => setSearchText(e.target.value)}
+                onChange={(event) =>
+                  setSearchText(event.target.value)
+                }
                 placeholder="Search employees by name, email, phone, iqama, department or position..."
-                className="w-full bg-app-bg border border-app-gray/15 rounded-md py-3.5 pl-12 pr-4 outline-none focus:border-app-brand transition-all text-sm"
+                className="w-full rounded-md border border-app-gray/15 bg-app-bg py-3.5 pr-4 pl-12 text-sm outline-none transition-all focus:border-app-brand"
               />
             </div>
 
-            {/* UPDATED: Department dropdown */}
             <div className="relative">
               <button
                 type="button"
-                onClick={() => setDepartmentOpen(!departmentOpen)}
-                className="w-full sm:w-52 text-left px-4 py-3.5 flex items-center justify-between border rounded-md bg-transparent border-app-gray/30 shadow-xs hover:bg-app-gray/5 focus:outline-none text-sm font-medium"
+                onClick={() =>
+                  setDepartmentOpen(
+                    (previous) => !previous,
+                  )
+                }
+                className="flex w-full items-center justify-between rounded-md border border-app-gray/30 bg-transparent px-4 py-3.5 text-left text-sm font-medium shadow-xs hover:bg-app-gray/5 focus:outline-none sm:w-52"
               >
                 <span>{selectedDepartment}</span>
+
                 <MdKeyboardArrowRight
                   className={`transform transition-transform duration-200 ${
-                    departmentOpen ? "rotate-90" : ""
+                    departmentOpen
+                      ? "rotate-90"
+                      : ""
                   }`}
                   size={18}
                 />
               </button>
 
               {departmentOpen && (
-                <ul className="absolute z-10 w-full sm:w-52 bg-app-bg border border-app-gray/20 rounded-lg shadow-md mt-1 py-1 text-sm max-h-64 overflow-y-auto">
+                <ul className="absolute z-10 mt-1 max-h-64 w-full overflow-y-auto rounded-lg border border-app-gray/20 bg-app-bg py-1 text-sm shadow-md sm:w-52">
                   <li
-                    className="px-4 py-2 hover:bg-app-brand hover:text-white cursor-pointer transition-colors font-semibold"
+                    className="cursor-pointer px-4 py-2 font-semibold transition-colors hover:bg-app-brand hover:text-white"
                     onClick={() => {
-                      setSelectedDepartment("All Departments"); // UPDATED
-                      setDepartmentOpen(false); // UPDATED
+                      setSelectedDepartment(
+                        "All Departments",
+                      );
+                      setDepartmentOpen(false);
                     }}
                   >
                     All Departments
                   </li>
 
-                  {departments.map((department) => (
-                    <li
-                      key={department}
-                      className="px-4 py-2 hover:bg-app-brand hover:text-white cursor-pointer transition-colors"
-                      onClick={() => {
-                        setSelectedDepartment(department); // UPDATED
-                        setDepartmentOpen(false); // UPDATED
-                      }}
-                    >
-                      {department}
-                    </li>
-                  ))}
+                  {departments.map(
+                    (department) => (
+                      <li
+                        key={department}
+                        className="cursor-pointer px-4 py-2 transition-colors hover:bg-app-brand hover:text-white"
+                        onClick={() => {
+                          setSelectedDepartment(
+                            department,
+                          );
+                          setDepartmentOpen(false);
+                        }}
+                      >
+                        {department}
+                      </li>
+                    ),
+                  )}
                 </ul>
               )}
             </div>
 
-            {/* UPDATED: Position dropdown */}
             <div className="relative">
               <button
                 type="button"
-                onClick={() => setPositionOpen(!positionOpen)}
-                className="w-full sm:w-52 text-left px-4 py-3.5 flex items-center justify-between border rounded-md bg-transparent border-app-gray/30 shadow-xs hover:bg-app-gray/5 focus:outline-none text-sm font-medium"
+                onClick={() =>
+                  setPositionOpen(
+                    (previous) => !previous,
+                  )
+                }
+                className="flex w-full items-center justify-between rounded-md border border-app-gray/30 bg-transparent px-4 py-3.5 text-left text-sm font-medium shadow-xs hover:bg-app-gray/5 focus:outline-none sm:w-52"
               >
                 <span>{selectedPosition}</span>
+
                 <MdKeyboardArrowRight
                   className={`transform transition-transform duration-200 ${
-                    positionOpen ? "rotate-90" : ""
+                    positionOpen
+                      ? "rotate-90"
+                      : ""
                   }`}
                   size={18}
                 />
               </button>
 
               {positionOpen && (
-                <ul className="absolute z-10 w-full sm:w-52 bg-app-bg border border-app-gray/20 rounded-lg shadow-md mt-1 py-1 text-sm max-h-64 overflow-y-auto">
+                <ul className="absolute z-10 mt-1 max-h-64 w-full overflow-y-auto rounded-lg border border-app-gray/20 bg-app-bg py-1 text-sm shadow-md sm:w-52">
                   <li
-                    className="px-4 py-2 hover:bg-app-brand hover:text-white cursor-pointer transition-colors font-semibold"
+                    className="cursor-pointer px-4 py-2 font-semibold transition-colors hover:bg-app-brand hover:text-white"
                     onClick={() => {
-                      setSelectedPosition("All Positions"); // UPDATED
-                      setPositionOpen(false); // UPDATED
+                      setSelectedPosition(
+                        "All Positions",
+                      );
+                      setPositionOpen(false);
                     }}
                   >
                     All Positions
@@ -207,10 +266,10 @@ const EmployeesPage = () => {
                   {positions.map((position) => (
                     <li
                       key={position}
-                      className="px-4 py-2 hover:bg-app-brand hover:text-white cursor-pointer transition-colors"
+                      className="cursor-pointer px-4 py-2 transition-colors hover:bg-app-brand hover:text-white"
                       onClick={() => {
-                        setSelectedPosition(position); // UPDATED
-                        setPositionOpen(false); // UPDATED
+                        setSelectedPosition(position);
+                        setPositionOpen(false);
                       }}
                     >
                       {position}
@@ -220,60 +279,98 @@ const EmployeesPage = () => {
               )}
             </div>
 
-            {/* UPDATED: Status dropdown */}
             <div className="relative">
               <button
                 type="button"
-                onClick={() => setStatusOpen(!statusOpen)}
-                className="w-full sm:w-48 text-left px-4 py-3.5 flex items-center justify-between border rounded-md bg-transparent border-app-gray/30 shadow-xs hover:bg-app-gray/5 focus:outline-none text-sm font-medium"
+                onClick={() =>
+                  setStatusOpen(
+                    (previous) => !previous,
+                  )
+                }
+                className="flex w-full items-center justify-between rounded-md border border-app-gray/30 bg-transparent px-4 py-3.5 text-left text-sm font-medium shadow-xs hover:bg-app-gray/5 focus:outline-none sm:w-48"
               >
                 <span>{selectedStatus}</span>
+
                 <MdKeyboardArrowRight
                   className={`transform transition-transform duration-200 ${
-                    statusOpen ? "rotate-90" : ""
+                    statusOpen
+                      ? "rotate-90"
+                      : ""
                   }`}
                   size={18}
                 />
               </button>
 
               {statusOpen && (
-                <ul className="absolute z-10 w-full sm:w-48 bg-app-bg border border-app-gray/20 rounded-lg shadow-md mt-1 py-1 text-sm">
+                <ul className="absolute z-10 mt-1 w-full rounded-lg border border-app-gray/20 bg-app-bg py-1 text-sm shadow-md sm:w-48">
                   <li
-                    className="px-4 py-2 hover:bg-app-brand hover:text-white cursor-pointer transition-colors font-semibold"
+                    className="cursor-pointer px-4 py-2 font-semibold transition-colors hover:bg-app-brand hover:text-white"
                     onClick={() => {
-                      setSelectedStatus("All Status"); // UPDATED
-                      setStatusOpen(false); // UPDATED
+                      setSelectedStatus(
+                        "All Status",
+                      );
+                      setStatusOpen(false);
                     }}
                   >
                     All Status
                   </li>
 
-                  {/* UPDATED: status dropdown with label/value */}
-                  {employeeStatuses.map((status) => (
-                    <li
-                      key={status.value}
-                      className="px-4 py-2 hover:bg-app-brand hover:text-white cursor-pointer transition-colors"
-                      onClick={() => {
-                        setSelectedStatus(status.value); // UPDATED
-                        setStatusOpen(false); // UPDATED
-                      }}
-                    >
-                      {status.label}
-                    </li>
-                  ))}
+                  {employeeStatuses.map(
+                    (status) => (
+                      <li
+                        key={status.value}
+                        className="cursor-pointer px-4 py-2 transition-colors hover:bg-app-brand hover:text-white"
+                        onClick={() => {
+                          setSelectedStatus(
+                            status.value,
+                          );
+                          setStatusOpen(false);
+                        }}
+                      >
+                        {status.label}
+                      </li>
+                    ),
+                  )}
                 </ul>
               )}
             </div>
           </div>
 
           <div className="transition-all duration-700">
-            {openEmployee && <Add_Employee setOpenEmployee={setOpenEmployee} />}
+            {openEmployee && (
+              <Add_Employee
+                setOpenEmployee={
+                  setOpenEmployee
+                }
+              />
+            )}
           </div>
         </div>
       </div>
 
-      <Employee_Card employees={filteredEmployees} />
+      <Employee_Card
+        employees={employees}
+        totalEmployees={
+          pagination?.totalData
+        }
+      />
 
+      <Pagination_Employee
+        currentPage={
+          pagination?.currentPage || 1
+        }
+        totalPages={
+          pagination?.totalPages || 1
+        }
+        hasNextPage={
+          pagination?.hasNextPage || false
+        }
+        hasPreviousPage={
+          pagination?.hasPreviousPage ||
+          false
+        }
+        onPageChange={setPage}
+      />
     </>
   );
 };

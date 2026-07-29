@@ -47,15 +47,57 @@ export const useGetSingleInvoice = (id?: string) => {
 };
 
 // Custom hook to fetch invoices
-export const useGetInvoices = () => {
+// Custom hook to fetch paginated invoices
+export const useGetInvoices = (
+  page: number = 1,
+  limit: number = 10,
+  search: string = "",
+) => {
   return useQuery({
-    queryKey: ["invoices"],
+    queryKey: [
+      "invoices",
+      page,
+      limit,
+      search,
+    ],
+
     queryFn: async () => {
-      const response = await axiosInstance.get("/invoices");
-      return response.data?.data || response.data;
+      const response = await axiosInstance.get(
+        "/invoices",
+        {
+          params: {
+            page,
+            limit,
+            search,
+          },
+        },
+      );
+
+      return {
+        invoices:
+          response.data?.invoices || [],
+
+        pagination:
+          response.data?.pagination || {
+            currentPage: page,
+            limit,
+            totalData: 0,
+            totalPages: 0,
+            hasNextPage: false,
+            hasPreviousPage: false,
+          },
+      };
     },
+
+    placeholderData: (previousData) =>
+      previousData,
   });
 };
+
+
+
+
+
 
 
 // UPDATE INVOICE

@@ -6,6 +6,7 @@ import toast from "react-hot-toast";
 import { useState } from "react";
 
 import bgImage from "../../assets/image/bg-image-2.jpg";
+import { Helmet } from "react-helmet-async";
 
 export default function Login() {
   const navigate = useNavigate();
@@ -42,11 +43,19 @@ export default function Login() {
     }
   };
 
+
   return (
     <div
       style={{ backgroundImage: `url(${bgImage})` }}
       className="relative flex min-h-screen items-center justify-center overflow-hidden bg-cover bg-center bg-no-repeat px-4"
     >
+      
+  <Helmet>
+    <title>Asset Manager | Login</title>
+  </Helmet>
+
+
+
       <div className="absolute inset-0 bg-black/75" />
 
       <div className="absolute h-72 w-72 rounded-full bg-app-brand/20 blur-3xl animate-pulse" />
