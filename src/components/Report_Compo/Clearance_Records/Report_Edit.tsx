@@ -14,6 +14,9 @@ export default function Report_Edit({
 
   const standardConditions = ["Good", "Damage", "Broken"];
 
+  const [remarks, setRemarks] = useState("");
+
+
   const [deviceCondition, setDeviceCondition] = useState("Good");
   const [customCondition, setCustomCondition] = useState("");
   const [status, setStatus] = useState("APPROVED");
@@ -24,94 +27,55 @@ export default function Report_Edit({
   useEffect(() => {
     const currentCondition = report?.deviceCondition || "Good";
 
-    const isStandardCondition =
-      standardConditions.includes(currentCondition);
+    const isStandardCondition = standardConditions.includes(currentCondition);
 
-    setDeviceCondition(
-      isStandardCondition ? currentCondition : "Custom",
-    );
+    setDeviceCondition(isStandardCondition ? currentCondition : "Custom");
 
-    setCustomCondition(
-      isStandardCondition ? "" : currentCondition,
-    );
+    setCustomCondition(isStandardCondition ? "" : currentCondition);
 
     setStatus(report?.status || "APPROVED");
 
     setAssignedAssets(
-      Array.isArray(report?.assignedAssets)
-        ? report.assignedAssets
-        : [],
+      Array.isArray(report?.assignedAssets) ? report.assignedAssets : [],
     );
 
+     setRemarks(report?.remarks || "");
+
     setAssignedLicenses(
-      Array.isArray(report?.assignedLicenses)
-        ? report.assignedLicenses
-        : [],
+      Array.isArray(report?.assignedLicenses) ? report.assignedLicenses : [],
     );
   }, [report]);
 
   const totalAssetPrice = assignedAssets.reduce(
-    (total: number, asset: any) =>
-      total + Number(asset?.price || 0),
+    (total: number, asset: any) => total + Number(asset?.price || 0),
     0,
   );
 
   const totalLicenseCost = assignedLicenses.reduce(
-    (total: number, license: any) =>
-      total + Number(license?.costs || 0),
+    (total: number, license: any) => total + Number(license?.costs || 0),
     0,
   );
 
-  const handleAssetChange = (
-    index: number,
-    field: string,
-    value: string,
-  ) => {
+
+
+
+  const handleAssetChange = (index: number, field: string, value: string) => {
     setAssignedAssets((previousAssets) =>
       previousAssets.map((asset, assetIndex) =>
         assetIndex === index
           ? {
               ...asset,
-              [field]:
-                field === "price"
-                  ? Number(value)
-                  : value,
+              [field]: field === "price" ? Number(value) : value,
             }
           : asset,
       ),
     );
   };
 
-  const handleLicenseChange = (
-    index: number,
-    field: string,
-    value: string,
-  ) => {
-    setAssignedLicenses((previousLicenses) =>
-      previousLicenses.map(
-        (license, licenseIndex) =>
-          licenseIndex === index
-            ? {
-                ...license,
-                [field]:
-                  field === "costs"
-                    ? Number(value)
-                    : value,
-              }
-            : license,
-      ),
-    );
-  };
-
-  const handleUpdateReport = (
-    event: React.FormEvent<HTMLFormElement>,
-  ) => {
+  const handleUpdateReport = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
 
-    if (
-      deviceCondition === "Custom" &&
-      !customCondition.trim()
-    ) {
+    if (deviceCondition === "Custom" && !customCondition.trim()) {
       Swal.fire({
         title: "Condition Required",
         text: "Please enter the custom device condition.",
@@ -122,20 +86,13 @@ export default function Report_Edit({
     }
 
     const finalDeviceCondition =
-      deviceCondition === "Custom"
-        ? customCondition.trim()
-        : deviceCondition;
+      deviceCondition === "Custom" ? customCondition.trim() : deviceCondition;
 
-    const employeeName =
-      report?.employee?.fullName ||
-      "Unknown Employee";
+    const employeeName = report?.employee?.fullName || "Unknown Employee";
 
-    const employeeDepartment =
-      report?.employee?.department ||
-      "No Department";
+    const employeeDepartment = report?.employee?.department || "No Department";
 
-    const employeePosition =
-      report?.employee?.position || "N/A";
+    const employeePosition = report?.employee?.position || "N/A";
 
     const readableStatus = status.replaceAll("_", " ");
 
@@ -166,6 +123,8 @@ Final Decision: ${readableStatus}
       totalLicenseCost,
       description,
       title: `Employee Clearance Report ${readableStatus}`,
+      remarks: remarks.trim() || null,
+
     };
 
     updateReport.mutate(
@@ -200,6 +159,12 @@ Final Decision: ${readableStatus}
     );
   };
 
+
+
+  
+
+
+
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-4 backdrop-blur-sm animate-fadeIn">
       <div className="max-h-[90vh] w-full max-w-5xl overflow-y-auto rounded-xl border border-app-gray/20 bg-app-bg p-6 text-app-text shadow-xl animate-scaleIn">
@@ -223,63 +188,45 @@ Final Decision: ${readableStatus}
         {/* Employee Information */}
         <div className="mb-6 rounded-lg border border-app-gray/20 bg-app-gray/5 p-4">
           <h2 className="text-lg font-bold">
-            {report?.employee?.fullName ||
-              "Unknown Employee"}
+            {report?.employee?.fullName || "Unknown Employee"}
           </h2>
 
           <div className="mt-3 grid grid-cols-1 gap-3 text-sm sm:grid-cols-2">
             <p>
-              <span className="font-semibold">
-                Iqama:
-              </span>{" "}
+              <span className="font-semibold">Iqama:</span>{" "}
               <span className="text-app-gray">
-                {report?.employee?.iqamaNumber ||
-                  "N/A"}
+                {report?.employee?.iqamaNumber || "N/A"}
               </span>
             </p>
 
             <p>
-              <span className="font-semibold">
-                Department:
-              </span>{" "}
+              <span className="font-semibold">Department:</span>{" "}
               <span className="text-app-gray">
-                {report?.employee?.department ||
-                  "No Department"}
+                {report?.employee?.department || "No Department"}
               </span>
             </p>
 
             <p>
-              <span className="font-semibold">
-                Position:
-              </span>{" "}
+              <span className="font-semibold">Position:</span>{" "}
               <span className="text-app-gray">
-                {report?.employee?.position ||
-                  "N/A"}
+                {report?.employee?.position || "N/A"}
               </span>
             </p>
 
             <p>
-              <span className="font-semibold">
-                Employee Status:
-              </span>{" "}
+              <span className="font-semibold">Employee Status:</span>{" "}
               <span className="text-app-gray">
-                {report?.employee?.status ||
-                  "N/A"}
+                {report?.employee?.status || "N/A"}
               </span>
             </p>
           </div>
         </div>
 
-        <form
-          onSubmit={handleUpdateReport}
-          className="space-y-6"
-        >
+        <form onSubmit={handleUpdateReport} className="space-y-6">
           {/* Assigned Assets */}
           <div>
             <div className="mb-2 flex items-center justify-between">
-              <h4 className="text-sm font-semibold">
-                Assigned Assets
-              </h4>
+              <h4 className="text-sm font-semibold">Assigned Assets</h4>
 
               <span className="text-xs text-app-gray">
                 Total: {assignedAssets.length}
@@ -290,132 +237,107 @@ Final Decision: ${readableStatus}
               <table className="min-w-[850px] w-full text-sm">
                 <thead className="bg-app-brand/10">
                   <tr>
-                    <th className="p-2 text-left">
-                      Name
-                    </th>
+                    <th className="p-2 text-left">Name</th>
 
-                    <th className="p-2 text-left">
-                      Type
-                    </th>
+                    <th className="p-2 text-left">Type</th>
 
-                    <th className="p-2 text-left">
-                      Serial
-                    </th>
+                    <th className="p-2 text-left">Serial</th>
 
-                    <th className="p-2 text-left">
-                      Condition
-                    </th>
+                    <th className="p-2 text-left">Condition</th>
 
-                    <th className="p-2 text-right">
-                      Price
-                    </th>
+                    <th className="p-2 text-right">Price</th>
                   </tr>
                 </thead>
 
                 <tbody>
                   {assignedAssets.length > 0 ? (
-                    assignedAssets.map(
-                      (asset: any, index: number) => (
-                        <tr
-                          key={asset.id || index}
-                          className="border-t border-app-gray/10"
-                        >
-                          <td className="p-2">
-                            <input
-                              type="text"
-                              value={
-                                asset.assetName || ""
-                              }
-                              onChange={(event) =>
-                                handleAssetChange(
-                                  index,
-                                  "assetName",
-                                  event.target.value,
-                                )
-                              }
-                              className="w-full rounded-md border border-app-gray/30 bg-app-bg px-2 py-1.5 outline-none focus:border-app-brand"
-                            />
-                          </td>
+                    assignedAssets.map((asset: any, index: number) => (
+                      <tr
+                        key={asset.id || index}
+                        className="border-t border-app-gray/10"
+                      >
+                        <td className="p-2">
+                          <input
+                            type="text"
+                            value={asset.assetName || ""}
+                            onChange={(event) =>
+                              handleAssetChange(
+                                index,
+                                "assetName",
+                                event.target.value,
+                              )
+                            }
+                            className="w-full rounded-md border border-app-gray/30 bg-app-bg px-2 py-1.5 outline-none focus:border-app-brand"
+                          />
+                        </td>
 
-                          <td className="p-2">
-                            <input
-                              type="text"
-                              value={
-                                asset.assetType || ""
-                              }
-                              onChange={(event) =>
-                                handleAssetChange(
-                                  index,
-                                  "assetType",
-                                  event.target.value,
-                                )
-                              }
-                              className="w-full rounded-md border border-app-gray/30 bg-app-bg px-2 py-1.5 outline-none focus:border-app-brand"
-                            />
-                          </td>
+                        <td className="p-2">
+                          <input
+                            type="text"
+                            value={asset.assetType || ""}
+                            onChange={(event) =>
+                              handleAssetChange(
+                                index,
+                                "assetType",
+                                event.target.value,
+                              )
+                            }
+                            className="w-full rounded-md border border-app-gray/30 bg-app-bg px-2 py-1.5 outline-none focus:border-app-brand"
+                          />
+                        </td>
 
-                          <td className="p-2">
-                            <input
-                              type="text"
-                              value={
-                                asset.serialNumber || ""
-                              }
-                              onChange={(event) =>
-                                handleAssetChange(
-                                  index,
-                                  "serialNumber",
-                                  event.target.value,
-                                )
-                              }
-                              className="w-full rounded-md border border-app-gray/30 bg-app-bg px-2 py-1.5 outline-none focus:border-app-brand"
-                            />
-                          </td>
+                        <td className="p-2">
+                          <input
+                            type="text"
+                            value={asset.serialNumber || ""}
+                            onChange={(event) =>
+                              handleAssetChange(
+                                index,
+                                "serialNumber",
+                                event.target.value,
+                              )
+                            }
+                            className="w-full rounded-md border border-app-gray/30 bg-app-bg px-2 py-1.5 outline-none focus:border-app-brand"
+                          />
+                        </td>
 
-                          <td className="p-2">
-                            <input
-                              type="text"
-                              value={
-                                asset.condition || ""
-                              }
-                              onChange={(event) =>
-                                handleAssetChange(
-                                  index,
-                                  "condition",
-                                  event.target.value,
-                                )
-                              }
-                              placeholder="Condition"
-                              className="w-full rounded-md border border-app-gray/30 bg-app-bg px-2 py-1.5 outline-none focus:border-app-brand"
-                            />
-                          </td>
+                        <td className="p-2">
+                          <input
+                            type="text"
+                            value={asset.condition || ""}
+                            onChange={(event) =>
+                              handleAssetChange(
+                                index,
+                                "condition",
+                                event.target.value,
+                              )
+                            }
+                            placeholder="Condition"
+                            className="w-full rounded-md border border-app-gray/30 bg-app-bg px-2 py-1.5 outline-none focus:border-app-brand"
+                          />
+                        </td>
 
-                          <td className="p-2">
-                            <input
-                              type="number"
-                              min="0"
-                              step="0.01"
-                              value={
-                                asset.price ?? 0
-                              }
-                              onChange={(event) =>
-                                handleAssetChange(
-                                  index,
-                                  "price",
-                                  event.target.value,
-                                )
-                              }
-                              className="w-full rounded-md border border-app-gray/30 bg-app-bg px-2 py-1.5 text-right outline-none focus:border-app-brand"
-                            />
-                          </td>
-                        </tr>
-                      ),
-                    )
+                        <td className="p-2">
+                          <input
+                            type="number"
+                            min="0"
+                            step="0.01"
+                            value={asset.price ?? 0}
+                            onChange={(event) =>
+                              handleAssetChange(
+                                index,
+                                "price",
+                                event.target.value,
+                              )
+                            }
+                            className="w-full rounded-md border border-app-gray/30 bg-app-bg px-2 py-1.5 text-right outline-none focus:border-app-brand"
+                          />
+                        </td>
+                      </tr>
+                    ))
                   ) : (
                     <tr>
-                      <td
-                        colSpan={5}
-                        className="p-4 text-center text-app-gray"
-                      >
+                      <td colSpan={5} className="p-4 text-center text-app-gray">
                         No assigned assets found.
                       </td>
                     </tr>
@@ -425,151 +347,30 @@ Final Decision: ${readableStatus}
             </div>
 
             <div className="mt-2 flex justify-end text-sm font-semibold">
-              Total Asset Value:{" "}
-              {totalAssetPrice.toFixed(2)}
+              Total Asset Value: {totalAssetPrice.toFixed(2)}
             </div>
+
           </div>
 
+          {/* ADD ANY DEVICE QUERY*/}
+          {/* Additional Remarks */}
+<div>
+  <label className="mb-2 block text-sm font-semibold">
+    Additional Remarks (Optional)
+  </label>
 
-          {/* Assigned Licenses */}
-          <div>
-            <div className="mb-2 flex items-center justify-between">
-              <h4 className="text-sm font-semibold">
-                Assigned Licenses
-              </h4>
+  <textarea
+    rows={3}
+    value={remarks}
+    onChange={(event) => setRemarks(event.target.value)}
+    placeholder="Enter any additional remarks..."
+    className="w-full resize-none rounded-lg border border-app-gray/30 bg-app-bg px-3 py-2.5 text-sm outline-none focus:border-app-brand"
+  />
+</div>
 
-              <span className="text-xs text-app-gray">
-                Total: {assignedLicenses.length}
-              </span>
-            </div>
 
-            <div className="overflow-x-auto rounded-lg border border-app-gray/20">
-              <table className="min-w-[750px] w-full text-sm">
-                <thead className="bg-app-brand/10">
-                  <tr>
-                    <th className="p-2 text-left">
-                      Software
-                    </th>
 
-                    <th className="p-2 text-left">
-                      License Type
-                    </th>
 
-                    <th className="p-2 text-left">
-                      License Key
-                    </th>
-
-                    <th className="p-2 text-right">
-                      Cost
-                    </th>
-                  </tr>
-                </thead>
-
-                <tbody>
-                  {assignedLicenses.length > 0 ? (
-                    assignedLicenses.map(
-                      (
-                        license: any,
-                        index: number,
-                      ) => (
-                        <tr
-                          key={license.id || index}
-                          className="border-t border-app-gray/10"
-                        >
-                          <td className="p-2">
-                            <input
-                              type="text"
-                              value={
-                                license.softwareName ||
-                                ""
-                              }
-                              onChange={(event) =>
-                                handleLicenseChange(
-                                  index,
-                                  "softwareName",
-                                  event.target.value,
-                                )
-                              }
-                              className="w-full rounded-md border border-app-gray/30 bg-app-bg px-2 py-1.5 outline-none focus:border-app-brand"
-                            />
-                          </td>
-
-                          <td className="p-2">
-                            <input
-                              type="text"
-                              value={
-                                license.licenseType ||
-                                ""
-                              }
-                              onChange={(event) =>
-                                handleLicenseChange(
-                                  index,
-                                  "licenseType",
-                                  event.target.value,
-                                )
-                              }
-                              className="w-full rounded-md border border-app-gray/30 bg-app-bg px-2 py-1.5 outline-none focus:border-app-brand"
-                            />
-                          </td>
-
-                          <td className="p-2">
-                            <input
-                              type="text"
-                              value={
-                                license.licenseKey ||
-                                ""
-                              }
-                              onChange={(event) =>
-                                handleLicenseChange(
-                                  index,
-                                  "licenseKey",
-                                  event.target.value,
-                                )
-                              }
-                              className="w-full rounded-md border border-app-gray/30 bg-app-bg px-2 py-1.5 outline-none focus:border-app-brand"
-                            />
-                          </td>
-
-                          <td className="p-2">
-                            <input
-                              type="number"
-                              min="0"
-                              step="0.01"
-                              value={
-                                license.costs ?? 0
-                              }
-                              onChange={(event) =>
-                                handleLicenseChange(
-                                  index,
-                                  "costs",
-                                  event.target.value,
-                                )
-                              }
-                              className="w-full rounded-md border border-app-gray/30 bg-app-bg px-2 py-1.5 text-right outline-none focus:border-app-brand"
-                            />
-                          </td>
-                        </tr>
-                      ),
-                    )
-                  ) : (
-                    <tr>
-                      <td
-                        colSpan={4}
-                        className="p-4 text-center text-app-gray"
-                      >
-                        No assigned licenses found.
-                      </td>
-                    </tr>
-                  )}
-                </tbody>
-              </table>
-            </div>
-
-            <div className="mt-2 flex justify-end text-sm font-semibold">
-              Total License Cost:{" "}
-              {totalLicenseCost.toFixed(2)}
-            </div>
-          </div>
 
           <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
             {/* Device Condition */}
@@ -580,39 +381,23 @@ Final Decision: ${readableStatus}
 
               <select
                 value={deviceCondition}
-                onChange={(event) =>
-                  setDeviceCondition(
-                    event.target.value,
-                  )
-                }
+                onChange={(event) => setDeviceCondition(event.target.value)}
                 className="w-full rounded-lg border border-app-gray/30 bg-app-bg px-3 py-2.5 text-sm outline-none focus:border-app-brand"
               >
-                <option value="Good">
-                  Good
-                </option>
+                <option value="Good">Good</option>
 
-                <option value="Damage">
-                  Damage
-                </option>
+                <option value="Damage">Damage</option>
 
-                <option value="Broken">
-                  Broken
-                </option>
+                <option value="Broken">Broken</option>
 
-                <option value="Custom">
-                  Custom
-                </option>
+                <option value="Custom">Custom</option>
               </select>
 
               {deviceCondition === "Custom" && (
                 <input
                   type="text"
                   value={customCondition}
-                  onChange={(event) =>
-                    setCustomCondition(
-                      event.target.value,
-                    )
-                  }
+                  onChange={(event) => setCustomCondition(event.target.value)}
                   placeholder="Enter custom device condition"
                   className="mt-3 w-full rounded-lg border border-app-gray/30 bg-app-bg px-3 py-2.5 text-sm outline-none focus:border-app-brand"
                 />
@@ -627,31 +412,20 @@ Final Decision: ${readableStatus}
 
               <select
                 value={status}
-                onChange={(event) =>
-                  setStatus(event.target.value)
-                }
+                onChange={(event) => setStatus(event.target.value)}
                 className="w-full rounded-lg border border-app-gray/30 bg-app-bg px-3 py-2.5 text-sm outline-none focus:border-app-brand"
               >
-                <option value="APPROVED">
-                  Approved
-                </option>
+                <option value="APPROVED">Approved</option>
 
-                <option value="REJECTED">
-                  Rejected
-                </option>
+                <option value="REJECTED">Rejected</option>
 
-                <option value="PENDING_FINANCE">
-                  Pending Finance
-                </option>
+                <option value="PENDING_FINANCE">Pending Finance</option>
 
-                <option value="FINALIZED">
-                  Finalized
-                </option>
+                <option value="FINALIZED">Finalized</option>
               </select>
 
               <p className="mt-2 text-xs text-app-gray">
-                Saving will move the report to
-                the selected status tab.
+                Saving will move the report to the selected status tab.
               </p>
             </div>
           </div>
@@ -674,9 +448,7 @@ Final Decision: ${readableStatus}
             >
               <FiSave size={15} />
 
-              {updateReport.isPending
-                ? "Updating..."
-                : "Save Update"}
+              {updateReport.isPending ? "Updating..." : "Save Update"}
             </button>
           </div>
         </form>

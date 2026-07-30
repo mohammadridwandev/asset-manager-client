@@ -1,6 +1,7 @@
 import { FiUsers, FiBox, FiCreditCard, FiAlertCircle } from "react-icons/fi";
 
 export default function Report_count() {
+  
   const stats = [
     {
       title: "Active Employees",

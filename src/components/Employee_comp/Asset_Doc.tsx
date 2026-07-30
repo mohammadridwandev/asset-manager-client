@@ -2,7 +2,6 @@ import { useEffect, useRef, useState } from "react";
 import {
   FaCloudUploadAlt,
   FaFileImage,
-  FaPrint,
   FaTimes,
   FaTrash,
 } from "react-icons/fa";

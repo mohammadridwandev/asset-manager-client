@@ -17,12 +17,12 @@ export default function ReportPage() {
   </Helmet>
     
       <div>
-        <Report_count />
+        {/* <Report_count /> */}
       </div>
 
-      <div className="grid mt-16 grid-cols-1 items-start lg:grid-cols-2 gap-6">
+      <div className="">
         <Select_Employee />
-        <Report_Information />
+        {/* <Report_Information /> */}
       </div>
 
       <div>

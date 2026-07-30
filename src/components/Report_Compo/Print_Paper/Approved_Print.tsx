@@ -22,11 +22,7 @@ function formatAmount(value: unknown) {
 }
 
 function displayValue(value: unknown) {
-  if (
-    value === null ||
-    value === undefined ||
-    value === ""
-  ) {
+  if (value === null || value === undefined || value === "") {
     return "N/A";
   }
 
@@ -34,20 +30,13 @@ function displayValue(value: unknown) {
 }
 
 function formatStatus(value: unknown) {
-  return displayValue(value)
-    .replaceAll("_", " ")
-    .toUpperCase();
+  return displayValue(value).replaceAll("_", " ").toUpperCase();
 }
 
 function getStatusColor(status: unknown) {
-  const value = String(
-    status || "",
-  ).toUpperCase();
+  const value = String(status || "").toUpperCase();
 
-  if (
-    value === "APPROVED" ||
-    value === "FINALIZED"
-  ) {
+  if (value === "APPROVED" || value === "FINALIZED") {
     return "text-[#087557]";
   }
 
@@ -79,104 +68,53 @@ const tableCellClass =
   "align-middle text-[7.8pt] leading-[1.2] " +
   "wrap-anywhere text-[#202a35]";
 
-function AssetsTable({
-  assets,
-}: AssetsTableProps) {
+function AssetsTable({ assets }: AssetsTableProps) {
   return (
-    <section className="mb-[3mm] w-full">
-      <h2 className={sectionTitleClass}>
-        Assets Returned
-      </h2>
-
+    <section className="mb-[2mm] w-full">
+      <h2 className={sectionTitleClass}>Assets Returned</h2>
       <table className="w-full table-fixed border-collapse">
         <thead className="[display:table-header-group]">
           <tr>
-            <th
-              className={`${tableHeaderClass} w-[38%]`}
-            >
-              Asset Name
-            </th>
+            <th className={`${tableHeaderClass} w-[38%]`}>Asset Name</th>
 
-            <th
-              className={`${tableHeaderClass} w-[30%]`}
-            >
-              Serial Number
-            </th>
+            <th className={`${tableHeaderClass} w-[30%]`}>Serial Number</th>
 
-            <th
-              className={`${tableHeaderClass} w-[15%]`}
-            >
-              Condition
-            </th>
+            <th className={`${tableHeaderClass} w-[15%]`}>Condition</th>
 
-            <th
-              className={`${tableHeaderClass} w-[17%] text-right`}
-            >
+            <th className={`${tableHeaderClass} w-[17%] text-right`}>
               Value
-              <span className="block">
-                (SAR)
-              </span>
+              <span className="block">(SAR)</span>
             </th>
           </tr>
         </thead>
 
         <tbody>
           {assets.length > 0 ? (
-            assets.map(
-              (
-                asset: any,
-                index: number,
-              ) => (
-                <tr
-                  key={
-                    asset?.id ??
-                    `asset-${index}`
-                  }
-                  className="
+            assets.map((asset: any, index: number) => (
+              <tr
+                key={asset?.id ?? `asset-${index}`}
+                className="
                     break-inside-avoid
                     [page-break-inside:avoid]
                   "
-                >
-                  <td
-                    className={
-                      tableCellClass
-                    }
-                  >
-                    {displayValue(
-                      asset?.assetName,
-                    )}
-                  </td>
+              >
+                <td className={tableCellClass}>
+                  {displayValue(asset?.assetName)}
+                </td>
 
-                  <td
-                    className={
-                      tableCellClass
-                    }
-                  >
-                    {displayValue(
-                      asset?.serialNumber,
-                    )}
-                  </td>
+                <td className={tableCellClass}>
+                  {displayValue(asset?.serialNumber)}
+                </td>
 
-                  <td
-                    className={
-                      tableCellClass
-                    }
-                  >
-                    {displayValue(
-                      asset?.condition,
-                    )}
-                  </td>
+                <td className={tableCellClass}>
+                  {displayValue(asset?.condition)}
+                </td>
 
-                  <td
-                    className={`${tableCellClass} text-right font-medium`}
-                  >
-                    {formatAmount(
-                      asset?.price,
-                    )}
-                  </td>
-                </tr>
-              ),
-            )
+                <td className={`${tableCellClass} text-right font-medium`}>
+                  {formatAmount(asset?.price)}
+                </td>
+              </tr>
+            ))
           ) : (
             <tr>
               <td
@@ -193,71 +131,46 @@ function AssetsTable({
   );
 }
 
-export default function Approved_Print({
-  report,
-}: ApprovedPrintProps) {
+export default function Approved_Print({ report }: ApprovedPrintProps) {
   if (!report) {
     return null;
   }
 
-  const employee =
-    report?.employee || {};
+  const employee = report?.employee || {};
 
-  const assignedAssets =
-    Array.isArray(
-      report?.assignedAssets,
-    )
-      ? report.assignedAssets
-      : [];
+  console.log("REPORT:", report);
+  console.log("ASSIGNED ASSETS:", report?.assignedAssets);
 
-  const calculatedAssetPrice =
-    assignedAssets.reduce(
-      (
-        sum: number,
-        asset: any,
-      ) =>
-        sum +
-        Number(asset?.price || 0),
-      0,
-    );
+  const assignedAssets = Array.isArray(report?.assignedAssets)
+    ? report.assignedAssets
+    : [];
+
+  const calculatedAssetPrice = assignedAssets.reduce(
+    (sum: number, asset: any) => sum + Number(asset?.price || 0),
+    0,
+  );
 
   const totalAssetPrice =
-    report?.totalAssetPrice !==
-      undefined &&
-    report?.totalAssetPrice !== null
-      ? Number(
-          report.totalAssetPrice,
-        )
+    report?.totalAssetPrice !== undefined && report?.totalAssetPrice !== null
+      ? Number(report.totalAssetPrice)
       : calculatedAssetPrice;
 
   const assetTypes = [
     ...new Set(
-      assignedAssets
-        .map(
-          (asset: any) =>
-            asset?.assetType,
-        )
-        .filter(Boolean),
+      assignedAssets.map((asset: any) => asset?.assetType).filter(Boolean),
     ),
   ];
 
   const deviceType =
-    report?.deviceType ||
-    assetTypes.join(", ") ||
-    "Company Assets";
+    report?.deviceType || assetTypes.join(", ") || "Company Assets";
 
-  const deviceCondition =
-    report?.deviceCondition ||
-    "N/A";
+  const deviceCondition = report?.deviceCondition || "N/A";
 
   const deviceNotes =
     report?.deviceNotes ||
     report?.notes ||
     assignedAssets
-      .map(
-        (asset: any) =>
-          asset?.assetName,
-      )
+      .map((asset: any) => asset?.assetName)
       .filter(Boolean)
       .join(", ") ||
     "N/A";
@@ -319,96 +232,44 @@ export default function Approved_Print({
             [page-break-inside:avoid]
           "
         >
-          <h2
-            className={
-              sectionTitleClass
-            }
-          >
-            Employee Information
-          </h2>
+          <h2 className={sectionTitleClass}>Employee Information</h2>
 
           <div className="space-y-[1.2mm]">
             <div className="flex items-start">
-              <span
-                className={
-                  informationLabelClass
-                }
-              >
-                Name:
-              </span>
+              <span className={informationLabelClass}>Name:</span>
 
-              <span
-                className={
-                  informationValueClass
-                }
-              >
-                {displayValue(
-                  employee?.fullName,
-                )}
+              <span className={informationValueClass}>
+                {displayValue(employee?.fullName)}
               </span>
             </div>
 
             <div className="flex items-start">
-              <span
-                className={
-                  informationLabelClass
-                }
-              >
-                Iqama ID:
-              </span>
+              <span className={informationLabelClass}>Iqama ID:</span>
 
-              <span
-                className={
-                  informationValueClass
-                }
-              >
-                {displayValue(
-                  employee?.iqamaNumber,
-                )}
+              <span className={informationValueClass}>
+                {displayValue(employee?.iqamaNumber)}
               </span>
             </div>
 
             <div className="flex items-start">
-              <span
-                className={
-                  informationLabelClass
-                }
-              >
-                Department:
-              </span>
+              <span className={informationLabelClass}>Department:</span>
 
-              <span
-                className={
-                  informationValueClass
-                }
-              >
-                {displayValue(
-                  employee?.department,
-                )}
+              <span className={informationValueClass}>
+                {displayValue(employee?.department)}
               </span>
             </div>
 
             <div className="flex items-start">
-              <span
-                className={
-                  informationLabelClass
-                }
-              >
-                Clearance Status:
-              </span>
+              <span className={informationLabelClass}>Clearance Status:</span>
 
               <span
                 className={[
                   informationValueClass,
                   "font-extrabold",
-                  getStatusColor(
-                    report?.status,
-                  ),
+                  getStatusColor(report?.status),
                 ].join(" ")}
               >
-                {formatStatus(
-                  report?.status,
-                )}
+                {formatStatus(report?.status)}
               </span>
             </div>
           </div>
@@ -422,14 +283,7 @@ export default function Approved_Print({
             [page-break-inside:avoid]
           "
         >
-          <h2
-            className={
-              sectionTitleClass
-            }
-          >
-            Device Inspection
-          </h2>
-
+          <h2 className={sectionTitleClass}>Device Inspection</h2>
           <div
             className="
               rounded-[2mm]
@@ -441,62 +295,26 @@ export default function Approved_Print({
           >
             <div className="space-y-[1.3mm]">
               <div className="flex items-start">
-                <span
-                  className={
-                    informationLabelClass
-                  }
-                >
-                  Device Type:
-                </span>
+                <span className={informationLabelClass}>Device Type:</span>
 
-                <span
-                  className={
-                    informationValueClass
-                  }
-                >
-                  {displayValue(
-                    deviceType,
-                  )}
+                <span className={informationValueClass}>
+                  {displayValue(deviceType)}
                 </span>
               </div>
 
               <div className="flex items-start">
-                <span
-                  className={
-                    informationLabelClass
-                  }
-                >
-                  Condition:
-                </span>
+                <span className={informationLabelClass}>Condition:</span>
 
-                <span
-                  className={
-                    informationValueClass
-                  }
-                >
-                  {displayValue(
-                    deviceCondition,
-                  )}
+                <span className={informationValueClass}>
+                  {displayValue(deviceCondition)}
                 </span>
               </div>
 
               <div className="flex items-start">
-                <span
-                  className={
-                    informationLabelClass
-                  }
-                >
-                  Notes:
-                </span>
+                <span className={informationLabelClass}>Notes:</span>
 
-                <span
-                  className={
-                    informationValueClass
-                  }
-                >
-                  {displayValue(
-                    deviceNotes,
-                  )}
+                <span className={informationValueClass}>
+                  {displayValue(deviceNotes)}
                 </span>
               </div>
             </div>
@@ -504,9 +322,45 @@ export default function Approved_Print({
         </section>
 
         {/* Assets */}
-        <AssetsTable
-          assets={assignedAssets}
-        />
+        <AssetsTable assets={assignedAssets} />
+
+        {/* Additional Remarks */}
+        {report?.remarks && (
+          <section
+            className="
+      mb-[4mm]
+      break-inside-avoid
+      [page-break-inside:avoid]
+    "
+          >
+            <h2 className={sectionTitleClass}>Additional Remarks</h2>
+
+            <div
+              className="
+        
+        
+        
+       
+        text-[8pt]
+        leading-[1.45]
+        text-[#202a35]
+      "
+            >
+              {report.remarks}
+            </div>
+          </section>
+        )}
+
+        {/* Totals */}
+        <section
+          className="
+    mb-[4mm]
+    flex
+    justify-end
+    break-inside-avoid
+    [page-break-inside:avoid]
+  "
+        ></section>
 
         {/* Totals */}
         <section
@@ -528,18 +382,8 @@ export default function Approved_Print({
               text-[#202a35]
             "
           >
-            <span>
-              Total Assets:{" "}
-              {assignedAssets.length}
-            </span>
-
-            <span>
-              Total Value:{" "}
-              {formatAmount(
-                totalAssetPrice,
-              )}{" "}
-              SAR
-            </span>
+            <span>Total Assets: {assignedAssets.length}</span>
+            <span>Total Value: {formatAmount(totalAssetPrice)} SAR</span>
           </div>
         </section>
 
@@ -551,13 +395,7 @@ export default function Approved_Print({
             [page-break-inside:avoid]
           "
         >
-          <h2
-            className={
-              sectionTitleClass
-            }
-          >
-            Clearance Confirmation
-          </h2>
+          <h2 className={sectionTitleClass}>Clearance Confirmation</h2>
 
           <p
             className="
@@ -568,15 +406,10 @@ export default function Approved_Print({
               text-[#202a35]
             "
           >
-            This is to certify that the
-            above-mentioned employee has
-            returned all company assets and
-            licenses in the condition
-            described above. All IT
-            equipment and access credentials
-            have been properly collected and
-            documented. The employee is
-            cleared from IT department
+            This is to certify that the above-mentioned employee has returned
+            all company assets and licenses in the condition described above.
+            All IT equipment and access credentials have been properly collected
+            and documented. The employee is cleared from IT department
             obligations.
           </p>
         </section>
@@ -605,13 +438,11 @@ export default function Approved_Print({
             </h3>
 
             <p className="my-[1.5mm] text-[8pt]">
-              Name:
-              ______________________
+              Name: ______________________
             </p>
 
             <p className="my-[1.5mm] text-[8pt]">
-              Date:
-              ______________________
+              Date: ______________________
             </p>
           </div>
 
@@ -629,13 +460,11 @@ export default function Approved_Print({
             </h3>
 
             <p className="my-[1.5mm] text-[8pt]">
-              Name:
-              ______________________
+              Name: ______________________
             </p>
 
             <p className="my-[1.5mm] text-[8pt]">
-              Date:
-              ______________________
+              Date: ______________________
             </p>
           </div>
         </section>

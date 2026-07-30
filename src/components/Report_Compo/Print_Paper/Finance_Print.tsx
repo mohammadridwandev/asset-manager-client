@@ -21,30 +21,8 @@ function formatAmount(value: unknown) {
   });
 }
 
-// function formatDate(value: unknown) {
-//   if (!value) {
-//     return "N/A";
-//   }
-
-//   const date = new Date(value as string);
-
-//   if (Number.isNaN(date.getTime())) {
-//     return "N/A";
-//   }
-
-//   return date.toLocaleDateString("en-US", {
-//     year: "numeric",
-//     month: "long",
-//     day: "2-digit",
-//   });
-// }
-
 function displayValue(value: unknown) {
-  if (
-    value === null ||
-    value === undefined ||
-    value === ""
-  ) {
+  if (value === null || value === undefined || value === "") {
     return "N/A";
   }
 
@@ -52,9 +30,7 @@ function displayValue(value: unknown) {
 }
 
 function formatStatus(value: unknown) {
-  return displayValue(value)
-    .replaceAll("_", " ")
-    .toUpperCase();
+  return displayValue(value).replaceAll("_", " ").toUpperCase();
 }
 
 const sectionTitleClass =
@@ -78,104 +54,54 @@ const tableCellClass =
   "align-middle text-[7.8pt] leading-[1.25] " +
   "wrap-anywhere text-[#202a35]";
 
-function AssetsTable({
-  assets,
-}: AssetsTableProps) {
+function AssetsTable({ assets }: AssetsTableProps) {
   return (
     <section className="mb-[3.5mm] w-full">
-      <h2 className={sectionTitleClass}>
-        Equipment Details
-      </h2>
+      <h2 className={sectionTitleClass}>Equipment Details</h2>
 
       <table className="w-full table-fixed border-collapse">
         <thead className="[display:table-header-group]">
           <tr>
-            <th
-              className={`${tableHeaderClass} w-[36%]`}
-            >
-              Asset Name
-            </th>
+            <th className={`${tableHeaderClass} w-[36%]`}>Asset Name</th>
 
-            <th
-              className={`${tableHeaderClass} w-[27%]`}
-            >
-              Serial Number
-            </th>
+            <th className={`${tableHeaderClass} w-[27%]`}>Serial Number</th>
 
-            <th
-              className={`${tableHeaderClass} w-[18%]`}
-            >
-              Condition
-            </th>
+            <th className={`${tableHeaderClass} w-[18%]`}>Condition</th>
 
-            <th
-              className={`${tableHeaderClass} w-[19%] text-right`}
-            >
+            <th className={`${tableHeaderClass} w-[19%] text-right`}>
               Value
-              <span className="block">
-                (SAR)
-              </span>
+              <span className="block">(SAR)</span>
             </th>
           </tr>
         </thead>
 
         <tbody>
           {assets.length > 0 ? (
-            assets.map(
-              (
-                asset: any,
-                index: number,
-              ) => (
-                <tr
-                  key={
-                    asset?.id ??
-                    `finance-asset-${index}`
-                  }
-                  className="
+            assets.map((asset: any, index: number) => (
+              <tr
+                key={asset?.id ?? `finance-asset-${index}`}
+                className="
                     break-inside-avoid
                     [page-break-inside:avoid]
                   "
-                >
-                  <td
-                    className={
-                      tableCellClass
-                    }
-                  >
-                    {displayValue(
-                      asset?.assetName,
-                    )}
-                  </td>
+              >
+                <td className={tableCellClass}>
+                  {displayValue(asset?.assetName)}
+                </td>
 
-                  <td
-                    className={
-                      tableCellClass
-                    }
-                  >
-                    {displayValue(
-                      asset?.serialNumber,
-                    )}
-                  </td>
+                <td className={tableCellClass}>
+                  {displayValue(asset?.serialNumber)}
+                </td>
 
-                  <td
-                    className={
-                      tableCellClass
-                    }
-                  >
-                    {displayValue(
-                      asset?.condition,
-                    )}
-                  </td>
+                <td className={tableCellClass}>
+                  {displayValue(asset?.condition)}
+                </td>
 
-                  <td
-                    className={`${tableCellClass} text-right font-medium`}
-                  >
-                    {formatAmount(
-                      asset?.price,
-                    )}
-                  </td>
-                </tr>
-              ),
-            )
+                <td className={`${tableCellClass} text-right font-medium`}>
+                  {formatAmount(asset?.price)}
+                </td>
+              </tr>
+            ))
           ) : (
             <tr>
               <td
@@ -192,61 +118,38 @@ function AssetsTable({
   );
 }
 
-export default function Finance_Print({
-  report,
-}: FinancePrintProps) {
+export default function Finance_Print({ report }: FinancePrintProps) {
   if (!report) {
     return null;
   }
 
-  const employee =
-    report?.employee || {};
+  const employee = report?.employee || {};
 
-  const assignedAssets =
-    Array.isArray(
-      report?.assignedAssets,
-    )
-      ? report.assignedAssets
-      : [];
+  const assignedAssets = Array.isArray(report?.assignedAssets)
+    ? report.assignedAssets
+    : [];
 
-  const calculatedAssetPrice =
-    assignedAssets.reduce(
-      (
-        sum: number,
-        asset: any,
-      ) =>
-        sum +
-        Number(asset?.price || 0),
-      0,
-    );
 
-  const totalAssetPrice =
-    report?.totalAssetPrice !==
-      undefined &&
-    report?.totalAssetPrice !== null
-      ? Number(
-          report.totalAssetPrice,
-        )
-      : calculatedAssetPrice;
+  const calculatedAssetPrice = assignedAssets.reduce(
+  (sum: number, asset: any) => sum + Number(asset?.price || 0),
+  0,
+);
+
+const totalAssetPrice =
+  report?.totalAssetPrice !== undefined &&
+  report?.totalAssetPrice !== null
+    ? Number(report.totalAssetPrice)
+    : calculatedAssetPrice;
+
+
+
+
 
   const deviceType =
-    report?.deviceType ||
-    assignedAssets?.[0]
-      ?.assetType ||
-    "Company Equipment";
+    report?.deviceType || assignedAssets?.[0]?.assetType || "Company Equipment";
 
   const deviceCondition =
-    report?.deviceCondition ||
-    assignedAssets?.[0]
-      ?.condition ||
-    "N/A";
-
-  // const rejectionReason =
-  //   report?.rejectionReason ||
-  //   report?.financeNote ||
-  //   report?.financeNotes ||
-  //   report?.description ||
-  //   "Equipment condition requires finance approval.";
+    report?.deviceCondition || assignedAssets?.[0]?.condition || "N/A";
 
   const signatures = [
     "Finance Manager Signature",
@@ -254,7 +157,6 @@ export default function Finance_Print({
     "IT QC Signature",
     "IT Manager Signature",
   ];
-
 
   return (
     <Print_Layout>
@@ -322,8 +224,7 @@ export default function Finance_Print({
               leading-[1.4]
               text-[#303843]
             "
-          >
-          </div>
+          ></div>
         </section>
 
         {/* Warning */}
@@ -349,8 +250,7 @@ export default function Finance_Print({
               uppercase
             "
           >
-            Damaged/Broken Equipment
-            Clearance Request
+            Damaged/Broken Equipment Clearance Request
           </h2>
 
           <p
@@ -362,8 +262,7 @@ export default function Finance_Print({
               text-[#684600]
             "
           >
-            This request requires Finance
-            Manager approval due to equipment
+            This request requires Finance Manager approval due to equipment
             condition issues.
           </p>
         </section>
@@ -376,94 +275,47 @@ export default function Finance_Print({
             [page-break-inside:avoid]
           "
         >
-          <h2
-            className={
-              sectionTitleClass
-            }
-          >
-            Employee Information
-          </h2>
+          <h2 className={sectionTitleClass}>Employee Information</h2>
 
           <div className="space-y-[1.2mm]">
             <div className="flex items-start">
-              <span
-                className={
-                  informationLabelClass
-                }
-              >
-                Name:
-              </span>
+              <span className={informationLabelClass}>Name:</span>
 
-              <span
-                className={
-                  informationValueClass
-                }
-              >
-                {displayValue(
-                  employee?.fullName,
-                )}
+              <span className={informationValueClass}>
+                {displayValue(employee?.fullName)}
               </span>
             </div>
 
             <div className="flex items-start">
-              <span
-                className={
-                  informationLabelClass
-                }
-              >
-                Iqama ID:
-              </span>
+              <span className={informationLabelClass}>Iqama ID:</span>
 
-              <span
-                className={
-                  informationValueClass
-                }
-              >
-                {displayValue(
-                  employee?.iqamaNumber,
-                )}
+              <span className={informationValueClass}>
+                {displayValue(employee?.iqamaNumber)}
               </span>
             </div>
 
             <div className="flex items-start">
-              <span
-                className={
-                  informationLabelClass
-                }
-              >
-                Department:
-              </span>
+              <span className={informationLabelClass}>Department:</span>
 
-              <span
-                className={
-                  informationValueClass
-                }
-              >
-                {displayValue(
-                  employee?.department,
-                )}
+              <span className={informationValueClass}>
+                {displayValue(employee?.department)}
               </span>
             </div>
 
             <div className="flex items-start">
-              <span
-                className={
-                  informationLabelClass
-                }
-              >
+              <span className={informationLabelClass}>
                 IT Clearance Status:
               </span>
 
               <span
                 className={`${informationValueClass} font-extrabold text-red-700`}
               >
-                {formatStatus(
-                  report?.status,
-                )}
+                {formatStatus(report?.status)}
               </span>
             </div>
           </div>
         </section>
+
 
         {/* Rejection Details */}
         <section
@@ -473,13 +325,7 @@ export default function Finance_Print({
             [page-break-inside:avoid]
           "
         >
-          <h2
-            className={
-              sectionTitleClass
-            }
-          >
-            Rejection Details
-          </h2>
+          <h2 className={sectionTitleClass}>Rejection Details</h2>
 
           <div
             className="
@@ -492,74 +338,87 @@ export default function Finance_Print({
           >
             <div className="space-y-[1.3mm]">
               <div className="flex items-start">
-                <span
-                  className={
-                    informationLabelClass
-                  }
-                >
-                  Device Type:
-                </span>
+                <span className={informationLabelClass}>Device Type:</span>
 
-                <span
-                  className={
-                    informationValueClass
-                  }
-                >
-                  {displayValue(
-                    deviceType,
-                  )}
+                <span className={informationValueClass}>
+                  {displayValue(deviceType)}
                 </span>
               </div>
 
               <div className="flex items-start">
-                <span
-                  className={
-                    informationLabelClass
-                  }
-                >
-                  Condition:
-                </span>
+                <span className={informationLabelClass}>Condition:</span>
 
-                <span
-                  className={
-                    informationValueClass
-                  }
-                >
-                  {displayValue(
-                    deviceCondition,
-                  )}
+                <span className={informationValueClass}>
+                  {displayValue(deviceCondition)}
                 </span>
               </div>
 
-              <div className="flex items-start">
-                {/* <span
-                  className={
-                    informationLabelClass
-                  }
-                >
-                  Rejection Reason:
-                </span> */}
-
-                {/* <span
-                  className={
-                    informationValueClass
-                  }
-                >
-                  {displayValue(
-                    rejectionReason,
-                  )}
-                </span> */}
-
-
-              </div>
+              <div className="flex items-start"></div>
             </div>
           </div>
         </section>
 
         {/* Equipment */}
-        <AssetsTable
-          assets={assignedAssets}
-        />
+        <AssetsTable assets={assignedAssets} />
+
+
+{report?.remarks && (
+          <section
+            className="
+      mb-[4mm]
+      break-inside-avoid
+      [page-break-inside:avoid]
+    "
+          >
+            <h2 className={sectionTitleClass}>Additional Remarks</h2>
+
+            <div
+              className="
+        
+        
+        
+       
+        text-[8pt]
+        leading-[1.45]
+        text-[#202a35]
+      "
+            >
+              {report.remarks}
+            </div>
+          </section>
+        )}
+
+
+
+
+{/* Totals */}
+<section
+  className="
+    mb-[4mm]
+    flex
+    justify-end
+    break-inside-avoid
+    [page-break-inside:avoid]
+  "
+>
+  <div
+    className="
+      flex
+      items-center
+      gap-[9mm]
+      text-[8pt]
+      font-bold
+      text-[#202a35]
+    "
+  >
+    <span>Total Assets: {assignedAssets.length}</span>
+    <span>Total Value: {formatAmount(totalAssetPrice)} SAR</span>
+  </div>
+</section>
+
+
+
+
 
         {/* Financial Impact */}
         <section
@@ -569,8 +428,6 @@ export default function Finance_Print({
             [page-break-inside:avoid]
           "
         >
-          
-
           <p
             className="
               mt-[2mm]
@@ -580,8 +437,7 @@ export default function Finance_Print({
               text-[#7a4a00]
             "
           >
-            Note: Finance approval is required
-            for damaged equipment handover.
+            Note: Finance approval is required for damaged equipment handover.
           </p>
         </section>
 
@@ -595,13 +451,7 @@ export default function Finance_Print({
     [page-break-inside:avoid] 
           "
         >
-          <h2
-            className={
-              sectionTitleClass
-            }
-          >
-            Approval Authorization
-          </h2>
+          <h2 className={sectionTitleClass}>Approval Authorization</h2>
 
           <p
             className="
@@ -612,13 +462,10 @@ export default function Finance_Print({
               text-[#202a35]
             "
           >
-            By signing below, the authorized
-            personnel acknowledge the equipment
-            condition and approve the employee
-            clearance despite the damages noted.
-            The employee may be held financially
-            responsible for damages as per company
-            policy.
+            By signing below, the authorized personnel acknowledge the equipment
+            condition and approve the employee clearance despite the damages
+            noted. The employee may be held financially responsible for damages
+            as per company policy.
           </p>
         </section>
 
@@ -633,36 +480,29 @@ export default function Finance_Print({
             [page-break-inside:avoid] pt-50
           "
         >
-          {signatures.map(
-            (signature) => (
-              <div
-                key={signature}
-                className="min-w-0"
-              >
-                <h3
-                  className="
+          {signatures.map((signature) => (
+            <div key={signature} className="min-w-0">
+              <h3
+                className="
                     m-0
                     mb-[2mm]
                     text-[8pt]
                     font-bold
                     text-[#202a35]
                   "
-                >
-                  {signature}
-                </h3>
+              >
+                {signature}
+              </h3>
 
-                <p className="my-[1.2mm] text-[7.8pt]">
-                  Name:
-                  ____________________
-                </p>
+              <p className="my-[1.2mm] text-[7.8pt]">
+                Name: ____________________
+              </p>
 
-                <p className="my-[1.2mm] text-[7.8pt]">
-                  Date:
-                  ____________________
-                </p>
-              </div>
-            ),
-          )}
+              <p className="my-[1.2mm] text-[7.8pt]">
+                Date: ____________________
+              </p>
+            </div>
+          ))}
         </section>
 
         {/* Important Note */}
@@ -686,8 +526,7 @@ export default function Finance_Print({
               uppercase
             "
           >
-            Important: This form must be signed
-            by all parties before final IT
+            Important: This form must be signed by all parties before final IT
             clearance can be issued.
           </p>
         </section>

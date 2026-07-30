@@ -34,29 +34,35 @@ export default function Add_Report({
   const finalCondition =
     condition === "Custom" ? customCondition || "Custom" : condition;
 
+
   const reportSnapshotData = {
-    deviceCondition: finalCondition,
+  deviceCondition: finalCondition,
 
-    assignedAssets: activeAssets.map((item: any) => ({
-      id: item.asset?.id,
-      assetName: item.asset?.assetName,
-      assetType: item.asset?.assetType,
-      serialNumber: item.asset?.serialNumber,
-      price: item.asset?.price,
-      condition: item.asset?.condition,
-    })),
+  assignedAssets: activeAssets.map((item: any) => ({
+    id: item.asset?.id,
+    assetName: item.asset?.assetName,
+    assetType: item.asset?.assetType,
+    serialNumber: item.asset?.serialNumber,
+    price: Number(item.asset?.price || 0),
+    condition: finalCondition,
+  })),
 
-    assignedLicenses: activeLicenses.map((item: any) => ({
-      id: item.license?.id,
-      softwareName: item.license?.softwareName,
-      licenseKey: item.license?.licenseKey,
-      licenseType: item.license?.licenseType,
-      costs: item.license?.costs,
-    })),
+  assignedLicenses: activeLicenses.map((item: any) => ({
+    id: item.license?.id,
+    softwareName: item.license?.softwareName,
+    licenseKey: item.license?.licenseKey,
+    licenseType: item.license?.licenseType,
+    costs: Number(item.license?.costs || 0),
+  })),
 
-    totalAssetPrice,
-    totalLicenseCost,
-  };
+  totalAssetPrice,
+  totalLicenseCost,
+};
+
+
+
+
+
 
   const handleApproveReport = () => {
     const reportData = {
@@ -88,7 +94,6 @@ export default function Add_Report({
 
     createReport.mutate(reportData, {
       onSuccess: () => {
-        
         toast.success(
           "Employee clearance report has been approved successfully.",
         );
@@ -212,8 +217,6 @@ export default function Add_Report({
             <span>Total Value: {totalAssetPrice.toFixed(2)}</span>
           </div>
         </div>
-
-     
 
         <div className="mb-5">
           <label className="text-sm font-semibold block mb-2">

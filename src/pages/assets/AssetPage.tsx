@@ -1,6 +1,6 @@
 import { FiMinus, FiPlus, FiSearch } from "react-icons/fi";
 import Add_Asset from "../../components/Asset_Compo/Add_Asset";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { MdKeyboardArrowRight } from "react-icons/md";
 import Asset_Card from "../../components/Asset_Compo/Asset_Card";
 import { useGetAssets } from "../../context/useAssets";
@@ -10,9 +10,12 @@ import Asset_Pagination from "../../components/Asset_Compo/Asset_Pagination";
 import { Helmet } from "react-helmet-async";
 
 export default function AssetPage() {
+
   const [assetOpen, setAssetOpen] = useState(false);
   const [searchText, setSearchText] = useState("");
+
   const [page, setPage] = useState(1);
+  const assetListRef = useRef<HTMLDivElement>(null);
 
   const [assetTypeOpen, setAssetTypeOpen] = useState(false);
   const [selectedType, setSelectedType] = useState("All Types");
@@ -21,6 +24,9 @@ export default function AssetPage() {
   const [selectedAssignment, setSelectedAssignment] = useState("All Status");
 
   const assignmentTypes = ["Assigned", "Unassigned"];
+
+
+
 
   const { data, isLoading, isError } = useGetAssets(
     page,
@@ -54,6 +60,20 @@ export default function AssetPage() {
   useEffect(() => {
     setPage(1);
   }, [searchText, selectedType, selectedAssignment]);
+
+
+  const handlePageChange = (newPage: number) => {
+  setPage(newPage);
+
+  setTimeout(() => {
+    assetListRef.current?.scrollIntoView({
+      behavior: "smooth",
+      block: "start",
+    });
+  }, 100);
+};
+
+
 
   return (
     <>
@@ -197,22 +217,27 @@ export default function AssetPage() {
           </div>
         </div>
 
-        <div>
-          <Asset_Card
-            assets={assets}
-            totalAssets={pagination?.totalData}
-            isLoading={isLoading}
-            isError={isError}
-          />
+       <div>
+  <div ref={assetListRef} className="scroll-mt-24">
+    <Asset_Card
+      assets={assets}
+      totalAssets={pagination?.totalData}
+      isLoading={isLoading}
+      isError={isError}
+    />
+  </div>
 
-          <Asset_Pagination
-            currentPage={pagination?.currentPage || 1}
-            totalPages={pagination?.totalPages || 1}
-            hasNextPage={pagination?.hasNextPage || false}
-            hasPreviousPage={pagination?.hasPreviousPage || false}
-            onPageChange={setPage}
-          />
-        </div>
+  <Asset_Pagination
+    currentPage={pagination?.currentPage || 1}
+    totalPages={pagination?.totalPages || 1}
+    hasNextPage={pagination?.hasNextPage || false}
+    hasPreviousPage={pagination?.hasPreviousPage || false}
+    onPageChange={handlePageChange}
+  />
+</div>
+
+
+
       </div>
     </>
   );

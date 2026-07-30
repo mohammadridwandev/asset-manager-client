@@ -13,7 +13,6 @@ import { useDeleteReport, useUpdateReport } from "../../../context/useReport";
 
 const API_BASE_URL = import.meta.env.VITE_BACKEND_URL_LINK;
 
-
 import { usePrint } from "../../../context/PrintContext";
 import Report_Edit from "./Report_Edit";
 import toast from "react-hot-toast";
@@ -29,13 +28,26 @@ export default function Pending_Finance({ reports = [] }: { reports?: any[] }) {
 
   const [selectedReport, setSelectedReport] = useState<any>(null);
 
-  const handleFinalizeReport = (reportId: string | number) => {
+  const handleFinalizeReport = (report: any) => {
+    // Step 1: Check Finance document
+    if (!report?.image) {
+      Swal.fire({
+        title: "Finance Document Required",
+        text: "Please upload the signed Finance document before finalizing.",
+        icon: "warning",
+        confirmButtonText: "OK",
+      });
+
+      return;
+    }
+
+    // Step 2: Asset and license unassign warning
     Swal.fire({
       title: "Finalize Clearance?",
-      text: "This report will move to the Finalized tab.",
-      icon: "question",
+      text: "Before finalizing, make sure all assets and licenses are unassigned.",
+      icon: "warning",
       showCancelButton: true,
-      confirmButtonText: "Yes, finalize",
+      confirmButtonText: "Yes, Finalize",
       cancelButtonText: "Cancel",
       confirmButtonColor: "#16a34a",
     }).then((result) => {
@@ -45,7 +57,7 @@ export default function Pending_Finance({ reports = [] }: { reports?: any[] }) {
 
       updateReport.mutate(
         {
-          id: String(reportId),
+          id: String(report.id),
           updateData: {
             status: "FINALIZED",
           },
@@ -66,6 +78,7 @@ export default function Pending_Finance({ reports = [] }: { reports?: any[] }) {
               title: "Failed!",
               text:
                 error?.response?.data?.message ||
+                error?.response?.data?.error ||
                 "Failed to finalize clearance report.",
               icon: "error",
             });
@@ -123,74 +136,66 @@ export default function Pending_Finance({ reports = [] }: { reports?: any[] }) {
 
   // ========================= UPDATED: upload finance document =========================
   // ========================= UPDATED: finance document upload =========================
-const handleUploadFinanceDocument = (
-  reportId: string | number,
-  file?: File,
-) => {
-  if (!file) return;
+  const handleUploadFinanceDocument = (
+    reportId: string | number,
+    file?: File,
+  ) => {
+    if (!file) return;
 
-  // ========================= UPDATED: allowed file type check =========================
-  const allowedTypes = [
-    "image/jpeg",
-    "image/png",
-    "image/webp",
-    "application/pdf",
-  ];
+    // ========================= UPDATED: allowed file type check =========================
+    const allowedTypes = [
+      "image/jpeg",
+      "image/png",
+      "image/webp",
+      "application/pdf",
+    ];
 
-  if (!allowedTypes.includes(file.type)) {
-    toast.error("Only JPG, PNG, WEBP or PDF files are allowed.");
-    return;
-  }
+    if (!allowedTypes.includes(file.type)) {
+      toast.error("Only JPG, PNG, WEBP or PDF files are allowed.");
+      return;
+    }
 
-  // ========================= UPDATED: maximum 5 MB file size =========================
-  if (file.size > 5 * 1024 * 1024) {
-    toast.error("File size must be less than 5 MB.");
-    return;
-  }
+    // ========================= UPDATED: maximum 5 MB file size =========================
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error("File size must be less than 5 MB.");
+      return;
+    }
 
-  const formData = new FormData();
+    const formData = new FormData();
 
-  // ========================= UPDATED: backend multer field name =========================
-  formData.append("image", file);
+    // ========================= UPDATED: backend multer field name =========================
+    formData.append("image", file);
 
-  updateReport.mutate(
-    {
-      id: String(reportId),
-      updateData: formData,
-    },
-    {
-      onSuccess: () => {
-        // ========================= UPDATED: selected local file reset =========================
-        setSelectedFiles((previous) => {
-          const updatedFiles = { ...previous };
-          delete updatedFiles[String(reportId)];
-          return updatedFiles;
-        });
-
-        toast.success("Finance document uploaded successfully.");
+    updateReport.mutate(
+      {
+        id: String(reportId),
+        updateData: formData,
       },
+      {
+        onSuccess: () => {
+          // ========================= UPDATED: selected local file reset =========================
+          setSelectedFiles((previous) => {
+            const updatedFiles = { ...previous };
+            delete updatedFiles[String(reportId)];
+            return updatedFiles;
+          });
 
-      onError: (error: any) => {
-        console.error("Finance Document Upload Error:", error);
+          toast.success("Finance document uploaded successfully.");
+        },
 
-        const message =
-          error?.response?.data?.message ||
-          error?.response?.data?.error ||
-          "Failed to upload finance document.";
+        onError: (error: any) => {
+          console.error("Finance Document Upload Error:", error);
 
-        toast.error(message);
+          const message =
+            error?.response?.data?.message ||
+            error?.response?.data?.error ||
+            "Failed to upload finance document.";
+
+          toast.error(message);
+        },
       },
-    },
-  );
-};
-
-
-
-
-
-
-
-
+    );
+  };
 
   return (
     <>
@@ -267,77 +272,63 @@ const handleUploadFinanceDocument = (
                   </div>
 
                   <div className="pt-2 flex items-center gap-5">
-
-
-
                     {/* ========================= UPDATED ========================= */}
-                   <input
-  id={`finance-${report.id}`}
-  type="file"
-  accept=".jpg,.jpeg,.png,.webp,.pdf"
-  className="hidden"
-  disabled={updateReport.isPending}
-  onChange={(event) => {
-    const file = event.target.files?.[0];
+                    <input
+                      id={`finance-${report.id}`}
+                      type="file"
+                      accept=".jpg,.jpeg,.png,.webp,.pdf"
+                      className="hidden"
+                      disabled={updateReport.isPending}
+                      onChange={(event) => {
+                        const file = event.target.files?.[0];
 
-    if (!file) return;
+                        if (!file) return;
 
-    // ========================= UPDATED: selected filename show =========================
-    setSelectedFiles((previous) => ({
-      ...previous,
-      [String(report.id)]: file,
-    }));
+                        // ========================= UPDATED: selected filename show =========================
+                        setSelectedFiles((previous) => ({
+                          ...previous,
+                          [String(report.id)]: file,
+                        }));
 
-    handleUploadFinanceDocument(report.id, file);
+                        handleUploadFinanceDocument(report.id, file);
 
-    // ========================= UPDATED: same file আবার select করা যাবে =========================
-    event.currentTarget.value = "";
-  }}
-/>
+                        // ========================= UPDATED: same file আবার select করা যাবে =========================
+                        event.currentTarget.value = "";
+                      }}
+                    />
 
+                    <label
+                      htmlFor={`finance-${report.id}`}
+                      className={`flex items-center gap-2 rounded-lg border border-app-brand/40 bg-app-brand/2 px-4 py-2.5 text-xs font-bold text-app-brand transition hover:bg-app-brand/10 ${
+                        updateReport.isPending
+                          ? "pointer-events-none cursor-not-allowed opacity-50"
+                          : "cursor-pointer"
+                      }`}
+                    >
+                      <FiUploadCloud size={14} />
 
+                      {updateReport.isPending
+                        ? "Uploading..."
+                        : selectedFiles[String(report.id)]?.name ||
+                          (report.image
+                            ? "Replace Finance Document"
+                            : "Select Finance Document")}
+                    </label>
 
-
-
-  <label
-  htmlFor={`finance-${report.id}`}
-  className={`flex items-center gap-2 rounded-lg border border-app-brand/40 bg-app-brand/2 px-4 py-2.5 text-xs font-bold text-app-brand transition hover:bg-app-brand/10 ${
-    updateReport.isPending
-      ? "pointer-events-none cursor-not-allowed opacity-50"
-      : "cursor-pointer"
-  }`}
->
-  <FiUploadCloud size={14} />
-
-  {updateReport.isPending
-    ? "Uploading..."
-    : selectedFiles[String(report.id)]?.name ||
-      (report.image
-        ? "Replace Finance Document"
-        : "Select Finance Document")}
-</label>
-
-
-
-
-
-{report.image && (
-  <a
-    href={`${API_BASE_URL}${report.image}`}
-    download={report.imageName || report.image.split("/").pop()}
-    target="_blank"
-    rel="noopener noreferrer"
-    title="Download Finance Document"
-    className="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-app-brand/20 bg-app-brand/10 text-app-brand transition hover:bg-app-brand/20"
-  >
-    <FiDownload size={16} />
-  </a>
-)}
-
-
-
-
-
+                    {report.image && (
+                      <a
+                        href={`${API_BASE_URL}${report.image}`}
+                        download={
+                          report.imageName || report.image.split("/").pop()
+                        }
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        title="Download Finance Document"
+                        className="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-app-brand/20 bg-app-brand/10 text-app-brand transition hover:bg-app-brand/20"
+                      >
+                        <FiDownload size={16} />
+                      </a>
+                    )}
 
                     <p className="text-[10px] italic text-app-gray opacity-60">
                       Generated:{" "}
@@ -345,16 +336,7 @@ const handleUploadFinanceDocument = (
                         ? new Date(report.createdAt).toLocaleString()
                         : "N/A"}
                     </p>
-
-
                   </div>
-
-
-
-
-
-
-
                 </div>
 
                 {/* Actions */}
@@ -372,7 +354,7 @@ const handleUploadFinanceDocument = (
 
                   <button
                     type="button"
-                    onClick={() => handleFinalizeReport(report.id)}
+                    onClick={() => handleFinalizeReport(report)}
                     disabled={updateReport.isPending}
                     className="flex w-full items-center justify-center gap-2 rounded-lg bg-green-600 px-4 py-3 text-sm font-bold text-white disabled:cursor-not-allowed disabled:opacity-50"
                   >
@@ -417,9 +399,6 @@ const handleUploadFinanceDocument = (
           onClose={() => setSelectedReport(null)}
         />
       )}
-
-
-
     </>
   );
 }

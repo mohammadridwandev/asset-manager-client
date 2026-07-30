@@ -25,65 +25,59 @@ const Navbar = () => {
 
   const { darkMode, toggleDarkMode } = useTheme();
 
+  const { hasRole } = useRole();
 
-const { hasRole } = useRole();
+  const navItems: {
+    name: string;
+    icon: React.ReactNode;
+    href: string;
+    roles: Role[];
+  }[] = [
+    {
+      name: "Dashboard",
+      icon: <LuLayoutDashboard size={18} />,
+      href: "/dashboard",
+      roles: ["ADMIN", "IT", "FINANCE", "GUEST"],
+    },
+    {
+      name: "Employees",
+      icon: <LuUsers size={18} />,
+      href: "/dashboard/employees",
+      roles: ["ADMIN"],
+    },
+    {
+      name: "Assets",
+      icon: <LuPackage size={18} />,
+      href: "/dashboard/assets",
+      roles: ["ADMIN"],
+    },
+    {
+      name: "Licenses",
+      icon: <TbLicense size={18} />,
+      href: "/dashboard/licenses",
+      roles: ["ADMIN"],
+    },
+    {
+      name: "Invoices",
+      icon: <LuFileText size={18} />,
+      href: "/dashboard/invoices",
+      roles: ["ADMIN", "FINANCE"],
+    },
+    {
+      name: "Search",
+      icon: <LuSearch size={18} />,
+      href: "/dashboard/search",
+      roles: ["ADMIN", "IT", "FINANCE"],
+    },
+    {
+      name: "Reports",
+      icon: <LuClipboardList size={18} />,
+      href: "/dashboard/reports",
+      roles: ["ADMIN"],
+    },
+  ];
 
-
-
- const navItems: {
-  name: string;
-  icon: React.ReactNode;
-  href: string;
-  roles: Role[];
-}[] = [
-  {
-    name: "Dashboard",
-    icon: <LuLayoutDashboard size={18} />,
-    href: "/dashboard",
-    roles: ["ADMIN", "IT", "FINANCE", "GUEST"],
-  },
-  {
-    name: "Employees",
-    icon: <LuUsers size={18} />,
-    href: "/dashboard/employees",
-    roles: ["ADMIN"],
-  },
-  {
-    name: "Assets",
-    icon: <LuPackage size={18} />,
-    href: "/dashboard/assets",
-    roles: ["ADMIN"],
-  },
-  {
-    name: "Licenses",
-    icon: <TbLicense size={18} />,
-    href: "/dashboard/licenses",
-    roles: ["ADMIN"],
-  },
-  {
-    name: "Invoices",
-    icon: <LuFileText size={18} />,
-    href: "/dashboard/invoices",
-    roles: ["ADMIN", "FINANCE"],
-  },
-  {
-    name: "Search",
-    icon: <LuSearch size={18} />,
-    href: "/dashboard/search",
-    roles: ["ADMIN", "IT", "FINANCE"],
-  },
-  {
-    name: "Reports",
-    icon: <LuClipboardList size={18} />,
-    href: "/dashboard/reports",
-    roles: ["ADMIN"],
-  },
-];
-
-
-const allowedNavItems = navItems.filter((item) =>
-  hasRole(item.roles),
-);
+  const allowedNavItems = navItems.filter((item) => hasRole(item.roles));
 
   const [profileOpen, setProfileOpen] = useState(false);
 
@@ -106,9 +100,17 @@ const allowedNavItems = navItems.filter((item) =>
     navigate("/login");
   };
 
+  const handleNavClick = () => {
+    setMenuOpen(false);
+
+    window.scrollTo({
+      top: 0,
+      behavior: "smooth",
+    });
+  };
+
   return (
     <header className="fixed w-full  z-50 bg-app-bg  border border-app-gray/15 ">
-      
       <nav className="container px-4 m-auto  py-4  flex items-center justify-between relative ">
         {/* Logo Section */}
 
@@ -121,26 +123,25 @@ const allowedNavItems = navItems.filter((item) =>
 
         {/* Desktop Menu */}
         <div className="hidden md:flex items-center bg-app-bg  rounded-full  py-1.5 gap-1">
-
-
-    
           {allowedNavItems.map((item) => (
             <NavLink
               key={item.name}
               to={item.href}
               end
-              className={({
-                isActive,
-              }) => `flex items-center hover:text-app-brand gap-2 px-4 py-1.5 rounded-full text-sm font-medium transition-all
-                ${isActive ? "text-app-brand font-bold border border-app-brand/10 bg-app-brand/10" : ""}
-              `}
+              onClick={handleNavClick}
+              className={({ isActive }) =>
+                `flex items-center hover:text-app-brand gap-2 px-4 py-1.5 rounded-full text-sm font-medium transition-all
+    ${
+      isActive
+        ? "text-app-brand font-bold border border-app-brand/10 bg-app-brand/10"
+        : ""
+    }`
+              }
             >
               {item.icon}
               {item.name}
             </NavLink>
           ))}
-
-
         </div>
 
         <div className="flex items-center  gap-3">
@@ -149,26 +150,20 @@ const allowedNavItems = navItems.filter((item) =>
             {/* Profile Section */}
             <div className="md:flex  items-center gap-3 text-app-text lg:pl-4 lg:border-l-app-gray/15">
               <div className="">
-                
-
-
                 <button
-  onClick={() => setProfileOpen(!profileOpen)}
-  className="w-10 h-10 overflow-hidden rounded-full bg-app-brand/20 border border-app-brand/20 flex items-center justify-center hover:bg-app-brand/30 transition-all cursor-pointer"
->
-  {user?.image ? (
-    <img
-      src={`${import.meta.env.VITE_BACKEND_URL_LINK}${user.image}`}
-      alt={user.name}
-      className="w-full h-full object-cover"
-    />
-  ) : (
-    <LuUsers size={20} className="text-app-brand" />
-  )}
-</button>
-
-
-
+                  onClick={() => setProfileOpen(!profileOpen)}
+                  className="w-10 h-10 overflow-hidden rounded-full bg-app-brand/20 border border-app-brand/20 flex items-center justify-center hover:bg-app-brand/30 transition-all cursor-pointer"
+                >
+                  {user?.image ? (
+                    <img
+                      src={`${import.meta.env.VITE_BACKEND_URL_LINK}${user.image}`}
+                      alt={user.name}
+                      className="w-full h-full object-cover"
+                    />
+                  ) : (
+                    <LuUsers size={20} className="text-app-brand" />
+                  )}
+                </button>
 
                 {profileOpen && (
                   <div className="absolute  border right-5 mt-4 lg:mt-4 w-52 bg-app-bg  border-app-gray/15 rounded-lg shadow-lg z-80 py-2">
@@ -195,8 +190,6 @@ const allowedNavItems = navItems.filter((item) =>
                         <LuUsers size={16} className="mb-1" />
                         Profile Settings
                       </Link>
-
-                    
 
                       <button
                         onClick={toggleDarkMode}
@@ -243,10 +236,12 @@ const allowedNavItems = navItems.filter((item) =>
                 key={item.name}
                 to={item.href}
                 end
+                onClick={handleNavClick}
                 className={({ isActive }) =>
-                  `flex items-center gap-3 px-4 py-3   transition-colors ${isActive ? "text-app-brand dark_Brand" : " /60 "}`
+                  `flex items-center gap-3 px-4 py-3 transition-colors ${
+                    isActive ? "text-app-brand dark_Brand" : "/60"
+                  }`
                 }
-                onClick={() => setMenuOpen(false)}
               >
                 {item.icon}
                 <span className="font-medium">{item.name}</span>

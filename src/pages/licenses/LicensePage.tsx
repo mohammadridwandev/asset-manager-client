@@ -1,6 +1,6 @@
 import { FiMinus, FiPlus, FiSearch } from "react-icons/fi";
 import Add_License from "../../components/Licenses_Compo/Add_License";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { MdKeyboardArrowRight } from "react-icons/md";
 import LicensesCard from "../../components/Licenses_Compo/LicensesCard";
 import { useLicenses } from "../../context/useLicenses";
@@ -11,6 +11,8 @@ export default function LicensePage() {
   const [openLicense, setOpenLicense] = useState(false);
   const [searchText, setSearchText] = useState("");
   const [page, setPage] = useState(1);
+
+  const licenseListRef = useRef<HTMLDivElement>(null);
 
   const [licenseTypeOpen, setLicenseTypeOpen] = useState(false);
   const [selectedType, setSelectedType] = useState("All Types");
@@ -45,8 +47,23 @@ export default function LicensePage() {
     setPage(1);
   }, [searchText, selectedType]);
 
+
+  const handlePageChange = (newPage: number) => {
+  setPage(newPage);
+
+  setTimeout(() => {
+    licenseListRef.current?.scrollIntoView({
+      behavior: "smooth",
+      block: "start",
+    });
+  }, 100);
+};
+
+
   return (
     <div className="pb-16">
+
+
 
 
   <Helmet>
@@ -158,21 +175,26 @@ export default function LicensePage() {
       </div>
 
       <div>
-        <LicensesCard
-          licenses={licenses}
-          totalLicenses={pagination?.totalData}
-          isLoading={isLoading}
-          isError={isError}
-        />
+  <div ref={licenseListRef} className="scroll-mt-24">
+    <LicensesCard
+      licenses={licenses}
+      totalLicenses={pagination?.totalData}
+      isLoading={isLoading}
+      isError={isError}
+    />
+  </div>
 
-        <License_Pagination
-          currentPage={pagination?.currentPage || 1}
-          totalPages={pagination?.totalPages || 1}
-          hasNextPage={pagination?.hasNextPage || false}
-          hasPreviousPage={pagination?.hasPreviousPage || false}
-          onPageChange={setPage}
-        />
-      </div>
+  <License_Pagination
+    currentPage={pagination?.currentPage || 1}
+    totalPages={pagination?.totalPages || 1}
+    hasNextPage={pagination?.hasNextPage || false}
+    hasPreviousPage={pagination?.hasPreviousPage || false}
+    onPageChange={handlePageChange}
+  />
+</div>
+
+
+
     </div>
   );
 }

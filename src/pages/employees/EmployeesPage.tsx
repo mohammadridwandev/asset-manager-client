@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { FiPlus, FiSearch, FiMinus } from "react-icons/fi";
 import { MdKeyboardArrowRight } from "react-icons/md";
 import Add_Employee from "../../components/Employee_comp/Add_Employee";
@@ -18,14 +18,15 @@ const EmployeesPage = () => {
     useState("All Departments");
 
   const [positionOpen, setPositionOpen] = useState(false);
-  const [selectedPosition, setSelectedPosition] =
-    useState("All Positions");
+  const [selectedPosition, setSelectedPosition] = useState("All Positions");
 
   const [statusOpen, setStatusOpen] = useState(false);
-  const [selectedStatus, setSelectedStatus] =
-    useState("All Status");
+  const [selectedStatus, setSelectedStatus] = useState("All Status");
 
   const [page, setPage] = useState(1);
+
+  const employeeListRef = useRef<HTMLDivElement>(null);
+
 
   const { data, isLoading, isError } = useGetEmployee(
     page,
@@ -40,30 +41,20 @@ const EmployeesPage = () => {
   const pagination = data?.pagination;
 
   const departments: string[] = employees
-    .map((employee: any) =>
-      String(employee.department || "").trim(),
-    )
+    .map((employee: any) => String(employee.department || "").trim())
     .filter((department: string) => department.length > 0)
     .filter(
-      (
-        department: string,
-        index: number,
-        array: string[],
-      ) => array.indexOf(department) === index,
+      (department: string, index: number, array: string[]) =>
+        array.indexOf(department) === index,
     )
     .sort();
 
   const positions: string[] = employees
-    .map((employee: any) =>
-      String(employee.position || "").trim(),
-    )
+    .map((employee: any) => String(employee.position || "").trim())
     .filter((position: string) => position.length > 0)
     .filter(
-      (
-        position: string,
-        index: number,
-        array: string[],
-      ) => array.indexOf(position) === index,
+      (position: string, index: number, array: string[]) =>
+        array.indexOf(position) === index,
     )
     .sort();
 
@@ -80,12 +71,20 @@ const EmployeesPage = () => {
 
   useEffect(() => {
     setPage(1);
-  }, [
-    searchText,
-    selectedDepartment,
-    selectedPosition,
-    selectedStatus,
-  ]);
+  }, [searchText, selectedDepartment, selectedPosition, selectedStatus]);
+
+
+  const handlePageChange = (newPage: number) => {
+  setPage(newPage);
+
+  setTimeout(() => {
+    employeeListRef.current?.scrollIntoView({
+      behavior: "smooth",
+      block: "start",
+    });
+  }, 100);
+};
+
 
   if (isLoading) {
     return (
@@ -105,12 +104,9 @@ const EmployeesPage = () => {
 
   return (
     <>
-
-
- <Helmet>
+      <Helmet>
         <title>Asset Manager | Employees</title>
       </Helmet>
-
 
       <div>
         <div className="py-4 md:py-8">
@@ -132,11 +128,7 @@ const EmployeesPage = () => {
 
               <button
                 type="button"
-                onClick={() =>
-                  setOpenEmployee(
-                    (previous) => !previous,
-                  )
-                }
+                onClick={() => setOpenEmployee((previous) => !previous)}
                 className="flex w-full cursor-pointer items-center justify-center gap-2 rounded-md bg-app-brand px-5 py-2.5 text-sm font-bold text-app-secondary shadow-md transition-all hover:opacity-90 active:scale-95 md:w-auto"
               >
                 {openEmployee ? (
@@ -163,9 +155,7 @@ const EmployeesPage = () => {
               <input
                 type="text"
                 value={searchText}
-                onChange={(event) =>
-                  setSearchText(event.target.value)
-                }
+                onChange={(event) => setSearchText(event.target.value)}
                 placeholder="Search employees by name, email, phone, iqama, department or position..."
                 className="w-full rounded-md border border-app-gray/15 bg-app-bg py-3.5 pr-4 pl-12 text-sm outline-none transition-all focus:border-app-brand"
               />
@@ -174,20 +164,14 @@ const EmployeesPage = () => {
             <div className="relative">
               <button
                 type="button"
-                onClick={() =>
-                  setDepartmentOpen(
-                    (previous) => !previous,
-                  )
-                }
+                onClick={() => setDepartmentOpen((previous) => !previous)}
                 className="flex w-full items-center justify-between rounded-md border border-app-gray/30 bg-transparent px-4 py-3.5 text-left text-sm font-medium shadow-xs hover:bg-app-gray/5 focus:outline-none sm:w-52"
               >
                 <span>{selectedDepartment}</span>
 
                 <MdKeyboardArrowRight
                   className={`transform transition-transform duration-200 ${
-                    departmentOpen
-                      ? "rotate-90"
-                      : ""
+                    departmentOpen ? "rotate-90" : ""
                   }`}
                   size={18}
                 />
@@ -198,31 +182,25 @@ const EmployeesPage = () => {
                   <li
                     className="cursor-pointer px-4 py-2 font-semibold transition-colors hover:bg-app-brand hover:text-white"
                     onClick={() => {
-                      setSelectedDepartment(
-                        "All Departments",
-                      );
+                      setSelectedDepartment("All Departments");
                       setDepartmentOpen(false);
                     }}
                   >
                     All Departments
                   </li>
 
-                  {departments.map(
-                    (department) => (
-                      <li
-                        key={department}
-                        className="cursor-pointer px-4 py-2 transition-colors hover:bg-app-brand hover:text-white"
-                        onClick={() => {
-                          setSelectedDepartment(
-                            department,
-                          );
-                          setDepartmentOpen(false);
-                        }}
-                      >
-                        {department}
-                      </li>
-                    ),
-                  )}
+                  {departments.map((department) => (
+                    <li
+                      key={department}
+                      className="cursor-pointer px-4 py-2 transition-colors hover:bg-app-brand hover:text-white"
+                      onClick={() => {
+                        setSelectedDepartment(department);
+                        setDepartmentOpen(false);
+                      }}
+                    >
+                      {department}
+                    </li>
+                  ))}
                 </ul>
               )}
             </div>
@@ -230,20 +208,14 @@ const EmployeesPage = () => {
             <div className="relative">
               <button
                 type="button"
-                onClick={() =>
-                  setPositionOpen(
-                    (previous) => !previous,
-                  )
-                }
+                onClick={() => setPositionOpen((previous) => !previous)}
                 className="flex w-full items-center justify-between rounded-md border border-app-gray/30 bg-transparent px-4 py-3.5 text-left text-sm font-medium shadow-xs hover:bg-app-gray/5 focus:outline-none sm:w-52"
               >
                 <span>{selectedPosition}</span>
 
                 <MdKeyboardArrowRight
                   className={`transform transition-transform duration-200 ${
-                    positionOpen
-                      ? "rotate-90"
-                      : ""
+                    positionOpen ? "rotate-90" : ""
                   }`}
                   size={18}
                 />
@@ -254,9 +226,7 @@ const EmployeesPage = () => {
                   <li
                     className="cursor-pointer px-4 py-2 font-semibold transition-colors hover:bg-app-brand hover:text-white"
                     onClick={() => {
-                      setSelectedPosition(
-                        "All Positions",
-                      );
+                      setSelectedPosition("All Positions");
                       setPositionOpen(false);
                     }}
                   >
@@ -282,20 +252,14 @@ const EmployeesPage = () => {
             <div className="relative">
               <button
                 type="button"
-                onClick={() =>
-                  setStatusOpen(
-                    (previous) => !previous,
-                  )
-                }
+                onClick={() => setStatusOpen((previous) => !previous)}
                 className="flex w-full items-center justify-between rounded-md border border-app-gray/30 bg-transparent px-4 py-3.5 text-left text-sm font-medium shadow-xs hover:bg-app-gray/5 focus:outline-none sm:w-48"
               >
                 <span>{selectedStatus}</span>
 
                 <MdKeyboardArrowRight
                   className={`transform transition-transform duration-200 ${
-                    statusOpen
-                      ? "rotate-90"
-                      : ""
+                    statusOpen ? "rotate-90" : ""
                   }`}
                   size={18}
                 />
@@ -306,70 +270,52 @@ const EmployeesPage = () => {
                   <li
                     className="cursor-pointer px-4 py-2 font-semibold transition-colors hover:bg-app-brand hover:text-white"
                     onClick={() => {
-                      setSelectedStatus(
-                        "All Status",
-                      );
+                      setSelectedStatus("All Status");
                       setStatusOpen(false);
                     }}
                   >
                     All Status
                   </li>
 
-                  {employeeStatuses.map(
-                    (status) => (
-                      <li
-                        key={status.value}
-                        className="cursor-pointer px-4 py-2 transition-colors hover:bg-app-brand hover:text-white"
-                        onClick={() => {
-                          setSelectedStatus(
-                            status.value,
-                          );
-                          setStatusOpen(false);
-                        }}
-                      >
-                        {status.label}
-                      </li>
-                    ),
-                  )}
+                  {employeeStatuses.map((status) => (
+                    <li
+                      key={status.value}
+                      className="cursor-pointer px-4 py-2 transition-colors hover:bg-app-brand hover:text-white"
+                      onClick={() => {
+                        setSelectedStatus(status.value);
+                        setStatusOpen(false);
+                      }}
+                    >
+                      {status.label}
+                    </li>
+                  ))}
                 </ul>
               )}
             </div>
           </div>
 
           <div className="transition-all duration-700">
-            {openEmployee && (
-              <Add_Employee
-                setOpenEmployee={
-                  setOpenEmployee
-                }
-              />
-            )}
+            {openEmployee && <Add_Employee setOpenEmployee={setOpenEmployee} />}
           </div>
         </div>
       </div>
 
-      <Employee_Card
-        employees={employees}
-        totalEmployees={
-          pagination?.totalData
-        }
-      />
+     <div ref={employeeListRef} className="scroll-mt-24">
+  <Employee_Card
+    employees={employees}
+    totalEmployees={pagination?.totalData}
+  />
+</div>
 
       <Pagination_Employee
-        currentPage={
-          pagination?.currentPage || 1
-        }
-        totalPages={
-          pagination?.totalPages || 1
-        }
-        hasNextPage={
-          pagination?.hasNextPage || false
-        }
-        hasPreviousPage={
-          pagination?.hasPreviousPage ||
-          false
-        }
-        onPageChange={setPage}
+        currentPage={pagination?.currentPage || 1}
+        totalPages={pagination?.totalPages || 1}
+        hasNextPage={pagination?.hasNextPage || false}
+        hasPreviousPage={pagination?.hasPreviousPage || false}
+        onPageChange={handlePageChange}
+
+
+
       />
     </>
   );

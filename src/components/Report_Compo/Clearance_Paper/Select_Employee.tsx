@@ -49,21 +49,6 @@ export default function Select_Employee() {
     return employee.status === "ACTIVE" && !alreadyHasReport;
   });
 
-  const activeCount = employees.filter(
-    (employee: any) => employee.status === "ACTIVE",
-  ).length;
-
-  const inactiveCount = employees.filter(
-    (employee: any) => employee.status === "INACTIVE",
-  ).length;
-
-  const vacationCount = employees.filter(
-    (employee: any) => employee.status === "VACATION",
-  ).length;
-
-  const resignedCount = employees.filter(
-    (employee: any) => employee.status === "RESIGNED",
-  ).length;
 
 
 

@@ -60,7 +60,6 @@ export default function Approved({ reports = [] }: { reports?: any[] }) {
 
 
 
-
   
   if (!reports.length) {
     return (
@@ -71,63 +70,82 @@ export default function Approved({ reports = [] }: { reports?: any[] }) {
   }
 
   // UPDATED: add print clearance handler
-  const handlePrintClearance = async (report: any) => {
-    // UPDATED: print current report before changing employee data
-    printDocument("approved", report);
+ const handlePrintClearance = async (report: any) => {
+  const result = await Swal.fire({
+    title: "Confirm Clearance",
+    text: "This will print the clearance document, mark the employee as INACTIVE, and unassign all assigned assets and licenses.",
+    icon: "warning",
+    showCancelButton: true,
+    confirmButtonText: "Proceed",
+    cancelButtonText: "Cancel",
+    confirmButtonColor: "#16a34a",
+    cancelButtonColor: "#6b7280",
+  });
 
-    try {
-      const employeeId = report.employee?.id;
+  if (!result.isConfirmed) return;
 
-      if (!employeeId) {
-        throw new Error("Employee ID not found.");
-      }
+  // Print current report
+  printDocument("approved", report);
 
-      // UPDATED: employee status INACTIVE
-      const updateData = new FormData();
-      updateData.append("status", "INACTIVE");
+  try {
+    const employeeId = report.employee?.id;
 
-      const assetAssignments =
-        report.employee?.assetAssignments || report.assetAssignments || [];
-
-      const licenseAssignments =
-        report.employee?.licenseAssignments || report.licenseAssignments || [];
-
-      // UPDATED: employee inactive + all assets/licenses unassign
-      await Promise.all([
-        updateEmployee.mutateAsync({
-          id: String(employeeId),
-          updateData,
-        }),
-
-        ...assetAssignments.map((assignment: any) =>
-          unassignAsset.mutateAsync(String(assignment.id)),
-        ),
-
-        ...licenseAssignments.map((assignment: any) =>
-          unassignLicense.mutateAsync(String(assignment.id)),
-        ),
-      ]);
-
-      Swal.fire({
-        title: "Clearance Processed!",
-        text: "Employee is now inactive and all assets and licenses have been unassigned.",
-        icon: "success",
-        timer: 2000,
-        showConfirmButton: false,
-      });
-    } catch (error: any) {
-      console.error("Print Clearance Update Error:", error);
-
-      Swal.fire({
-        title: "Update Failed!",
-        text:
-          error?.response?.data?.message ||
-          error?.response?.data?.error ||
-          "Failed to update employee clearance data.",
-        icon: "error",
-      });
+    if (!employeeId) {
+      throw new Error("Employee ID not found.");
     }
-  };
+
+    const updateData = new FormData();
+    updateData.append("status", "INACTIVE");
+
+    const assetAssignments =
+      report.employee?.assetAssignments || report.assetAssignments || [];
+
+    const licenseAssignments =
+      report.employee?.licenseAssignments || report.licenseAssignments || [];
+
+    await Promise.all([
+      updateEmployee.mutateAsync({
+        id: String(employeeId),
+        updateData,
+      }),
+
+      ...assetAssignments.map((assignment: any) =>
+        unassignAsset.mutateAsync(String(assignment.id)),
+      ),
+
+      ...licenseAssignments.map((assignment: any) =>
+        unassignLicense.mutateAsync(String(assignment.id)),
+      ),
+    ]);
+
+    Swal.fire({
+      title: "Clearance Processed",
+      text: "The employee has been marked as INACTIVE and all assigned assets and licenses have been unassigned.",
+      icon: "success",
+      timer: 2000,
+      showConfirmButton: false,
+    });
+  } catch (error: any) {
+    console.error("Print Clearance Update Error:", error);
+
+    Swal.fire({
+      title: "Update Failed",
+      text:
+        error?.response?.data?.message ||
+        error?.response?.data?.error ||
+        "Failed to process employee clearance.",
+      icon: "error",
+    });
+  }
+};
+
+
+
+
+
+
+
+
 
   return (
     <>
