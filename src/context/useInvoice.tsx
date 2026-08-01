@@ -1,6 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
-
 import toast from "react-hot-toast";
 import axiosInstance from "../config/axiosInstance";
 
@@ -46,7 +45,6 @@ export const useGetSingleInvoice = (id?: string) => {
   });
 };
 
-// Custom hook to fetch invoices
 // Custom hook to fetch paginated invoices
 export const useGetInvoices = (
   page: number = 1,
@@ -54,51 +52,34 @@ export const useGetInvoices = (
   search: string = "",
 ) => {
   return useQuery({
-    queryKey: [
-      "invoices",
-      page,
-      limit,
-      search,
-    ],
+    queryKey: ["invoices", page, limit, search],
 
     queryFn: async () => {
-      const response = await axiosInstance.get(
-        "/invoices",
-        {
-          params: {
-            page,
-            limit,
-            search,
-          },
+      const response = await axiosInstance.get("/invoices", {
+        params: {
+          page,
+          limit,
+          search,
         },
-      );
+      });
 
       return {
-        invoices:
-          response.data?.invoices || [],
+        invoices: response.data?.invoices || [],
 
-        pagination:
-          response.data?.pagination || {
-            currentPage: page,
-            limit,
-            totalData: 0,
-            totalPages: 0,
-            hasNextPage: false,
-            hasPreviousPage: false,
-          },
+        pagination: response.data?.pagination || {
+          currentPage: page,
+          limit,
+          totalData: 0,
+          totalPages: 0,
+          hasNextPage: false,
+          hasPreviousPage: false,
+        },
       };
     },
 
-    placeholderData: (previousData) =>
-      previousData,
+    placeholderData: (previousData) => previousData,
   });
 };
-
-
-
-
-
-
 
 // UPDATE INVOICE
 export const useUpdateInvoice = () => {

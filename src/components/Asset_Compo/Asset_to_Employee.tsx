@@ -57,36 +57,31 @@ export default function Asset_to_Employee({
     )}/${image.replace(/^\//, "")}`;
   };
 
-  const filteredEmployees =
-    searchText.trim().length > 0
-      ? activeEmployees.filter(
-          (employee: any) => {
-            const search = searchText
-              .trim()
-              .toLowerCase();
+const filteredEmployees =
+  searchText.trim().length > 0
+    ? activeEmployees.filter(
+        (employee: any) => {
+          const search = searchText
+            .trim()
+            .toLowerCase();
 
-            return (
-              employee.fullName
-                ?.toLowerCase()
-                .includes(search) ||
-              String(
-                employee.iqamaNumber || "",
-              )
-                .toLowerCase()
-                .includes(search) ||
-              employee.email
-                ?.toLowerCase()
-                .includes(search) ||
-              String(
-                employee.phoneNumber || "",
-              )
-                .toLowerCase()
-                .includes(search)
-            );
-          },
-        )
-      : activeEmployees;
-
+          return (
+            employee.fullName
+              ?.toLowerCase()
+              .includes(search) ||
+            String(employee.iqamaNumber || "")
+              .toLowerCase()
+              .includes(search) ||
+            employee.email
+              ?.toLowerCase()
+              .includes(search) ||
+            String(employee.phoneNumber || "")
+              .toLowerCase()
+              .includes(search)
+          );
+        },
+      )
+    : [];
   const handleAssignEmployee = (
     employee: any,
   ) => {
@@ -281,9 +276,12 @@ export default function Asset_to_Employee({
               },
             )
           ) : (
+
             <p className="py-6 text-center text-sm text-app-gray">
               No active employee found
             </p>
+
+            
           )}
         </div>
       </div>

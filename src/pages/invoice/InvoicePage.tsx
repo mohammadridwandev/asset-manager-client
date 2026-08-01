@@ -5,6 +5,7 @@ import InvoiceCard from "../../components/Invoices_Compo/InvoiceCard";
 import { useGetInvoices } from "../../context/useInvoice";
 import Invoice_Pagination from "../../components/Invoices_Compo/Invoice_Pagination";
 import { Helmet } from "react-helmet-async";
+import DataLoading from "../../DataLoading";
 
 export default function InvoicePage() {
   const [showUpload, setShowUpload] = useState(false);
@@ -32,6 +33,25 @@ export default function InvoicePage() {
       });
     }, 100);
   };
+
+
+  
+    if (isLoading) {
+  
+      return (
+  
+       <DataLoading
+        title="Loading Invoices"
+        message="Fetching invoice data..."
+      />
+  
+      );
+  
+  
+    }
+
+
+
 
   return (
     <div>

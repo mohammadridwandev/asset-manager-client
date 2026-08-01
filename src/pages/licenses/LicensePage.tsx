@@ -6,6 +6,7 @@ import LicensesCard from "../../components/Licenses_Compo/LicensesCard";
 import { useLicenses } from "../../context/useLicenses";
 import License_Pagination from "../../components/Licenses_Compo/Licenses_Pagination";
 import { Helmet } from "react-helmet-async";
+import DataLoading from "../../DataLoading";
 
 export default function LicensePage() {
   const [openLicense, setOpenLicense] = useState(false);
@@ -47,29 +48,41 @@ export default function LicensePage() {
     setPage(1);
   }, [searchText, selectedType]);
 
-
   const handlePageChange = (newPage: number) => {
-  setPage(newPage);
+    setPage(newPage);
 
-  setTimeout(() => {
-    licenseListRef.current?.scrollIntoView({
-      behavior: "smooth",
-      block: "start",
-    });
-  }, 100);
-};
+    setTimeout(() => {
+      licenseListRef.current?.scrollIntoView({
+        behavior: "smooth",
+        block: "start",
+      });
+    }, 100);
+  };
+
+
+  
+    if (isLoading) {
+  
+      return (
+  
+       <DataLoading
+        title="Loading Licenses"
+        message="Fetching license data..."
+      />
+  
+      );
+  
+  
+    }
+
+
 
 
   return (
     <div className="pb-16">
-
-
-
-
-  <Helmet>
-    <title>Asset Manager | Licenses</title>
-  </Helmet>
-
+      <Helmet>
+        <title>Asset Manager | Licenses</title>
+      </Helmet>
 
       <div className="py-4 md:py-8">
         <div className="mb-8 flex flex-col justify-between gap-6 lg:flex-row lg:items-center">
@@ -131,9 +144,8 @@ export default function LicensePage() {
               <span>
                 {selectedType === "All Types"
                   ? "All Types"
-                  : licenseTypes.find(
-                      (item) => item.value === selectedType,
-                    )?.label}
+                  : licenseTypes.find((item) => item.value === selectedType)
+                      ?.label}
               </span>
 
               <MdKeyboardArrowRight
@@ -168,33 +180,28 @@ export default function LicensePage() {
         </div>
 
         <div>
-          {openLicense && (
-            <Add_License setOpenLicense={setOpenLicense} />
-          )}
+          {openLicense && <Add_License setOpenLicense={setOpenLicense} />}
         </div>
       </div>
 
       <div>
-  <div ref={licenseListRef} className="scroll-mt-24">
-    <LicensesCard
-      licenses={licenses}
-      totalLicenses={pagination?.totalData}
-      isLoading={isLoading}
-      isError={isError}
-    />
-  </div>
+        <div ref={licenseListRef} className="scroll-mt-24">
+          <LicensesCard
+            licenses={licenses}
+            totalLicenses={pagination?.totalData}
+            isLoading={isLoading}
+            isError={isError}
+          />
+        </div>
 
-  <License_Pagination
-    currentPage={pagination?.currentPage || 1}
-    totalPages={pagination?.totalPages || 1}
-    hasNextPage={pagination?.hasNextPage || false}
-    hasPreviousPage={pagination?.hasPreviousPage || false}
-    onPageChange={handlePageChange}
-  />
-</div>
-
-
-
+        <License_Pagination
+          currentPage={pagination?.currentPage || 1}
+          totalPages={pagination?.totalPages || 1}
+          hasNextPage={pagination?.hasNextPage || false}
+          hasPreviousPage={pagination?.hasPreviousPage || false}
+          onPageChange={handlePageChange}
+        />
+      </div>
     </div>
   );
 }

@@ -64,7 +64,6 @@ export const useGetReports = () => {
 };
 
 // UPDATE REPORT
-// UPDATE REPORT
 export const useUpdateReport = () => {
   const queryClient = useQueryClient();
 

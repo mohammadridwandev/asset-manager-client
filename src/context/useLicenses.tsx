@@ -65,13 +65,7 @@ export const useLicenses = (
   licenseType: string = "",
 ) => {
   return useQuery({
-    queryKey: [
-      "licenses",
-      page,
-      limit,
-      search,
-      licenseType,
-    ],
+    queryKey: ["licenses", page, limit, search, licenseType],
 
     queryFn: async () => {
       const response = await axiosInstance.get("/licenses", {
@@ -100,11 +94,6 @@ export const useLicenses = (
     placeholderData: (previousData) => previousData,
   });
 };
-
-
-
-
-
 
 // UPDATE LICENSE
 export const useUpdateLicense = () => {

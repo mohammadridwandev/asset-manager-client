@@ -8,9 +8,9 @@ import Asset_Import from "../../components/Asset_Compo/Asset_Import";
 import Asset_Export from "../../components/Asset_Compo/Asset_Export";
 import Asset_Pagination from "../../components/Asset_Compo/Asset_Pagination";
 import { Helmet } from "react-helmet-async";
+import DataLoading from "../../DataLoading";
 
 export default function AssetPage() {
-
   const [assetOpen, setAssetOpen] = useState(false);
   const [searchText, setSearchText] = useState("");
 
@@ -24,9 +24,6 @@ export default function AssetPage() {
   const [selectedAssignment, setSelectedAssignment] = useState("All Status");
 
   const assignmentTypes = ["Assigned", "Unassigned"];
-
-
-
 
   const { data, isLoading, isError } = useGetAssets(
     page,
@@ -61,23 +58,31 @@ export default function AssetPage() {
     setPage(1);
   }, [searchText, selectedType, selectedAssignment]);
 
-
   const handlePageChange = (newPage: number) => {
-  setPage(newPage);
+    setPage(newPage);
 
-  setTimeout(() => {
-    assetListRef.current?.scrollIntoView({
-      behavior: "smooth",
-      block: "start",
-    });
-  }, 100);
-};
+    setTimeout(() => {
+      assetListRef.current?.scrollIntoView({
+        behavior: "smooth",
+        block: "start",
+      });
+    }, 100);
+  };
 
+  if (isLoading) {
+    return (
+      <DataLoading
+        title="Loading Assets"
+        message="Fetching asset inventory..."
+      />
+    );
+  }
+
+  
 
 
   return (
     <>
-    
       <Helmet>
         <title>Asset Manager | Assets</title>
       </Helmet>
@@ -96,7 +101,7 @@ export default function AssetPage() {
             </div>
 
             <div className="flex flex-wrap items-center gap-2 md:gap-3">
-              <Asset_Export assets={assets} />
+              <Asset_Export />
 
               <Asset_Import />
 
@@ -217,27 +222,24 @@ export default function AssetPage() {
           </div>
         </div>
 
-       <div>
-  <div ref={assetListRef} className="scroll-mt-24">
-    <Asset_Card
-      assets={assets}
-      totalAssets={pagination?.totalData}
-      isLoading={isLoading}
-      isError={isError}
-    />
-  </div>
+        <div>
+          <div ref={assetListRef} className="scroll-mt-24">
+            <Asset_Card
+              assets={assets}
+              totalAssets={pagination?.totalData}
+              isLoading={isLoading}
+              isError={isError}
+            />
+          </div>
 
-  <Asset_Pagination
-    currentPage={pagination?.currentPage || 1}
-    totalPages={pagination?.totalPages || 1}
-    hasNextPage={pagination?.hasNextPage || false}
-    hasPreviousPage={pagination?.hasPreviousPage || false}
-    onPageChange={handlePageChange}
-  />
-</div>
-
-
-
+          <Asset_Pagination
+            currentPage={pagination?.currentPage || 1}
+            totalPages={pagination?.totalPages || 1}
+            hasNextPage={pagination?.hasNextPage || false}
+            hasPreviousPage={pagination?.hasPreviousPage || false}
+            onPageChange={handlePageChange}
+          />
+        </div>
       </div>
     </>
   );

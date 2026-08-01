@@ -39,6 +39,11 @@ export default function Employee_Card({
     return `${API_BASE_URL.replace(/\/$/, "")}/${image.replace(/^\//, "")}`;
   };
 
+
+
+
+
+
   return (
     <>
       <div>
@@ -49,9 +54,12 @@ export default function Employee_Card({
 
       <div className="bg-app-bg py-4 text-app-text transition-colors duration-300 md:py-6">
         {employees.length === 0 ? (
+
           <div className="flex min-h-75 items-center justify-center text-lg font-medium text-app-gray">
             No employee found!
           </div>
+
+          
         ) : (
           <div className="grid grid-cols-1 gap-5 md:grid-cols-2 2xl:grid-cols-3">
             {employees.map((employee: any) => (
@@ -97,10 +105,8 @@ export default function Employee_Card({
                           employeeId={employee.id}
                           initialDocuments={employee.assetDocuments || []}
                         />
-
                       </div>
                     </div>
-
                     <span
                       className={`shrink-0 rounded-full px-3 py-1 text-xs font-normal capitalize ${
                         employee.status === "ACTIVE"

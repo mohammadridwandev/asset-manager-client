@@ -84,6 +84,10 @@ export default function Asset_view({ assets, onClose }: AssetProps) {
     }
   };
 
+
+  
+
+
   return (
     <>
       <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-4 backdrop-blur-sm animate-fadeIn">

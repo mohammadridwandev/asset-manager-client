@@ -162,3 +162,54 @@ export const useDeleteEmployee = () => {
     },
   });
 };
+
+
+// GET ALL EMPLOYEES FOR EXPORT
+export const useExportEmployees = () => {
+  return useMutation({
+    mutationFn: async () => {
+      const response =
+        await axiosInstance.get(
+          "/employees/export",
+        );
+
+      return response.data?.data || [];
+    },
+
+    onError: (error: any) => {
+      const message =
+        error?.response?.data?.message ||
+        error?.response?.data?.error ||
+        "Failed to export employees.";
+      toast.error(message);
+    },
+  });
+};
+
+
+// GET EMPLOYEE FILTER OPTIONS
+export const useGetEmployeeFilterOptions = () => {
+  return useQuery({
+    queryKey: ["employee-filter-options"],
+
+    queryFn: async () => {
+      const response =
+        await axiosInstance.get(
+          "/employees/filter-options",
+        );
+
+      return {
+        departments:
+          response.data?.data?.departments || [],
+
+        positions:
+          response.data?.data?.positions || [],
+      };
+    },
+
+    staleTime: 5 * 60 * 1000,
+    refetchOnWindowFocus: false,
+  });
+};
+
+

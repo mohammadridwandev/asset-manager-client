@@ -3,6 +3,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import toast from "react-hot-toast";
 import axiosInstance from "../config/axiosInstance";
 
+
 // create asset:
 export const useCreateAsset = () => {
   const queryClient = useQueryClient();
@@ -34,7 +35,6 @@ export const useCreateAsset = () => {
   });
 };
 
-
 export const useGetSingleAsset = (id?: string) => {
   return useQuery({
     queryKey: ["assets", id],
@@ -47,7 +47,6 @@ export const useGetSingleAsset = (id?: string) => {
   });
 };
 
-
 export const useGetAssets = (
   page: number = 1,
   limit: number = 10,
@@ -56,14 +55,7 @@ export const useGetAssets = (
   assignmentStatus: string = "",
 ) => {
   return useQuery({
-    queryKey: [
-      "assets",
-      page,
-      limit,
-      search,
-      assetType,
-      assignmentStatus,
-    ],
+    queryKey: ["assets", page, limit, search, assetType, assignmentStatus],
 
     queryFn: async () => {
       const response = await axiosInstance.get("/assets", {
@@ -92,15 +84,6 @@ export const useGetAssets = (
     placeholderData: (previousData) => previousData,
   });
 };
-
-
-
-
-
-
-
-
-
 
 // UPDATE ASSET
 export const useUpdateAsset = () => {
@@ -162,6 +145,26 @@ export const useDeleteAsset = () => {
     onError: (error: any) => {
       console.error(error);
       // toast.error("Failed to delete asset!");
+    },
+  });
+};
+
+// GET ALL ASSETS FOR EXPORT
+export const useExportAssets = () => {
+  return useMutation({
+    mutationFn: async () => {
+      const response = await axiosInstance.get("/assets/export");
+
+      return response.data?.data || [];
+    },
+
+    onError: (error: any) => {
+      const message =
+        error?.response?.data?.message ||
+        error?.response?.data?.error ||
+        "Failed to export assets.";
+
+      toast.error(message);
     },
   });
 };
