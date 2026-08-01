@@ -232,10 +232,10 @@ export default function Update_Employee() {
                 className="w-full px-4 py-2.5 my-2 rounded-lg border border-app-gray/30 bg-app-bg focus:outline-none focus:border-app-brand transition-colors"
               >
                 <option value="ACTIVE">Active</option>
-                <option value="ON_LEAVE">On Leave</option>
-                <option value="VACATION">Vacation</option>
+                {/* <option value="ON_LEAVE">On Leave</option> */}
+                {/* <option value="VACATION">Vacation</option> */}
                 <option value="INACTIVE">Inactive</option>
-                <option value="RESIGNED">Resigned</option>
+                {/* <option value="RESIGNED">Resigned</option> */}
               </select>
             </div>
 

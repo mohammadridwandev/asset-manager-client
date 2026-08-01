@@ -129,21 +129,15 @@ export default function Finance_Print({ report }: FinancePrintProps) {
     ? report.assignedAssets
     : [];
 
-
   const calculatedAssetPrice = assignedAssets.reduce(
-  (sum: number, asset: any) => sum + Number(asset?.price || 0),
-  0,
-);
+    (sum: number, asset: any) => sum + Number(asset?.price || 0),
+    0,
+  );
 
-const totalAssetPrice =
-  report?.totalAssetPrice !== undefined &&
-  report?.totalAssetPrice !== null
-    ? Number(report.totalAssetPrice)
-    : calculatedAssetPrice;
-
-
-
-
+  const totalAssetPrice =
+    report?.totalAssetPrice !== undefined && report?.totalAssetPrice !== null
+      ? Number(report.totalAssetPrice)
+      : calculatedAssetPrice;
 
   const deviceType =
     report?.deviceType || assignedAssets?.[0]?.assetType || "Company Equipment";
@@ -316,27 +310,28 @@ const totalAssetPrice =
           </div>
         </section>
 
-
+        {/* Rejection Details */}
         {/* Rejection Details */}
         <section
           className="
-            mb-[4mm]
-            break-inside-avoid
-            [page-break-inside:avoid]
-          "
+    mb-[4mm]
+    break-inside-avoid
+    [page-break-inside:avoid]
+  "
         >
           <h2 className={sectionTitleClass}>Rejection Details</h2>
 
           <div
             className="
-              rounded-[2mm]
-              border
-              border-[#d3d7db]
-              px-[4mm]
-              py-[2.8mm]
-            "
+      rounded-[2mm]
+      border
+      border-[#d3d7db]
+      px-[4mm]
+      py-[2.8mm]
+    "
           >
-            <div className="space-y-[1.3mm]">
+            <div className="space-y-[1.8mm]">
+              {/* Device Type */}
               <div className="flex items-start">
                 <span className={informationLabelClass}>Device Type:</span>
 
@@ -345,6 +340,7 @@ const totalAssetPrice =
                 </span>
               </div>
 
+              {/* Device Condition */}
               <div className="flex items-start">
                 <span className={informationLabelClass}>Condition:</span>
 
@@ -353,7 +349,16 @@ const totalAssetPrice =
                 </span>
               </div>
 
-              <div className="flex items-start"></div>
+              {/* Rejection Reason */}
+              <div className="flex items-start">
+                <span className={informationLabelClass}>Rejection Reason:</span>
+
+                <span
+                  className={`${informationValueClass} whitespace-pre-wrap font-semibold text-red-700`}
+                >
+                  {displayValue(report?.rejectionReason)}
+                </span>
+              </div>
             </div>
           </div>
         </section>
@@ -361,8 +366,7 @@ const totalAssetPrice =
         {/* Equipment */}
         <AssetsTable assets={assignedAssets} />
 
-
-{report?.remarks && (
+        {report?.remarks && (
           <section
             className="
       mb-[4mm]
@@ -388,21 +392,18 @@ const totalAssetPrice =
           </section>
         )}
 
-
-
-
-{/* Totals */}
-<section
-  className="
+        {/* Totals */}
+        <section
+          className="
     mb-[4mm]
     flex
     justify-end
     break-inside-avoid
     [page-break-inside:avoid]
   "
->
-  <div
-    className="
+        >
+          <div
+            className="
       flex
       items-center
       gap-[9mm]
@@ -410,15 +411,11 @@ const totalAssetPrice =
       font-bold
       text-[#202a35]
     "
-  >
-    <span>Total Assets: {assignedAssets.length}</span>
-    <span>Total Value: {formatAmount(totalAssetPrice)} SAR</span>
-  </div>
-</section>
-
-
-
-
+          >
+            <span>Total Assets: {assignedAssets.length}</span>
+            <span>Total Value: {formatAmount(totalAssetPrice)} SAR</span>
+          </div>
+        </section>
 
         {/* Financial Impact */}
         <section
