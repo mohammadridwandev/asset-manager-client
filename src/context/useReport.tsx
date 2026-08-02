@@ -27,15 +27,19 @@ export const useCreateReport = () => {
         queryKey: ["reports"],
       });
 
-      // Employee-related report information refresh করবে
+      // Employee-related report data refresh করবে
       queryClient.invalidateQueries({
         queryKey: ["employees"],
       });
 
-      // UPDATED:
-      // Allocation Report-এর cached data refresh করবে
+      // Allocation Report refresh করবে
       queryClient.invalidateQueries({
         queryKey: ["report-allocation"],
+      });
+
+      // Dashboard report count refresh করবে
+      queryClient.invalidateQueries({
+        queryKey: ["dashboard"],
       });
     },
 
@@ -55,16 +59,22 @@ export const useCreateReport = () => {
   });
 };
 
+// ====================================================
+// GET SINGLE REPORT
+// ====================================================
 export const useGetSingleReport = (
   id?: string,
 ) => {
   return useQuery({
     queryKey: ["report", id],
 
-    queryFn: async () => {
+    queryFn: async ({ signal }) => {
       const response =
         await axiosInstance.get(
           `/reports/${id}`,
+          {
+            signal,
+          },
         );
 
       return (
@@ -74,19 +84,27 @@ export const useGetSingleReport = (
     },
 
     enabled: !!id,
+
+    retry: 1,
+
+    refetchOnWindowFocus: false,
   });
 };
 
-
-
+// ====================================================
+// GET ALL REPORTS
+// ====================================================
 export const useGetReports = () => {
   return useQuery({
     queryKey: ["reports"],
 
-    queryFn: async () => {
+    queryFn: async ({ signal }) => {
       const response =
         await axiosInstance.get(
           "/reports",
+          {
+            signal,
+          },
         );
 
       return (
@@ -95,17 +113,20 @@ export const useGetReports = () => {
       );
     },
 
-    // Report page-এ ফিরে এলে অপ্রয়োজনীয় request কমাবে
+    // ৩০ সেকেন্ড একই data fresh থাকবে
     staleTime: 30 * 1000,
 
-    // Browser tab change করলে auto refetch বন্ধ থাকবে
+    // Network problem হলে সর্বোচ্চ ২ বার retry করবে
+    retry: 2,
+
+    // Browser tab change করলে অপ্রয়োজনীয় refetch হবে না
     refetchOnWindowFocus: false,
   });
 };
 
-
-
-
+// ====================================================
+// UPDATE REPORT
+// ====================================================
 export const useUpdateReport = () => {
   const queryClient = useQueryClient();
 
@@ -132,8 +153,6 @@ export const useUpdateReport = () => {
           headers: {
             Authorization: `Bearer ${token}`,
 
-            // File upload হলে multipart,
-            // সাধারণ update হলে JSON পাঠাবে
             ...(isFormData
               ? {
                   "Content-Type":
@@ -159,15 +178,19 @@ export const useUpdateReport = () => {
         queryKey: ["report"],
       });
 
-      // Employee data refresh করবে
+      // Employee-related report data refresh করবে
       queryClient.invalidateQueries({
         queryKey: ["employees"],
       });
 
-      // UPDATED:
       // Allocation Report refresh করবে
       queryClient.invalidateQueries({
         queryKey: ["report-allocation"],
+      });
+
+      // Dashboard report count refresh করবে
+      queryClient.invalidateQueries({
+        queryKey: ["dashboard"],
       });
     },
 
@@ -219,15 +242,19 @@ export const useDeleteReport = () => {
         queryKey: ["report"],
       });
 
-      // Employee data refresh করবে
+      // Employee-related report data refresh করবে
       queryClient.invalidateQueries({
         queryKey: ["employees"],
       });
 
-      // UPDATED:
       // Allocation Report refresh করবে
       queryClient.invalidateQueries({
         queryKey: ["report-allocation"],
+      });
+
+      // Dashboard report count refresh করবে
+      queryClient.invalidateQueries({
+        queryKey: ["dashboard"],
       });
     },
 
@@ -247,46 +274,52 @@ export const useDeleteReport = () => {
   });
 };
 
+// ====================================================
+// GET ALLOCATION REPORT
+// ====================================================
+export const useGetAllocationReport =
+  () => {
+    return useQuery({
+      queryKey: [
+        "report-allocation",
+      ],
 
-export const useGetAllocationReport = () => {
-  return useQuery({
-    queryKey: ["report-allocation"],
+      queryFn: async ({
+        signal,
+      }) => {
+        const response =
+          await axiosInstance.get(
+            "/reports/allocation",
+            {
+              signal,
+            },
+          );
 
-    queryFn: async ({ signal }) => {
-      const response =
-        await axiosInstance.get(
-          "/reports/allocation",
-          {
-            // নতুন request হলে পুরোনো request cancel করতে সাহায্য করবে
-            signal,
-          },
-        );
+        return {
+          // Department-wise report rows
+          reportData:
+            response.data?.data || [],
 
-      return {
-        // Department-wise report rows
-        reportData:
-          response.data?.data || [],
+          // সব department-এর grand total
+          summary:
+            response.data?.summary || {
+              employees: 0,
+              assets: 0,
+              assetValue: 0,
+              licenses: 0,
+              licenseValue: 0,
+              totalValue: 0,
+            },
+        };
+      },
 
-        // সব department-এর grand total
-        summary:
-          response.data?.summary || {
-            employees: 0,
-            assets: 0,
-            assetValue: 0,
-            licenses: 0,
-            licenseValue: 0,
-            totalValue: 0,
-          },
-      };
-    },
+      
+      staleTime: 30 * 1000,
 
-    // ৩০ সেকেন্ড একই data fresh ধরা হবে
-    staleTime: 30 * 1000,
+      
+      retry: 2,
 
-    // Browser tab change করলে অপ্রয়োজনীয় request যাবে না
-    refetchOnWindowFocus: false,
-
-    // Network problem হলে ২ বার retry করবে
-    retry: 2,
-  });
-};
+      // Browser tab change করলে অপ্রয়োজনীয় refetch হবে না
+      refetchOnWindowFocus: false,
+    });
+  };

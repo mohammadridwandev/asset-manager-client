@@ -37,10 +37,19 @@ const Add_Employee = ({
     }
 
     if (file.size > 2 * 1024 * 1024) {
-      toast.error("File size should be less than 2MB!");
-      e.target.value = "";
-      return;
-    }
+  toast.error("File size should be less than 2MB!");
+
+  e.target.value = "";
+  setImagePreview(null);
+  setFileName("No file chosen");
+
+  return;
+}
+
+
+
+
+
 
     setFileName(file.name);
     const reader = new FileReader();
@@ -50,22 +59,21 @@ const Add_Employee = ({
     reader.readAsDataURL(file);
   };
 
+  const handlerEmployee = (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
 
+    const form = event.currentTarget;
+    const formData = new FormData(form);
 
-  
-  const handlerEmployee = async (e: any) => {
-    e.preventDefault();
-
-    const formData = new FormData(e.target);
-    const form = e.target as HTMLFormElement;
-
+    // Join date
     if (startDate) {
       formData.set("joinDate", startDate.toISOString().split("T")[0]);
     } else {
-      formData.set("joinDate", "");
+      formData.delete("joinDate");
     }
 
-    const imageFile = formData.get("image") as File;
+    // Empty image remove
+    const imageFile = formData.get("image") as File | null;
 
     if (!imageFile || imageFile.size === 0) {
       formData.delete("image");
@@ -73,21 +81,21 @@ const Add_Employee = ({
 
     useEmployeeData.mutate(formData, {
       onSuccess: () => {
-        setOpenEmployee(false);
+        // শুধু successful create হলে form clear হবে
+        form.reset();
+
+        setStartDate(new Date());
         setImagePreview(null);
         setFileName("No file chosen");
-        
+        setOpenEmployee(false);
+      },
+
+      onError: () => {
+        // Error message useCreateEmployee hook থেকে দেখাবে
+        // Form clear হবে না
       },
     });
-    
-
-    form.reset();
   };
-
-
-
-  
-
 
   return (
     <div className="min-h-screen py-5 bg-app-bg text-app-text transition-colors duration-300">
@@ -130,9 +138,12 @@ const Add_Employee = ({
               <label className="text-sm text-app-text font-medium">
                 Phone Number
               </label>
+
               <input
-                type="number"
+                type="tel"
                 name="phoneNumber"
+                inputMode="tel"
+                autoComplete="tel"
                 placeholder="+966 XXX XXX XXXX"
                 className="w-full px-4 py-2.5 my-2 rounded-lg border border-app-gray/30 bg-transparent focus:outline-none focus:border-app-brand transition-colors"
               />
@@ -235,7 +246,6 @@ const Add_Employee = ({
 
           {/* Buttons */}
           <div className="flex justify-end gap-4 mt-10">
-
             <button
               onClick={() => setOpenEmployee(false)}
               type="button"
@@ -251,12 +261,10 @@ const Add_Employee = ({
             >
               {useEmployeeData.isPending ? "Adding..." : "Add Employee"}
             </button>
-
           </div>
         </form>
       </div>
     </div>
-    
   );
 };
 

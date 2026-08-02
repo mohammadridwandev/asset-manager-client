@@ -3,24 +3,38 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import toast from "react-hot-toast";
 import axiosInstance from "../config/axiosInstance";
 
-// Custom hook to create a new license
+// CREATE LICENSE
 export const useCreateLicense = () => {
   const queryClient = useQueryClient();
 
   return useMutation({
     mutationFn: async (createLicense: any) => {
       return axiosInstance.post("/licenses", createLicense, {
-        headers: { "Content-Type": "multipart/form-data" },
+        headers: {
+          "Content-Type": "multipart/form-data",
+        },
       });
     },
 
     onSuccess: (response: any) => {
+      // License list refresh করবে
       queryClient.invalidateQueries({
         queryKey: ["licenses"],
       });
 
+      // Employee license information refresh করবে
       queryClient.invalidateQueries({
         queryKey: ["employees"],
+      });
+
+      // Dashboard license count refresh করবে
+      queryClient.invalidateQueries({
+        queryKey: ["dashboard"],
+      });
+
+      // Allocation Report license value/count refresh করবে
+      queryClient.invalidateQueries({
+        queryKey: ["report-allocation"],
       });
 
       toast.success(
@@ -29,35 +43,55 @@ export const useCreateLicense = () => {
     },
 
     onError: (error: any) => {
-      console.error(error);
-      const errorMessage =
-        error.response?.data?.error ||
-        error.response?.data?.message ||
-        "Failed to create license";
+      // Full technical error developer console-এ থাকবে
+      console.error("Create License Error:", error);
 
-      toast.error("Failed to create license");
+      const status = error?.response?.status;
 
-      console.log(errorMessage);
+      let message = "License could not be created. Please try again.";
+
+      // Duplicate license key
+      if (status === 409) {
+        message =
+          error?.response?.data?.message || "This license key already exists.";
+      }
+
+      // Validation problem
+      else if (status === 400) {
+        message = "Please check the license information.";
+      }
+
+      // Network problem
+      else if (!error?.response) {
+        message =
+          "Unable to connect to the server. Please check your connection.";
+      }
+
+      toast.error(message);
     },
   });
 };
 
-// Custom hook to fetch a single license by ID
+
 export const useGetSingleLicense = (id?: string) => {
   return useQuery({
     queryKey: ["license", id],
 
-    queryFn: async () => {
-      const response = await axiosInstance.get(`/licenses/${id}`);
+    queryFn: async ({ signal }) => {
+      const response = await axiosInstance.get(`/licenses/${id}`, {
+        signal,
+      });
+
       return response.data?.data || response.data;
     },
 
     enabled: !!id,
+    refetchOnWindowFocus: false,
+    retry: 1,
   });
 };
 
-// Custom hook to fetch all licenses
-// Custom hook to fetch paginated licenses
+// GET LICENSES WITH PAGINATION
 export const useLicenses = (
   page: number = 1,
   limit: number = 10,
@@ -67,7 +101,7 @@ export const useLicenses = (
   return useQuery({
     queryKey: ["licenses", page, limit, search, licenseType],
 
-    queryFn: async () => {
+    queryFn: async ({ signal }) => {
       const response = await axiosInstance.get("/licenses", {
         params: {
           page,
@@ -75,6 +109,8 @@ export const useLicenses = (
           search,
           licenseType,
         },
+
+        signal,
       });
 
       return {
@@ -92,6 +128,9 @@ export const useLicenses = (
     },
 
     placeholderData: (previousData) => previousData,
+
+    refetchOnWindowFocus: false,
+    retry: 1,
   });
 };
 
@@ -118,19 +157,63 @@ export const useUpdateLicense = () => {
     },
 
     onSuccess: () => {
+      // License list এবং single license cache refresh করবে
       queryClient.invalidateQueries({
         queryKey: ["licenses"],
       });
 
       queryClient.invalidateQueries({
+        queryKey: ["license"],
+      });
+
+      // Employee license information refresh করবে
+      queryClient.invalidateQueries({
         queryKey: ["employees"],
       });
+
+      // Dashboard refresh করবে
+      queryClient.invalidateQueries({
+        queryKey: ["dashboard"],
+      });
+
+      // Allocation Report refresh করবে
+      queryClient.invalidateQueries({
+        queryKey: ["report-allocation"],
+      });
+
+      toast.success("License updated successfully.");
     },
 
     onError: (error: any) => {
-      console.error(error);
-      // toast.error("Failed to update license!");
+      console.error("Update License Error:", error);
+
+      const status = error?.response?.status;
+
+      let message = "License could not be updated. Please try again.";
+
+      // Duplicate license key
+      if (status === 409) {
+        message =
+          error?.response?.data?.message ||
+          "This license key is already used by another license.";
+      }
+
+      // Validation problem
+      else if (status === 400) {
+        message = "Please check the license information.";
+      }
+
+      // Network problem
+      else if (!error?.response) {
+        message =
+          "Unable to connect to the server. Please check your connection.";
+      }
+
+      toast.error(message);
     },
+
+
+
   });
 };
 
@@ -150,18 +233,43 @@ export const useDeleteLicense = () => {
     },
 
     onSuccess: () => {
+      // License list refresh করবে
       queryClient.invalidateQueries({
         queryKey: ["licenses"],
       });
 
+      // Single license cache refresh করবে
+      queryClient.invalidateQueries({
+        queryKey: ["license"],
+      });
+
+      // Employee license information refresh করবে
       queryClient.invalidateQueries({
         queryKey: ["employees"],
       });
+
+      // Dashboard license count refresh করবে
+      queryClient.invalidateQueries({
+        queryKey: ["dashboard"],
+      });
+
+      // Allocation Report refresh করবে
+      queryClient.invalidateQueries({
+        queryKey: ["report-allocation"],
+      });
+
+      toast.success("License deleted successfully.");
     },
 
     onError: (error: any) => {
-      console.error(error);
-      // toast.error("Failed to delete license!");
+      console.error("Delete License Error:", error);
+
+      const message =
+        error?.response?.data?.message ||
+        error?.response?.data?.error ||
+        "Failed to delete license.";
+
+      toast.error(message);
     },
   });
 };

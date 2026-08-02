@@ -25,12 +25,16 @@ export default function Asset_Update() {
     setSelectedDate(date);
   };
 
-  const handlerAssetsUpdate = async (
-  e: React.FormEvent<HTMLFormElement>,
+const handlerAssetsUpdate = async (
+  event: React.FormEvent<HTMLFormElement>,
 ) => {
-  e.preventDefault();
+  event.preventDefault();
 
-  const form = e.currentTarget;
+  if (!id) {
+    return;
+  }
+
+  const form = event.currentTarget;
 
   const confirm = await Swal.fire({
     title: "Update Asset?",
@@ -43,16 +47,105 @@ export default function Asset_Update() {
     cancelButtonText: "Cancel",
   });
 
-  if (!confirm.isConfirmed) return;
+  if (!confirm.isConfirmed) {
+    return;
+  }
+
+  if (!selectedDate) {
+    await Swal.fire({
+      title: "Purchase Date Required",
+      text: "Please select a purchase date.",
+      icon: "warning",
+    });
+
+    return;
+  }
 
   const formData = new FormData(form);
-  const data = Object.fromEntries(formData.entries());
+
+  const assetName = String(
+    formData.get("assetName") || "",
+  ).trim();
+
+  const assetType = String(
+    formData.get("assetType") || "",
+  ).trim();
+
+  const serialNumber = String(
+    formData.get("serialNumber") || "",
+  ).trim();
+
+  const invoiceNumber = String(
+    formData.get("invoiceNumber") || "",
+  ).trim();
+
+  const condition = String(
+    formData.get("condition") || "",
+  ).trim();
+
+  const notes = String(
+    formData.get("notes") || "",
+  ).trim();
+
+  const quantity = Number(
+    formData.get("quantity"),
+  );
+
+  const price = Number(
+    formData.get("price"),
+  );
+
+  if (!assetName || !assetType) {
+    await Swal.fire({
+      title: "Required Information",
+      text: "Asset name and asset type are required.",
+      icon: "warning",
+    });
+
+    return;
+  }
+
+  if (
+    !Number.isInteger(quantity) ||
+    quantity < 1
+  ) {
+    await Swal.fire({
+      title: "Invalid Quantity",
+      text: "Quantity must be at least 1.",
+      icon: "warning",
+    });
+
+    return;
+  }
+
+  if (
+    Number.isNaN(price) ||
+    price < 0
+  ) {
+    await Swal.fire({
+      title: "Invalid Price",
+      text: "Price must be 0 or greater.",
+      icon: "warning",
+    });
+
+    return;
+  }
 
   const updateData = {
-    ...data,
-    purchaseDate: selectedDate ? selectedDate.toISOString() : null,
-    quantity: Number(data.quantity),
-    price: Number(data.price),
+    assetName,
+    assetType,
+    serialNumber:
+      serialNumber || null,
+    quantity,
+    invoiceNumber:
+      invoiceNumber || null,
+    purchaseDate: selectedDate
+      .toISOString()
+      .split("T")[0],
+    price,
+    condition:
+      condition || null,
+    notes: notes || null,
   };
 
   updateAssetMutation.mutate(
@@ -61,8 +154,8 @@ export default function Asset_Update() {
       updateData,
     },
     {
-      onSuccess: () => {
-        Swal.fire({
+      onSuccess: async () => {
+        await Swal.fire({
           title: "Updated!",
           text: "Asset updated successfully.",
           icon: "success",
@@ -72,9 +165,17 @@ export default function Asset_Update() {
 
         navigate("/dashboard/assets");
       },
+
+      onError: () => {
+        // Professional error toast useUpdateAsset hook থেকে আসবে
+        // Duplicate serial হলেও form data থাকবে
+      },
     },
   );
 };
+
+
+
 
 
 
@@ -95,6 +196,7 @@ export default function Asset_Update() {
     <div>
       <div className="min-h-screen transition-all duration-300 py-4 bg-app-bg text-app-text">
         <div className="bg-app-bg border border-app-gray/10 rounded-xl shadow-sm p-6 md:p-8">
+
           <h2 className="text-xl font-bold mb-4">Update Asset</h2>
 
           <form onSubmit={handlerAssetsUpdate} className="space-y-6">
@@ -231,6 +333,8 @@ export default function Asset_Update() {
               </button>
             </div>
           </form>
+
+
         </div>
       </div>
     </div>

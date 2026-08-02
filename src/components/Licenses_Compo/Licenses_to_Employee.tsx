@@ -1,13 +1,20 @@
-import { useState } from "react";
+import {
+  useMemo,
+  useState,
+} from "react";
+
 import {
   FiSearch,
   FiUserPlus,
   FiX,
 } from "react-icons/fi";
+
 import { toast } from "react-hot-toast";
 
 import { useGetEmployee } from "../../context/useEmployee";
 import { useCreateLicenseAssignment } from "../../context/useLicenseAssignment";
+import { useDebounce } from "../../context/useDebounce";
+
 
 export default function Licenses_to_Employee({
   license,
@@ -19,11 +26,26 @@ export default function Licenses_to_Employee({
   const [searchText, setSearchText] =
     useState("");
 
+  // User typing শেষ করার 400ms পরে API request যাবে
+  const debouncedSearchText =
+    useDebounce(
+      searchText.trim(),
+      400,
+    );
+
   const {
     data: employeeData,
     isLoading,
+    isFetching,
     isError,
-  } = useGetEmployee(1, 100, searchText);
+  } = useGetEmployee(
+    1,
+    20,
+    debouncedSearchText,
+    "",
+    "",
+    "ACTIVE",
+  );
 
   const employees = Array.isArray(
     employeeData?.employees,
@@ -35,10 +57,15 @@ export default function Licenses_to_Employee({
     useCreateLicenseAssignment();
 
   const API_BASE_URL =
-    import.meta.env.VITE_BACKEND_URL_LINK || "";
+    import.meta.env
+      .VITE_BACKEND_URL_LINK || "";
 
-  const getImageUrl = (image?: string) => {
-    if (!image) return "";
+  const getImageUrl = (
+    image?: string,
+  ) => {
+    if (!image) {
+      return "";
+    }
 
     if (
       image.startsWith("http://") ||
@@ -53,42 +80,25 @@ export default function Licenses_to_Employee({
     )}/${image.replace(/^\//, "")}`;
   };
 
-  const activeEmployees = employees.filter(
-    (employee: any) =>
-      employee.status === "ACTIVE",
-  );
-
-
+  /*
+   * Backend-এ ACTIVE status পাঠানো হচ্ছে।
+   * তারপরও safety হিসেবে frontend-এ active employee check রাখা হয়েছে।
+   * Empty search হলে কোনো employee দেখাবে না।
+   */
   const filteredEmployees =
-  searchText.trim().length > 0
-    ? activeEmployees.filter(
-        (employee: any) => {
-          const search = searchText
-            .trim()
-            .toLowerCase();
+    useMemo(() => {
+      if (!debouncedSearchText) {
+        return [];
+      }
 
-          return (
-            employee.fullName
-              ?.toLowerCase()
-              .includes(search) ||
-            String(employee.iqamaNumber || "")
-              .toLowerCase()
-              .includes(search) ||
-            employee.email
-              ?.toLowerCase()
-              .includes(search) ||
-            String(employee.phoneNumber || "")
-              .toLowerCase()
-              .includes(search)
-          );
-        },
-      )
-    : [];
-
-
-
-
-
+      return employees.filter(
+        (employee: any) =>
+          employee.status === "ACTIVE",
+      );
+    }, [
+      employees,
+      debouncedSearchText,
+    ]);
 
   const handleAssignLicense = (
     employee: any,
@@ -96,15 +106,17 @@ export default function Licenses_to_Employee({
     const alreadyAssigned =
       license.assignments?.some(
         (assignment: any) =>
-          assignment.employeeId ===
-            employee.id &&
+          Number(
+            assignment.employeeId,
+          ) === Number(employee.id) &&
           !assignment.returnedAt,
       );
 
     if (alreadyAssigned) {
       toast.error(
-        "License already assigned to this employee.",
+        "This license is already assigned to this employee.",
       );
+
       return;
     }
 
@@ -123,28 +135,67 @@ export default function Licenses_to_Employee({
         },
 
         onError: (error: any) => {
+          // Full technical error developer console-এ থাকবে
           console.error(
-            "Failed to assign license:",
+            "Assign License Error:",
             error,
           );
 
-          const errorMessage =
-            error.response?.data?.message ||
-            error.response?.data?.error ||
-            "Failed to assign license. Please try again.";
+          const status =
+            error?.response?.status;
 
-          toast.error(errorMessage);
+          let message =
+            "License could not be assigned. Please try again.";
+
+          if (status === 400) {
+            message =
+              error?.response?.data
+                ?.message ||
+              "Please check the assignment information.";
+          } else if (status === 409) {
+            message =
+              error?.response?.data
+                ?.message ||
+              "This license is already assigned.";
+          } else if (status === 401) {
+            message =
+              "Your session has expired. Please log in again.";
+          } else if (status === 403) {
+            message =
+              "You do not have permission to assign this license.";
+          } else if (!error?.response) {
+            message =
+              "Unable to connect to the server. Please check your connection.";
+          }
+
+          toast.error(message);
         },
       },
     );
   };
 
+  const isTyping =
+    searchText.trim() !==
+    debouncedSearchText;
 
+  const isSearching =
+    isTyping ||
+    isLoading ||
+    isFetching;
+
+  const hasSearchText =
+    searchText.trim().length > 0;
 
   return (
     <div
       className="fixed inset-0 z-[60] flex items-center justify-center bg-black/40 px-4 backdrop-blur-sm animate-fadeIn"
-      onClick={onClose}
+      onClick={() => {
+        if (
+          !createLicenseAssignment.isPending
+        ) {
+          onClose();
+        }
+      }}
     >
       <div
         className="w-full max-w-lg rounded-xl border border-app-gray/20 bg-app-bg p-6 shadow-xl animate-scaleIn"
@@ -160,8 +211,11 @@ export default function Licenses_to_Employee({
 
           <button
             type="button"
+            disabled={
+              createLicenseAssignment.isPending
+            }
             onClick={onClose}
-            className="cursor-pointer text-app-gray transition hover:text-app-text"
+            className="cursor-pointer text-app-gray transition hover:text-app-text disabled:cursor-not-allowed disabled:opacity-50"
             title="Close"
           >
             <FiX size={20} />
@@ -171,12 +225,15 @@ export default function Licenses_to_Employee({
         <div className="mb-4 text-sm">
           <p>
             License:{" "}
-            <b>{license.softwareName}</b>
+            <b>
+              {license.softwareName}
+            </b>
           </p>
 
           <p className="text-app-gray">
             Type:{" "}
-            {license.licenseType || "N/A"}
+            {license.licenseType ||
+              "N/A"}
           </p>
         </div>
 
@@ -188,25 +245,59 @@ export default function Licenses_to_Employee({
           <input
             type="text"
             value={searchText}
+            autoComplete="off"
             onChange={(event) =>
               setSearchText(
                 event.target.value,
               )
             }
-            placeholder="Search active employee by name, email, iqama number, phone..."
-            className="w-full rounded-lg border border-app-gray/30 bg-transparent py-3 pr-4 pl-10 text-sm placeholder:text-app-gray/40 focus:border-app-brand focus:outline-none"
+            placeholder="Search active employee by name, email, Iqama or phone..."
+            className="w-full rounded-lg border border-app-gray/30 bg-transparent py-3 pr-28 pl-10 text-sm placeholder:text-app-gray/40 focus:border-app-brand focus:outline-none"
           />
+
+          {isSearching &&
+            hasSearchText && (
+              <div className="pointer-events-none absolute inset-y-0 right-3 flex items-center gap-2 text-xs text-app-brand">
+                <span className="h-4 w-4 animate-spin rounded-full border-2 border-app-brand/20 border-t-app-brand" />
+
+                <span className="hidden sm:inline">
+                  Searching...
+                </span>
+              </div>
+            )}
         </div>
 
         <div className="max-h-80 space-y-2 overflow-y-auto pr-1">
-          {isLoading ? (
-            <p className="py-6 text-center text-sm text-app-brand">
-              Loading employees...
-            </p>
+          {!hasSearchText ? (
+            <div className="py-6 text-center">
+              <p className="text-sm font-medium text-app-text">
+                Search for an employee
+              </p>
+
+              <p className="mt-1 text-xs text-app-gray">
+                Enter a name, email,
+                Iqama number or phone
+                number.
+              </p>
+            </div>
+          ) : isSearching ? (
+            <div className="flex items-center justify-center gap-2 py-6 text-sm text-app-brand">
+              <span className="h-4 w-4 animate-spin rounded-full border-2 border-app-brand/20 border-t-app-brand" />
+
+              <span>
+                Searching employees...
+              </span>
+            </div>
           ) : isError ? (
-            <p className="py-6 text-center text-sm text-red-500">
-              Failed to load employees
-            </p>
+            <div className="py-6 text-center">
+              <p className="text-sm font-medium text-red-500">
+                Failed to search employees
+              </p>
+
+              <p className="mt-1 text-xs text-app-gray">
+                Please try again.
+              </p>
+            </div>
           ) : filteredEmployees.length >
             0 ? (
             filteredEmployees.map(
@@ -216,8 +307,12 @@ export default function Licenses_to_Employee({
                     (
                       assignment: any,
                     ) =>
-                      assignment.employeeId ===
-                        employee.id &&
+                      Number(
+                        assignment.employeeId,
+                      ) ===
+                        Number(
+                          employee.id,
+                        ) &&
                       !assignment.returnedAt,
                   );
 
@@ -238,6 +333,7 @@ export default function Licenses_to_Employee({
                               "Employee"
                             }
                             className="h-full w-full object-cover"
+                            loading="lazy"
                           />
                         ) : (
                           <span className="text-xs font-bold text-app-brand">
@@ -259,6 +355,13 @@ export default function Licenses_to_Employee({
                         <p className="truncate text-xs text-app-gray">
                           {employee.position ||
                             "No Position"}
+                        </p>
+
+                        <p className="mt-0.5 truncate text-[11px] text-app-gray">
+                          {employee.iqamaNumber ||
+                            employee.email ||
+                            employee.phoneNumber ||
+                            "No additional information"}
                         </p>
                       </div>
                     </div>
@@ -287,9 +390,17 @@ export default function Licenses_to_Employee({
               },
             )
           ) : (
-            <p className="py-6 text-center text-sm text-app-gray">
-              Search an active employee to assign this license.
-            </p>
+            <div className="py-6 text-center">
+              <p className="text-sm font-medium text-app-text">
+                No active employee found
+              </p>
+
+              <p className="mt-1 text-xs text-app-gray">
+                Try another name,
+                email, Iqama number or
+                phone number.
+              </p>
+            </div>
           )}
         </div>
       </div>

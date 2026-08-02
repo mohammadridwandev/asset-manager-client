@@ -3,30 +3,42 @@ import Add_Asset from "../../components/Asset_Compo/Add_Asset";
 import { useEffect, useRef, useState } from "react";
 import { MdKeyboardArrowRight } from "react-icons/md";
 import Asset_Card from "../../components/Asset_Compo/Asset_Card";
+
 import {
   useGetAssets,
   useGetAssetFilterOptions,
 } from "../../context/useAssets";
+
 import Asset_Import from "../../components/Asset_Compo/Asset_Import";
 import Asset_Export from "../../components/Asset_Compo/Asset_Export";
 import Asset_Pagination from "../../components/Asset_Compo/Asset_Pagination";
 import { Helmet } from "react-helmet-async";
 import DataLoading from "../../DataLoading";
+import { useDebounce } from "../../context/useDebounce";
+
 
 export default function AssetPage() {
   const [assetOpen, setAssetOpen] = useState(false);
   const [searchText, setSearchText] = useState("");
+
+  // Search typing শেষ হওয়ার 400ms পরে API request যাবে
+  const debouncedSearchText = useDebounce(
+    searchText.trim(),
+    400,
+  );
 
   const [page, setPage] = useState(1);
   const assetListRef = useRef<HTMLDivElement>(null);
 
   const [assetTypeOpen, setAssetTypeOpen] =
     useState(false);
+
   const [selectedType, setSelectedType] =
     useState("All Types");
 
   const [assignmentOpen, setAssignmentOpen] =
     useState(false);
+
   const [
     selectedAssignment,
     setSelectedAssignment,
@@ -40,11 +52,12 @@ export default function AssetPage() {
   const {
     data,
     isLoading,
+    isFetching,
     isError,
   } = useGetAssets(
     page,
     10,
-    searchText,
+    debouncedSearchText,
     selectedType,
     selectedAssignment,
   );
@@ -75,10 +88,11 @@ export default function AssetPage() {
     setAssignmentOpen(false);
   };
 
+  // Search বা filter change হলে page 1-এ যাবে
   useEffect(() => {
     setPage(1);
   }, [
-    searchText,
+    debouncedSearchText,
     selectedType,
     selectedAssignment,
   ]);
@@ -96,12 +110,21 @@ export default function AssetPage() {
     }, 100);
   };
 
-  if (isLoading) {
+  // শুধু initial load-এর সময় full loading page দেখাবে
+  if (isLoading && !data) {
     return (
       <DataLoading
         title="Loading Assets"
         message="Fetching asset inventory..."
       />
+    );
+  }
+
+  if (isError && !data) {
+    return (
+      <div className="flex min-h-75 items-center justify-center text-lg font-medium text-red-500">
+        Failed to load asset data!
+      </div>
     );
   }
 
@@ -134,7 +157,9 @@ export default function AssetPage() {
               <button
                 type="button"
                 onClick={() =>
-                  setAssetOpen(!assetOpen)
+                  setAssetOpen(
+                    (previous) => !previous,
+                  )
                 }
                 className="flex w-full cursor-pointer items-center justify-center gap-2 rounded-lg bg-app-brand px-5 py-2.5 text-sm font-bold text-white shadow-md transition-all hover:opacity-90 active:scale-95 md:w-auto"
               >
@@ -154,8 +179,9 @@ export default function AssetPage() {
           </div>
 
           <div className="mb-8 flex flex-col items-stretch gap-3 sm:flex-row sm:items-center">
+            {/* Search */}
             <div className="relative flex-1">
-              <div className="pointer-events-none absolute inset-y-0 -top-1 left-4 flex items-center text-app-gray opacity-60">
+              <div className="pointer-events-none absolute inset-y-0 left-4 flex items-center text-app-gray opacity-60">
                 <FiSearch size={18} />
               </div>
 
@@ -168,24 +194,39 @@ export default function AssetPage() {
                   )
                 }
                 placeholder="Search by asset name, serial number, invoice number, type, employee name, email, or Iqama..."
-                className="w-full rounded-md border border-app-gray/30 bg-transparent py-2.5 pl-12 text-sm outline-none transition-all placeholder:text-app-gray/50 focus:border-app-brand"
+                className="w-full rounded-md border border-app-gray/30 bg-transparent py-2.5 pr-30 pl-12 text-sm outline-none transition-all placeholder:text-app-gray/50 focus:border-app-brand"
               />
+
+              {isFetching && !isLoading && (
+                <div className="pointer-events-none absolute inset-y-0 right-4 flex items-center gap-2 text-xs font-medium text-app-brand">
+                  <span className="h-4 w-4 animate-spin rounded-full border-2 border-app-brand/20 border-t-app-brand" />
+
+                  <span className="hidden lg:inline">
+                    Searching...
+                  </span>
+                </div>
+              )}
             </div>
 
+            {/* Asset Type Filter */}
             <div className="relative">
               <button
                 type="button"
-                onClick={() =>
+                onClick={() => {
                   setAssetTypeOpen(
-                    !assetTypeOpen,
-                  )
-                }
+                    (previous) => !previous,
+                  );
+
+                  setAssignmentOpen(false);
+                }}
                 className="flex w-full items-center justify-between rounded-md border border-app-gray/30 bg-transparent px-4 py-2.5 text-left text-sm font-medium shadow-xs hover:bg-app-gray/5 focus:outline-none sm:w-48"
               >
-                <span>{selectedType}</span>
+                <span className="truncate">
+                  {selectedType}
+                </span>
 
                 <MdKeyboardArrowRight
-                  className={`transform transition-transform duration-200 ${
+                  className={`shrink-0 transform transition-transform duration-200 ${
                     assetTypeOpen
                       ? "rotate-90"
                       : ""
@@ -195,13 +236,11 @@ export default function AssetPage() {
               </button>
 
               {assetTypeOpen && (
-                <ul className="absolute z-10 mt-1 max-h-64 w-full overflow-y-auto rounded-lg border border-app-gray/20 bg-app-bg py-1 text-sm shadow-md sm:w-48">
+                <ul className="absolute z-20 mt-1 max-h-64 w-full overflow-y-auto rounded-lg border border-app-gray/20 bg-app-bg py-1 text-sm shadow-md sm:w-48">
                   <li
                     className="cursor-pointer px-4 py-2 font-semibold transition-colors hover:bg-app-brand hover:text-white"
                     onClick={() =>
-                      handleSelect(
-                        "All Types",
-                      )
+                      handleSelect("All Types")
                     }
                   >
                     All Types
@@ -213,15 +252,11 @@ export default function AssetPage() {
                     </li>
                   ) : filterOptionsError ? (
                     <li className="px-4 py-2 text-red-500">
-                      Failed to load asset
-                      types
+                      Failed to load asset types
                     </li>
-                  ) : assetTypes.length >
-                    0 ? (
+                  ) : assetTypes.length > 0 ? (
                     assetTypes.map(
-                      (
-                        assetType: string,
-                      ) => (
+                      (assetType: string) => (
                         <li
                           key={assetType}
                           className="cursor-pointer px-4 py-2 transition-colors hover:bg-app-brand hover:text-white"
@@ -244,14 +279,17 @@ export default function AssetPage() {
               )}
             </div>
 
+            {/* Assignment Filter */}
             <div className="relative">
               <button
                 type="button"
-                onClick={() =>
+                onClick={() => {
                   setAssignmentOpen(
-                    !assignmentOpen,
-                  )
-                }
+                    (previous) => !previous,
+                  );
+
+                  setAssetTypeOpen(false);
+                }}
                 className="flex w-full items-center justify-between rounded-md border border-app-gray/30 bg-transparent px-4 py-2.5 text-left text-sm font-medium shadow-xs hover:bg-app-gray/5 focus:outline-none sm:w-48"
               >
                 <span>
@@ -259,7 +297,7 @@ export default function AssetPage() {
                 </span>
 
                 <MdKeyboardArrowRight
-                  className={`transform transition-transform duration-200 ${
+                  className={`shrink-0 transform transition-transform duration-200 ${
                     assignmentOpen
                       ? "rotate-90"
                       : ""
@@ -269,7 +307,7 @@ export default function AssetPage() {
               </button>
 
               {assignmentOpen && (
-                <ul className="absolute z-10 mt-1 w-full rounded-lg border border-app-gray/20 bg-app-bg py-1 text-sm shadow-md sm:w-48">
+                <ul className="absolute z-20 mt-1 w-full rounded-lg border border-app-gray/20 bg-app-bg py-1 text-sm shadow-md sm:w-48">
                   <li
                     className="cursor-pointer px-4 py-2 font-semibold transition-colors hover:bg-app-brand hover:text-white"
                     onClick={() =>

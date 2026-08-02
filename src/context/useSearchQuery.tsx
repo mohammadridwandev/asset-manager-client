@@ -9,34 +9,37 @@ import axiosInstance from "../config/axiosInstance";
 
 export const useSearchEmployeeProfile = () => {
   return useMutation({
-    // UPDATED: search api call
     mutationFn: async (searchText: string) => {
       const token = localStorage.getItem("token");
 
       const response = await axiosInstance.get(
-        `/search/profile?query=${encodeURIComponent(searchText)}`,
+        "/search/profile",
         {
+          params: {
+            query: searchText,
+          },
+
           headers: {
             Authorization: `Bearer ${token}`,
           },
         },
       );
 
-      return response.data.data;
+      return response.data?.data;
     },
 
-    // UPDATED: success message
-    onSuccess: () => {
-      // optional
-    },
-
-    // UPDATED: error handling
     onError: (error: any) => {
-      console.error(error);
-
-      toast.error(
-        error.response?.data?.message || "Employee not found.",
+      console.error(
+        "Search Employee Error:",
+        error,
       );
+
+      const errorMessage =
+        error?.response?.data?.message ||
+        error?.response?.data?.error ||
+        "Employee not found.";
+
+      toast.error(errorMessage);
     },
   });
 };

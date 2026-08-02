@@ -1,252 +1,520 @@
 import { useEffect, useState } from "react";
 import DatePicker from "react-datepicker";
 import toast from "react-hot-toast";
-import { useNavigate, useParams } from "react-router-dom";
+import {
+  useNavigate,
+  useParams,
+} from "react-router-dom";
+import Swal from "sweetalert2";
+
 import {
   useGetSingleEmployee,
   useUpdateEmployee,
 } from "../../context/useEmployee";
-import Swal from "sweetalert2";
 
 export default function Update_Employee() {
-  
   const { id } = useParams();
   const navigate = useNavigate();
 
-  const { data: employee, isLoading } = useGetSingleEmployee(id);
+  const {
+    data: employee,
+    isLoading,
+    isError,
+  } = useGetSingleEmployee(id);
 
+  const updateMutation =
+    useUpdateEmployee();
 
-  const updateMutation = useUpdateEmployee();
+  const [startDate, setStartDate] =
+    useState<Date | null>(null);
 
-  const [startDate, setStartDate] = useState<Date | null>(null);
-  const [imagePreview, setImagePreview] = useState<string | null>(null);
-  const [fileName, setFileName] = useState<string>("No file chosen");
+  const [
+    imagePreview,
+    setImagePreview,
+  ] = useState<string | null>(null);
 
+  const [fileName, setFileName] =
+    useState("No file chosen");
+
+  const API_BASE_URL =
+    import.meta.env
+      .VITE_BACKEND_URL_LINK || "";
+
+  // ====================================================
+  // BUILD SAFE IMAGE URL
+  // ====================================================
+  const getImageUrl = (
+    image?: string | null,
+  ) => {
+    if (!image) {
+      return "";
+    }
+
+    if (
+      image.startsWith("http://") ||
+      image.startsWith("https://")
+    ) {
+      return image;
+    }
+
+    return `${API_BASE_URL.replace(
+      /\/$/,
+      "",
+    )}/${image.replace(/^\//, "")}`;
+  };
+
+  // ====================================================
+  // LOAD EXISTING EMPLOYEE DATA
+  // ====================================================
   useEffect(() => {
-  
-    if (employee?.joinDate) {
-      setStartDate(new Date(employee.joinDate));
+    if (!employee) {
+      return;
     }
 
-    if (employee?.image) {
-      setImagePreview(`${import.meta.env.VITE_BACKEND_URL_LINK}${employee.image}`);
+    // Existing join date load করবে
+    if (employee.joinDate) {
+      const parsedDate = new Date(
+        employee.joinDate,
+      );
+
+      setStartDate(
+        Number.isNaN(parsedDate.getTime())
+          ? null
+          : parsedDate,
+      );
+    } else {
+      setStartDate(null);
     }
+
+    // Existing image preview load করবে
+    if (employee.image) {
+      setImagePreview(
+        getImageUrl(employee.image),
+      );
+    } else {
+      setImagePreview(null);
+    }
+
+    setFileName("No file chosen");
   }, [employee]);
 
-  const handleDateSelect = (date: Date | null) => {
+  const handleDateSelect = (
+    date: Date | null,
+  ) => {
     setStartDate(date);
   };
 
+  // ====================================================
+  // IMAGE VALIDATION
+  // ====================================================
+  const handlerImageUpdate = (
+    event: React.ChangeEvent<HTMLInputElement>,
+  ) => {
+    const file =
+      event.target.files?.[0];
 
-  const handlerImageUpdate = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    const allowedTypes = ["image/jpeg", "image/png", "image/jpg", "image/webp"];
+    const allowedTypes = [
+      "image/jpeg",
+      "image/png",
+      "image/jpg",
+      "image/webp",
+    ];
 
-    if (!file) return;
+    if (!file) {
+      return;
+    }
 
     if (!allowedTypes.includes(file.type)) {
-      toast.error("Only .jpg, .jpeg, .png or .webp files are allowed!");
-      e.target.value = "";
-      setImagePreview(null);
+      toast.error(
+        "Only .jpg, .jpeg, .png or .webp files are allowed!",
+      );
+
+      event.target.value = "";
+
+      // Invalid file হলে existing image preview রাখবে
+      setImagePreview(
+        employee?.image
+          ? getImageUrl(employee.image)
+          : null,
+      );
+
       setFileName("No file chosen");
+
       return;
     }
 
     if (file.size > 2 * 1024 * 1024) {
-      toast.error("File size should be less than 2MB!");
-      e.target.value = "";
+      toast.error(
+        "File size should be less than 2MB!",
+      );
+
+      event.target.value = "";
+
+      // Large file হলে existing image preview রাখবে
+      setImagePreview(
+        employee?.image
+          ? getImageUrl(employee.image)
+          : null,
+      );
+
+      setFileName("No file chosen");
+
       return;
     }
 
     setFileName(file.name);
 
     const reader = new FileReader();
+
     reader.onloadend = () => {
-      setImagePreview(reader.result as string);
+      setImagePreview(
+        reader.result as string,
+      );
     };
+
     reader.readAsDataURL(file);
   };
 
+  // ====================================================
+  // UPDATE EMPLOYEE
+  // ====================================================
+  const handlerEmployeeUpdate = async (
+    event: React.FormEvent<HTMLFormElement>,
+  ) => {
+    event.preventDefault();
 
+    if (!id) {
+      toast.error(
+        "Invalid employee ID.",
+      );
 
- const handlerEmployeeUpdate = async (
-  e: React.FormEvent<HTMLFormElement>,
-) => {
-  e.preventDefault();
+      return;
+    }
 
-  const form = e.currentTarget;
+    const form = event.currentTarget;
 
-  const confirm = await Swal.fire({
-    title: "Update Employee?",
-    text: "Are you sure you want to save these changes?",
-    icon: "question",
-    showCancelButton: true,
-    confirmButtonColor: "#2563eb",
-    cancelButtonColor: "#6b7280",
-    confirmButtonText: "Yes, Update",
-    cancelButtonText: "Cancel",
-  });
+    const confirm = await Swal.fire({
+      title: "Update Employee?",
+      text: "Are you sure you want to save these changes?",
+      icon: "question",
+      showCancelButton: true,
+      confirmButtonColor: "#2563eb",
+      cancelButtonColor: "#6b7280",
+      confirmButtonText: "Yes, Update",
+      cancelButtonText: "Cancel",
+    });
 
-  if (!confirm.isConfirmed) return;
+    if (!confirm.isConfirmed) {
+      return;
+    }
 
-  const formData = new FormData(form);
+    const formData = new FormData(form);
 
-  if (startDate) {
-    formData.set("joinDate", startDate.toISOString());
-  }
+    // Clean required text values
+    formData.set(
+      "fullName",
+      String(
+        formData.get("fullName") || "",
+      ).trim(),
+    );
 
-  const imageFile = formData.get("image") as File;
+    formData.set(
+      "iqamaNumber",
+      String(
+        formData.get(
+          "iqamaNumber",
+        ) || "",
+      ).trim(),
+    );
 
-  if (!imageFile || imageFile.size === 0) {
-    formData.delete("image");
-  }
+    formData.set(
+      "department",
+      String(
+        formData.get("department") ||
+          "",
+      ).trim(),
+    );
 
-  updateMutation.mutate(
-    {
-      id: String(id),
-      updateData: formData,
-    },
-    {
-      onSuccess: () => {
-        Swal.fire({
-          title: "Updated!",
-          text: "Employee updated successfully.",
-          icon: "success",
-          timer: 1500,
-          showConfirmButton: false,
-        });
+    formData.set(
+      "position",
+      String(
+        formData.get("position") || "",
+      ).trim(),
+    );
 
-        navigate("/dashboard/employees");
+    // Optional phone
+    const phoneNumber = String(
+      formData.get("phoneNumber") || "",
+    ).trim();
+
+    if (phoneNumber) {
+      formData.set(
+        "phoneNumber",
+        phoneNumber,
+      );
+    } else {
+      // Backend null করবে
+      formData.set("phoneNumber", "");
+    }
+
+    // Optional email
+    const email = String(
+      formData.get("email") || "",
+    )
+      .trim()
+      .toLowerCase();
+
+    if (email) {
+      formData.set("email", email);
+    } else {
+      // Backend null করবে
+      formData.set("email", "");
+    }
+
+    // Join date
+    if (startDate) {
+      formData.set(
+        "joinDate",
+        startDate
+          .toISOString()
+          .split("T")[0],
+      );
+    } else {
+      // Date clear করলে backend null করবে
+      formData.set("joinDate", "");
+    }
+
+    // Empty file পাঠাবে না
+    const imageFile = formData.get(
+      "image",
+    ) as File | null;
+
+    if (
+      !imageFile ||
+      imageFile.size === 0
+    ) {
+      formData.delete("image");
+    }
+
+    updateMutation.mutate(
+      {
+        id: String(id),
+        updateData: formData,
       },
-    },
-  );
-};
+      {
+        onSuccess: async () => {
+          await Swal.fire({
+            title: "Updated!",
+            text: "Employee updated successfully.",
+            icon: "success",
+            timer: 1500,
+            showConfirmButton: false,
+          });
 
+          navigate(
+            "/dashboard/employees",
+          );
+        },
 
-  
+        onError: () => {
+          /*
+           * Professional error toast
+           * useUpdateEmployee hook থেকে আসবে।
+           * Error হলে form data unchanged থাকবে।
+           */
+        },
+      },
+    );
+  };
 
   if (isLoading) {
-    return <p className="p-6">Loading employee...</p>;
+    return (
+      <div className="flex min-h-75 items-center justify-center text-app-gray">
+        Loading employee...
+      </div>
+    );
   }
 
-  if (!employee) {
-    return <p className="p-6 text-red-500">Employee not found!</p>;
+  if (isError || !employee) {
+    return (
+      <div className="flex min-h-75 items-center justify-center text-red-500">
+        Employee not found!
+      </div>
+    );
   }
-
-
 
   return (
-    <div className="min-h-screen py-5 bg-app-bg text-app-text transition-colors duration-300">
-      <div className="bg-app-bg border border-app-gray/10 rounded-xl shadow-sm p-6 md:p-8">
-        <h2 className="text-xl font-bold mb-5">Update Employee</h2>
+    <div className="min-h-screen bg-app-bg py-5 text-app-text transition-colors duration-300">
+      <div className="rounded-xl border border-app-gray/10 bg-app-bg p-6 shadow-sm md:p-8">
+        <h2 className="mb-5 text-xl font-bold">
+          Update Employee
+        </h2>
 
-        <form onSubmit={handlerEmployeeUpdate} className="space-y-3">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-x-5 gap-y-5">
+        <form
+          onSubmit={
+            handlerEmployeeUpdate
+          }
+          className="space-y-3"
+        >
+          <div className="grid grid-cols-1 gap-x-5 gap-y-5 md:grid-cols-2">
+            {/* Full Name */}
             <div className="space-y-2">
-              <label className="text-sm text-app-text font-medium">
+              <label className="text-sm font-medium text-app-text">
                 Full Name *
               </label>
+
               <input
                 type="text"
                 required
-                defaultValue={employee.fullName || ""}
                 name="fullName"
+                defaultValue={
+                  employee.fullName || ""
+                }
                 placeholder="Enter full name"
-                className="w-full px-4 py-2.5 my-2 rounded-lg border border-app-gray/30 bg-transparent focus:outline-none focus:border-app-brand transition-colors"
+                className="my-2 w-full rounded-lg border border-app-gray/30 bg-transparent px-4 py-2.5 transition-colors focus:border-app-brand focus:outline-none"
               />
             </div>
 
+            {/* Iqama / Passport */}
             <div className="space-y-2">
-              <label className="text-sm text-app-text font-medium">
+              <label className="text-sm font-medium text-app-text">
                 Iqama/Passport *
               </label>
+
               <input
                 type="text"
-                name="iqamaNumber"
                 required
-                defaultValue={employee.iqamaNumber || ""}
+                name="iqamaNumber"
+                defaultValue={
+                  employee.iqamaNumber ||
+                  ""
+                }
                 placeholder="Enter Iqama ID or Passport"
-                className="w-full px-4 py-2.5 my-2 rounded-lg border border-app-gray/30 bg-transparent focus:outline-none focus:border-app-brand transition-colors"
+                className="my-2 w-full rounded-lg border border-app-gray/30 bg-transparent px-4 py-2.5 transition-colors focus:border-app-brand focus:outline-none"
               />
             </div>
 
+            {/* Phone Number */}
             <div className="space-y-2">
-              <label className="text-sm text-app-text font-medium">
+              <label className="text-sm font-medium text-app-text">
                 Phone Number
               </label>
+
               <input
-                type="text"
+                type="tel"
                 name="phoneNumber"
-                defaultValue={employee.phoneNumber || ""}
+                inputMode="tel"
+                autoComplete="tel"
+                defaultValue={
+                  employee.phoneNumber ||
+                  ""
+                }
                 placeholder="+966 XXX XXX XXXX"
-                className="w-full px-4 py-2.5 my-2 rounded-lg border border-app-gray/30 bg-transparent focus:outline-none focus:border-app-brand transition-colors"
+                className="my-2 w-full rounded-lg border border-app-gray/30 bg-transparent px-4 py-2.5 transition-colors focus:border-app-brand focus:outline-none"
               />
             </div>
 
+            {/* Email */}
             <div className="space-y-2">
-              <label className="text-sm text-app-text font-medium">Email</label>
+              <label className="text-sm font-medium text-app-text">
+                Email
+              </label>
+
               <input
                 type="email"
                 name="email"
-                defaultValue={employee.email || ""}
+                autoComplete="email"
+                defaultValue={
+                  employee.email || ""
+                }
                 placeholder="employee@company.com"
-                className="w-full px-4 py-2.5 my-2 rounded-lg border border-app-gray/30 bg-transparent focus:outline-none focus:border-app-brand transition-colors"
+                className="my-2 w-full rounded-lg border border-app-gray/30 bg-transparent px-4 py-2.5 transition-colors focus:border-app-brand focus:outline-none"
               />
             </div>
 
+            {/* Department */}
             <div className="space-y-2">
-              <label className="text-sm text-app-text font-medium">
+              <label className="text-sm font-medium text-app-text">
                 Department *
               </label>
+
               <input
                 type="text"
                 required
                 name="department"
-                defaultValue={employee.department || ""}
+                defaultValue={
+                  employee.department || ""
+                }
                 placeholder="Enter department"
-                className="w-full px-4 py-2.5 my-2 rounded-lg border border-app-gray/30 bg-transparent focus:outline-none focus:border-app-brand transition-colors"
+                className="my-2 w-full rounded-lg border border-app-gray/30 bg-transparent px-4 py-2.5 transition-colors focus:border-app-brand focus:outline-none"
               />
             </div>
 
+            {/* Position */}
             <div className="space-y-2">
-              <label className="text-sm text-app-text font-medium">
+              <label className="text-sm font-medium text-app-text">
                 Position *
               </label>
+
               <input
                 type="text"
                 required
                 name="position"
-                defaultValue={employee.position || ""}
+                defaultValue={
+                  employee.position || ""
+                }
                 placeholder="e.g., Manager, Developer"
-                className="w-full px-4 py-2.5 my-2 rounded-lg border border-app-gray/30 bg-transparent focus:outline-none focus:border-app-brand transition-colors"
+                className="my-2 w-full rounded-lg border border-app-gray/30 bg-transparent px-4 py-2.5 transition-colors focus:border-app-brand focus:outline-none"
               />
             </div>
 
+            {/* Status */}
             <div className="space-y-2">
-              <label className="text-sm text-app-text font-medium">
+              <label className="text-sm font-medium text-app-text">
                 Status
               </label>
+
               <select
                 name="status"
-                defaultValue={employee.status || "ACTIVE"}
-                className="w-full px-4 py-2.5 my-2 rounded-lg border border-app-gray/30 bg-app-bg focus:outline-none focus:border-app-brand transition-colors"
+                defaultValue={
+                  employee.status ||
+                  "ACTIVE"
+                }
+                className="my-2 w-full rounded-lg border border-app-gray/30 bg-app-bg px-4 py-2.5 transition-colors focus:border-app-brand focus:outline-none"
               >
-                <option value="ACTIVE">Active</option>
-                {/* <option value="ON_LEAVE">On Leave</option> */}
-                {/* <option value="VACATION">Vacation</option> */}
-                <option value="INACTIVE">Inactive</option>
-                {/* <option value="RESIGNED">Resigned</option> */}
+                <option value="ACTIVE">
+                  Active
+                </option>
+
+                <option value="ON_LEAVE">
+                  On Leave
+                </option>
+
+                <option value="VACATION">
+                  Vacation
+                </option>
+
+                <option value="INACTIVE">
+                  Inactive
+                </option>
+
+                <option value="RESIGNED">
+                  Resigned
+                </option>
               </select>
             </div>
 
+            {/* Join Date */}
             <div className="space-y-2 md:col-span-1">
-              <label className="text-sm text-app-text font-medium">
+              <label className="text-sm font-medium text-app-text">
                 Join Date
               </label>
 
               <DatePicker
                 selected={startDate}
-                onChange={handleDateSelect}
+                onChange={
+                  handleDateSelect
+                }
                 dateFormat="yyyy-MM-dd"
                 closeOnScroll
                 isClearable
@@ -254,63 +522,82 @@ export default function Update_Employee() {
                 placeholderText="Select Join Date"
                 popperPlacement="bottom-start"
                 calendarClassName="animate-fadeIn"
-                className="w-full px-4 py-2.5 my-2 rounded-lg border border-app-gray/30 bg-transparent focus:outline-none focus:border-app-brand transition-colors"
+                className="my-2 w-full rounded-lg border border-app-gray/30 bg-transparent px-4 py-2.5 transition-colors focus:border-app-brand focus:outline-none"
               />
             </div>
           </div>
 
-          <div className="mt-8 p-6 border border-dashed border-app-gray/30 rounded-xl flex items-center gap-4">
-            <div className="w-12 h-12 rounded-full border border-app-gray/20 flex items-center justify-center text-[10px] text-app-gray overflow-hidden">
+          {/* Image Upload */}
+          <div className="mt-8 flex items-center gap-4 rounded-xl border border-dashed border-app-gray/30 p-6">
+            <div className="flex h-12 w-12 items-center justify-center overflow-hidden rounded-full border border-app-gray/20 text-[10px] text-app-gray">
               {imagePreview ? (
                 <img
                   src={imagePreview}
-                  alt="Preview"
-                  className="w-full h-full object-cover"
+                  alt="Employee preview"
+                  className="h-full w-full object-cover"
                 />
               ) : (
-                <span className="opacity-60">Preview</span>
+                <span className="opacity-60">
+                  Preview
+                </span>
               )}
             </div>
 
-            <div className="flex flex-col gap-1">
+            <div className="flex min-w-0 flex-col gap-1">
               <div className="flex items-center gap-3">
-                <label className="cursor-pointer bg-app-brand/20 text-app-brand px-4 py-1.5 rounded-md text-sm font-medium hover:bg-app-brand/30 transition-colors">
+                <label className="cursor-pointer rounded-md bg-app-brand/20 px-4 py-1.5 text-sm font-medium text-app-brand transition-colors hover:bg-app-brand/30">
                   Choose File
+
                   <input
                     type="file"
                     accept=".jpg,.jpeg,.png,.webp"
                     name="image"
-                    onChange={handlerImageUpdate}
+                    onChange={
+                      handlerImageUpdate
+                    }
                     className="hidden"
                   />
                 </label>
 
-                <span className="text-sm text-app-gray truncate max-w-50">
+                <span className="max-w-50 truncate text-sm text-app-gray">
                   {fileName}
                 </span>
               </div>
 
               <p className="text-[11px] text-app-gray">
-                | jpg | jpeg | png | webp | Max 2MB
+                jpg | jpeg | png | webp |
+                Max 2MB
               </p>
             </div>
           </div>
 
-          <div className="flex justify-end gap-4 mt-10">
+          {/* Buttons */}
+          <div className="mt-10 flex justify-end gap-4">
             <button
               type="button"
-              onClick={() => navigate("/dashboard/employees")}
-              className="px-8 py-2 rounded-lg border border-app-gray/30 font-medium hover:bg-app-gray/5 transition-colors"
+              disabled={
+                updateMutation.isPending
+              }
+              onClick={() =>
+                navigate(
+                  "/dashboard/employees",
+                )
+              }
+              className="rounded-lg border border-app-gray/30 px-8 py-2 font-medium transition-colors hover:bg-app-gray/5 disabled:cursor-not-allowed disabled:opacity-50"
             >
               Cancel
             </button>
 
             <button
               type="submit"
-              disabled={updateMutation.isPending}
-              className="px-8 py-2 rounded-lg bg-app-brand text-white font-medium hover:opacity-90 transition-opacity disabled:opacity-50"
+              disabled={
+                updateMutation.isPending
+              }
+              className="rounded-lg bg-app-brand px-8 py-2 font-medium text-white transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
             >
-              {updateMutation.isPending ? "Updating..." : "Update Employee"}
+              {updateMutation.isPending
+                ? "Updating..."
+                : "Update Employee"}
             </button>
           </div>
         </form>

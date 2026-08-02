@@ -1,8 +1,4 @@
-import {
-  useMutation,
-  useQuery,
-  useQueryClient,
-} from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
 import toast from "react-hot-toast";
 import axiosInstance from "../config/axiosInstance";
@@ -17,30 +13,44 @@ export const useCreateAsset = () => {
     },
 
     onSuccess: () => {
+      // Asset list refresh করবে
       queryClient.invalidateQueries({
         queryKey: ["assets"],
       });
 
+      // Employee-related asset information refresh করবে
       queryClient.invalidateQueries({
         queryKey: ["employees"],
       });
 
+      // Asset Type dropdown refresh করবে
       queryClient.invalidateQueries({
         queryKey: ["asset-filter-options"],
+      });
+
+      // Dashboard asset count refresh করবে
+      queryClient.invalidateQueries({
+        queryKey: ["dashboard"],
+      });
+
+      // Allocation Report asset value/count refresh করবে
+      queryClient.invalidateQueries({
+        queryKey: ["report-allocation"],
       });
     },
 
     onError: (error: any) => {
-      console.error(error);
+      console.error("Create Asset Error:", error);
 
-      const errorMessage =
-        error.response?.data?.error ||
-        error.response?.data?.message ||
-        "Failed to create assets";
+      const status = error?.response?.status;
 
-      console.log(errorMessage);
+      const message =
+        status === 409
+          ? error?.response?.data?.message ||
+            "This serial number already exists."
+          : "Asset could not be created. Please try again.";
 
-      toast.error("Failed to create assets");
+      toast.error(message);
     },
   });
 };
@@ -50,13 +60,16 @@ export const useGetSingleAsset = (id?: string) => {
   return useQuery({
     queryKey: ["assets", id],
 
-    queryFn: async () => {
-      const response = await axiosInstance.get(`/assets/${id}`);
+    queryFn: async ({ signal }) => {
+      const response = await axiosInstance.get(`/assets/${id}`, {
+        signal,
+      });
 
       return response.data?.data || response.data;
     },
 
     enabled: !!id,
+    refetchOnWindowFocus: false,
   });
 };
 
@@ -69,16 +82,9 @@ export const useGetAssets = (
   assignmentStatus: string = "",
 ) => {
   return useQuery({
-    queryKey: [
-      "assets",
-      page,
-      limit,
-      search,
-      assetType,
-      assignmentStatus,
-    ],
+    queryKey: ["assets", page, limit, search, assetType, assignmentStatus],
 
-    queryFn: async () => {
+    queryFn: async ({ signal }) => {
       const response = await axiosInstance.get("/assets", {
         params: {
           page,
@@ -87,10 +93,14 @@ export const useGetAssets = (
           assetType,
           assignmentStatus,
         },
+
+        // Search/filter change হলে পুরোনো request cancel করবে
+        signal,
       });
 
       return {
         assets: response.data?.data || [],
+
         pagination: response.data?.pagination || {
           currentPage: page,
           limit,
@@ -102,7 +112,10 @@ export const useGetAssets = (
       };
     },
 
+    // নতুন page/search data আসা পর্যন্ত আগের data রাখবে
     placeholderData: (previousData) => previousData,
+
+    refetchOnWindowFocus: false,
   });
 };
 
@@ -111,42 +124,55 @@ export const useUpdateAsset = () => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async ({
-      id,
-      updateData,
-    }: {
-      id: string;
-      updateData: any;
-    }) => {
+    mutationFn: async ({ id, updateData }: { id: string; updateData: any }) => {
       const token = localStorage.getItem("token");
 
-      return axiosInstance.patch(
-        `/assets/${id}`,
-        updateData,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
+      return axiosInstance.patch(`/assets/${id}`, updateData, {
+        headers: {
+          Authorization: `Bearer ${token}`,
         },
-      );
+      });
     },
 
     onSuccess: () => {
+      // Asset list এবং single asset cache refresh করবে
       queryClient.invalidateQueries({
         queryKey: ["assets"],
       });
 
+      // Employee asset information refresh করবে
       queryClient.invalidateQueries({
         queryKey: ["employees"],
       });
 
+      // Asset Type পরিবর্তন হলে dropdown refresh করবে
       queryClient.invalidateQueries({
         queryKey: ["asset-filter-options"],
+      });
+
+      // Dashboard total/count refresh করবে
+      queryClient.invalidateQueries({
+        queryKey: ["dashboard"],
+      });
+
+      // Allocation Report value/count refresh করবে
+      queryClient.invalidateQueries({
+        queryKey: ["report-allocation"],
       });
     },
 
     onError: (error: any) => {
-      console.error(error);
+      console.error("Update Asset Error:", error);
+
+      const status = error?.response?.status;
+
+      const message =
+        status === 409
+          ? error?.response?.data?.message ||
+            "This serial number is already used by another asset."
+          : "Asset could not be updated. Please try again.";
+
+      toast.error(message);
     },
   });
 };
@@ -167,32 +193,50 @@ export const useDeleteAsset = () => {
     },
 
     onSuccess: () => {
+      // Asset list refresh করবে
       queryClient.invalidateQueries({
         queryKey: ["assets"],
       });
 
+      // Employee asset information refresh করবে
       queryClient.invalidateQueries({
         queryKey: ["employees"],
       });
 
+      // Last asset type delete হলে dropdown refresh করবে
       queryClient.invalidateQueries({
         queryKey: ["asset-filter-options"],
+      });
+
+      // Dashboard total/count refresh করবে
+      queryClient.invalidateQueries({
+        queryKey: ["dashboard"],
+      });
+
+      // Allocation Report refresh করবে
+      queryClient.invalidateQueries({
+        queryKey: ["report-allocation"],
       });
     },
 
     onError: (error: any) => {
-      console.error(error);
+      console.error("Delete Asset Error:", error);
+
+      const errorMessage =
+        error?.response?.data?.message ||
+        error?.response?.data?.error ||
+        "Failed to delete asset.";
+
+      toast.error(errorMessage);
     },
   });
 };
 
-// EXPORT ASSETS
+// EXPORT ALL ASSETS
 export const useExportAssets = () => {
   return useMutation({
     mutationFn: async () => {
-      const response = await axiosInstance.get(
-        "/assets/export",
-      );
+      const response = await axiosInstance.get("/assets/export");
 
       return response.data?.data || [];
     },
@@ -213,18 +257,19 @@ export const useGetAssetFilterOptions = () => {
   return useQuery({
     queryKey: ["asset-filter-options"],
 
-    queryFn: async () => {
-      const response = await axiosInstance.get(
-        "/assets/filter-options",
-      );
+    queryFn: async ({ signal }) => {
+      const response = await axiosInstance.get("/assets/filter-options", {
+        signal,
+      });
 
       return {
-        assetTypes:
-          response.data?.data?.assetTypes || [],
+        assetTypes: response.data?.data?.assetTypes || [],
       };
     },
 
+    // ৫ মিনিট একই filter option fresh থাকবে
     staleTime: 5 * 60 * 1000,
+
     refetchOnWindowFocus: false,
   });
 };

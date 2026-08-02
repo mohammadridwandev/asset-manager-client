@@ -15,28 +15,77 @@ const Add_Asset = ({
     setSelectedDate(date);
   };
 
-  const handlerAssets = (e: any) => {
-    e.preventDefault();
+  const handlerAssets = (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
 
-    const formData = new FormData(e.target);
+    const form = event.currentTarget;
 
-    const form = e.target as HTMLFormElement;
+    if (!selectedDate) {
+      // DatePicker clear করা থাকলে submit বন্ধ করবে
+      return;
+    }
 
-    const data = Object.fromEntries(formData.entries());
+    const formData = new FormData(form);
+
+    const assetName = String(formData.get("assetName") || "").trim();
+
+    const assetType = String(formData.get("assetType") || "").trim();
+
+    const serialNumber = String(formData.get("serialNumber") || "").trim();
+
+    const invoiceNumber = String(formData.get("invoiceNumber") || "").trim();
+
+    const condition = String(formData.get("condition") || "").trim();
+
+    const notes = String(formData.get("notes") || "").trim();
+
+    const quantity = Number(formData.get("quantity"));
+
+    const price = Number(formData.get("price"));
+
+    if (!assetName || !assetType) {
+      return;
+    }
+
+    if (!Number.isInteger(quantity) || quantity < 1) {
+      return;
+    }
+
+    if (Number.isNaN(price) || price < 0) {
+      return;
+    }
 
     const assetData = {
-      ...data,
+      assetName,
+      assetType,
+
+      // Empty serial backend-এ null হবে
+      serialNumber: serialNumber || null,
+
+      quantity,
+
+      invoiceNumber: invoiceNumber || null,
+
       purchaseDate: selectedDate.toISOString().split("T")[0],
 
-      quantity: Number(data.quantity),
-      price: Number(data.price),
+      price,
+
+      condition: condition || null,
+
+      notes: notes || null,
     };
 
     useAssetsData.mutate(assetData, {
       onSuccess: () => {
+        // শুধু successful create হলে reset হবে
         form.reset();
         setSelectedDate(new Date());
         setAssetOpen(false);
+      },
+
+      onError: () => {
+        // Professional message useCreateAsset hook দেখাবে
+        // Duplicate serial হলে form data থাকবে
       },
     });
   };
@@ -180,7 +229,7 @@ const Add_Asset = ({
             <button
               disabled={useAssetsData.isPending}
               type="submit"
-              className="px-8 py-2 rounded-lg bg-app-brand text-white font-medium hover:opacity-90 transition-opacity"
+              className="px-8 py-2 rounded-lg bg-app-brand text-white font-medium hover:opacity-90 transition-opacity disabled:cursor-not-allowed disabled:opacity-50"
             >
               {useAssetsData.isPending ? "Adding..." : "Add Asset"}
             </button>

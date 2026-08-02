@@ -9,11 +9,7 @@ import {
 
 const MAX_FILE_SIZE = 2 * 1024 * 1024; // 2 MB
 
-const ALLOWED_FILE_TYPES = [
-  "image/jpeg",
-  "image/png",
-  "image/webp",
-];
+const ALLOWED_FILE_TYPES = ["image/jpeg", "image/png", "image/webp"];
 
 export default function Licenses_Update() {
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
@@ -28,7 +24,11 @@ export default function Licenses_Update() {
 
   useEffect(() => {
     if (license?.purchaseDate) {
-      setSelectedDate(new Date(license.purchaseDate));
+      const parsedDate = new Date(license.purchaseDate);
+
+      setSelectedDate(Number.isNaN(parsedDate.getTime()) ? null : parsedDate);
+    } else {
+      setSelectedDate(null);
     }
   }, [license]);
 
@@ -36,9 +36,7 @@ export default function Licenses_Update() {
     setSelectedDate(date);
   };
 
-  const handleFileChange = (
-    e: React.ChangeEvent<HTMLInputElement>,
-  ) => {
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
 
     setFileError("");
@@ -49,9 +47,7 @@ export default function Licenses_Update() {
     }
 
     if (!ALLOWED_FILE_TYPES.includes(file.type)) {
-      setFileError(
-        "Only JPG, JPEG, PNG and WebP images are allowed.",
-      );
+      setFileError("Only JPG, JPEG, PNG and WebP images are allowed.");
 
       setFileName("No file chosen");
       e.target.value = "";
@@ -69,15 +65,19 @@ export default function Licenses_Update() {
   };
 
   const handlerLicenseUpdate = async (
-    e: React.FormEvent<HTMLFormElement>,
+    event: React.FormEvent<HTMLFormElement>,
   ) => {
-    e.preventDefault();
+    event.preventDefault();
 
     if (fileError) {
       return;
     }
 
-    const form = e.currentTarget;
+    if (!id) {
+      return;
+    }
+
+    const form = event.currentTarget;
 
     const confirm = await Swal.fire({
       title: "Update License?",
@@ -96,12 +96,15 @@ export default function Licenses_Update() {
 
     const formData = new FormData(form);
 
+    // Purchase date selected থাকলে clean date পাঠাবে
     if (selectedDate) {
-      formData.set("purchaseDate", selectedDate.toISOString());
+      formData.set("purchaseDate", selectedDate.toISOString().split("T")[0]);
     } else {
-      formData.delete("purchaseDate");
+      // Date clear করলে backend null করবে
+      formData.set("purchaseDate", "");
     }
 
+    // Empty image field backend-এ পাঠাবে না
     const imageFile = formData.get("image");
 
     if (!(imageFile instanceof File) || imageFile.size === 0) {
@@ -113,9 +116,10 @@ export default function Licenses_Update() {
         id: String(id),
         updateData: formData,
       },
+
       {
-        onSuccess: () => {
-          Swal.fire({
+        onSuccess: async () => {
+          await Swal.fire({
             title: "Updated!",
             text: "License updated successfully.",
             icon: "success",
@@ -125,18 +129,9 @@ export default function Licenses_Update() {
 
           navigate("/dashboard/licenses");
         },
-        onError: (error: any) => {
-          const message =
-            error?.response?.data?.message ||
-            error?.response?.data?.error ||
-            "Failed to update license.";
 
-          Swal.fire({
-            title: "Update Failed",
-            text: message,
-            icon: "error",
-          });
-        },
+ 
+
       },
     );
   };
@@ -146,30 +141,19 @@ export default function Licenses_Update() {
   }
 
   if (!license) {
-    return (
-      <p className="p-6 text-red-500">
-        License not found!
-      </p>
-    );
+    return <p className="p-6 text-red-500">License not found!</p>;
   }
 
   return (
     <div>
       <div className="bg-app-bg py-5 text-app-text transition-colors duration-300">
         <div className="rounded-md border border-app-gray/10 bg-app-bg p-6 shadow-sm md:p-8">
-          <h2 className="mb-4 text-xl font-bold">
-            Update License
-          </h2>
+          <h2 className="mb-4 text-xl font-bold">Update License</h2>
 
-          <form
-            onSubmit={handlerLicenseUpdate}
-            className="space-y-6"
-          >
+          <form onSubmit={handlerLicenseUpdate} className="space-y-6">
             <div className="grid grid-cols-1 gap-x-5 gap-y-5 md:grid-cols-2">
               <div className="space-y-2">
-                <label className="text-sm font-medium">
-                  Software Name *
-                </label>
+                <label className="text-sm font-medium">Software Name *</label>
 
                 <input
                   type="text"
@@ -182,9 +166,7 @@ export default function Licenses_Update() {
               </div>
 
               <div className="space-y-2">
-                <label className="text-sm font-medium">
-                  Vendor/Publisher
-                </label>
+                <label className="text-sm font-medium">Vendor/Publisher</label>
 
                 <input
                   type="text"
@@ -196,9 +178,7 @@ export default function Licenses_Update() {
               </div>
 
               <div className="space-y-2">
-                <label className="text-sm font-medium">
-                  License Key
-                </label>
+                <label className="text-sm font-medium">License Key</label>
 
                 <input
                   type="text"
@@ -210,9 +190,7 @@ export default function Licenses_Update() {
               </div>
 
               <div className="space-y-2">
-                <label className="text-sm font-medium">
-                  License Type *
-                </label>
+                <label className="text-sm font-medium">License Type *</label>
 
                 <select
                   required
@@ -220,24 +198,16 @@ export default function Licenses_Update() {
                   defaultValue={license.licenseType || ""}
                   className="my-2 w-full cursor-pointer appearance-none rounded-lg border border-app-gray/30 bg-app-bg px-4 py-2.5 transition-colors focus:border-app-brand focus:outline-none"
                 >
-                  <option value="">
-                    Select Type
-                  </option>
+                  <option value="">Select Type</option>
 
-                  <option value="subscription">
-                    Subscription
-                  </option>
+                  <option value="subscription">Subscription</option>
 
-                  <option value="one-time">
-                    One-time
-                  </option>
+                  <option value="one-time">One-time</option>
                 </select>
               </div>
 
               <div className="space-y-2">
-                <label className="text-sm font-medium">
-                  Total Quantity *
-                </label>
+                <label className="text-sm font-medium">Total Quantity *</label>
 
                 <input
                   type="number"
@@ -252,9 +222,7 @@ export default function Licenses_Update() {
               </div>
 
               <div className="space-y-2">
-                <label className="text-sm font-medium">
-                  Purchase Date
-                </label>
+                <label className="text-sm font-medium">Purchase Date</label>
 
                 <DatePicker
                   selected={selectedDate}
@@ -270,9 +238,7 @@ export default function Licenses_Update() {
               </div>
 
               <div className="space-y-2">
-                <label className="text-sm font-medium">
-                  Costs *
-                </label>
+                <label className="text-sm font-medium">Costs *</label>
 
                 <input
                   type="number"
@@ -280,7 +246,7 @@ export default function Licenses_Update() {
                   required
                   min="0"
                   step="0.01"
-                  defaultValue={license.costs || 0}
+                  defaultValue={license.costs ?? 0}
                   placeholder="0"
                   className="my-2 w-full rounded-lg border border-app-gray/30 bg-transparent px-4 py-2.5 transition-colors focus:border-app-brand focus:outline-none"
                 />
@@ -288,9 +254,7 @@ export default function Licenses_Update() {
             </div>
 
             <div className="mt-6 space-y-2">
-              <label className="text-sm font-medium">
-                Notes
-              </label>
+              <label className="text-sm font-medium">Notes</label>
 
               <textarea
                 rows={4}
@@ -310,15 +274,12 @@ export default function Licenses_Update() {
 
               <div
                 className={`rounded-xl border border-dashed bg-transparent p-5 ${
-                  fileError
-                    ? "border-red-500"
-                    : "border-app-gray/30"
+                  fileError ? "border-red-500" : "border-app-gray/30"
                 }`}
               >
                 <div className="mb-2 flex flex-wrap items-center gap-3">
                   <label className="cursor-pointer rounded-md bg-app-brand/20 px-4 py-1.5 text-sm font-medium text-app-brand transition-colors hover:bg-app-brand/50">
                     Choose File
-
                     <input
                       name="image"
                       type="file"
@@ -334,8 +295,7 @@ export default function Licenses_Update() {
                 </div>
 
                 <p className="text-[11px] text-app-text opacity-80">
-                  Formats: JPG, JPEG, PNG and WebP. Maximum
-                  image size is 2 MB.
+                  Formats: JPG, JPEG, PNG and WebP. Maximum image size is 2 MB.
                 </p>
 
                 {fileError && (
@@ -350,9 +310,7 @@ export default function Licenses_Update() {
               <button
                 type="button"
                 disabled={updateLicenseMutation.isPending}
-                onClick={() =>
-                  navigate("/dashboard/licenses")
-                }
+                onClick={() => navigate("/dashboard/licenses")}
                 className="rounded-lg border border-app-gray/30 px-8 py-2 font-medium transition-colors hover:bg-app-gray/5 disabled:cursor-not-allowed disabled:opacity-50"
               >
                 Cancel
@@ -360,15 +318,10 @@ export default function Licenses_Update() {
 
               <button
                 type="submit"
-                disabled={
-                  updateLicenseMutation.isPending ||
-                  Boolean(fileError)
-                }
+                disabled={updateLicenseMutation.isPending || Boolean(fileError)}
                 className="rounded-lg bg-app-brand px-8 py-2 font-medium text-white transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
               >
-                {updateLicenseMutation.isPending
-                  ? "Saving..."
-                  : "Save"}
+                {updateLicenseMutation.isPending ? "Saving..." : "Save"}
               </button>
             </div>
           </form>

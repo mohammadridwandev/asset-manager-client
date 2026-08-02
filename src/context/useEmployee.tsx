@@ -3,8 +3,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import toast from "react-hot-toast";
 import axiosInstance from "../config/axiosInstance";
 
-
-// CREATE EMPLOYEE HERE
+// CREATE EMPLOYEE
 export const useCreateEmployee = () => {
   const queryClient = useQueryClient();
 
@@ -20,37 +19,95 @@ export const useCreateEmployee = () => {
 
     onSuccess: () => {
       toast.success("Successfully employee created!");
+
       queryClient.invalidateQueries({
         queryKey: ["employees"],
+      });
+
+      queryClient.invalidateQueries({
+        queryKey: ["employee-filter-options"],
+      });
+
+      queryClient.invalidateQueries({
+        queryKey: ["dashboard"],
+      });
+
+      queryClient.invalidateQueries({
+        queryKey: ["report-allocation"],
       });
     },
 
     onError: (error: any) => {
-      console.error(error);
-      const errorMessage =
-        error.response?.data?.error ||
-        error.response?.data?.message ||
-        "Failed to create employee";
-      console.log(errorMessage);
+      // ========================= UPDATED: Full backend error for developers =========================
+      console.error("Create Employee Error:", error);
 
-      toast.error("Failed to create employee");
+      const status = error?.response?.status;
+
+      // ========================= UPDATED: Default professional message =========================
+      let userMessage = "Employee could not be created. Please try again.";
+
+      // Validation error
+      if (status === 400) {
+        userMessage =
+          error?.response?.data?.message ||
+          "Please check the employee information.";
+      }
+
+      // Duplicate Iqama / Phone / Email
+      else if (status === 409) {
+        userMessage =
+          error?.response?.data?.message ||
+          "Employee information already exists.";
+      }
+
+      // Unauthorized
+      else if (status === 401) {
+        userMessage = "Your session has expired. Please log in again.";
+      }
+
+      // Permission denied
+      else if (status === 403) {
+        userMessage = "You do not have permission to create an employee.";
+      }
+
+      // Server error
+      else if (status >= 500) {
+        userMessage =
+          "Unable to create employee at the moment. Please try again later.";
+      }
+
+      // Network error
+      else if (!error?.response) {
+        userMessage =
+          "Unable to connect to the server. Please check your internet connection.";
+      }
+
+      toast.error(userMessage);
     },
   });
 };
 
+// GET SINGLE EMPLOYEE
 export const useGetSingleEmployee = (id?: string) => {
   return useQuery({
     queryKey: ["employee", id],
 
-    queryFn: async () => {
-      const response = await axiosInstance.get(`/employees/${id}`);
+    queryFn: async ({ signal }) => {
+      const response = await axiosInstance.get(`/employees/${id}`, {
+        signal,
+      });
+
       return response.data?.data || response.data;
     },
+
     enabled: !!id,
+
+    refetchOnWindowFocus: false,
   });
 };
 
-// GET ALL EMPLOYEE WITH PAGINATION + SEARCH
+// GET EMPLOYEES
+// GET EMPLOYEES
 export const useGetEmployee = (
   page: number = 1,
   limit: number = 10,
@@ -58,40 +115,76 @@ export const useGetEmployee = (
   department: string = "",
   position: string = "",
   status: string = "",
+
+  // UPDATED:
+  // false হলে employee API request যাবে না
+  enabled: boolean = true,
 ) => {
   return useQuery({
-    queryKey: ["employees", page, limit, search, department, position, status],
+    queryKey: [
+      "employees",
+      page,
+      limit,
+      search,
+      department,
+      position,
+      status,
+    ],
 
-    queryFn: async () => {
-      const response = await axiosInstance.get("/employees", {
-        params: {
-          page,
-          limit,
-          search,
-          department,
-          position,
-          status,
-        },
-      });
+    queryFn: async ({ signal }) => {
+      const response =
+        await axiosInstance.get(
+          "/employees",
+          {
+            params: {
+              page,
+              limit,
+              search,
+              department,
+              position,
+              status,
+            },
+
+            signal,
+          },
+        );
 
       return {
-        employees: response.data?.employees || [],
-        pagination: response.data?.pagination || {
-          currentPage: page,
-          limit,
-          totalData: 0,
-          totalPages: 0,
-          hasNextPage: false,
-          hasPreviousPage: false,
-        },
+        employees:
+          response.data?.employees || [],
+
+        pagination:
+          response.data?.pagination || {
+            currentPage: page,
+            limit,
+            totalData: 0,
+            totalPages: 0,
+            hasNextPage: false,
+            hasPreviousPage: false,
+          },
       };
     },
 
-    placeholderData: (previousData) => previousData,
+    // নতুন result আসা পর্যন্ত previous data রাখবে
+    placeholderData: (
+      previousData,
+    ) => previousData,
+
+    // UPDATED:
+    // false হলে এই query run করবে না
+    enabled,
+
+    refetchOnWindowFocus: false,
+
+    retry: 1,
   });
 };
 
-// update employee data here
+
+
+
+
+
 export const useUpdateEmployee = () => {
   const queryClient = useQueryClient();
 
@@ -117,15 +210,54 @@ export const useUpdateEmployee = () => {
       queryClient.invalidateQueries({
         queryKey: ["employees"],
       });
+
+      queryClient.invalidateQueries({
+        queryKey: ["employee-filter-options"],
+      });
+
+      queryClient.invalidateQueries({
+        queryKey: ["dashboard"],
+      });
+
+      queryClient.invalidateQueries({
+        queryKey: ["report-allocation"],
+      });
     },
 
     onError: (error: any) => {
-      console.log(error);
-      // toast.error("Failed to update employee!");
+      // ========================= UPDATED: Full backend error for developers =========================
+      console.error("Update Employee Error:", error);
+
+      const status = error?.response?.status;
+
+      let userMessage = "Employee could not be updated. Please try again.";
+
+      if (status === 400) {
+        userMessage =
+          error?.response?.data?.message ||
+          "Please check the employee information.";
+      } else if (status === 409) {
+        userMessage =
+          error?.response?.data?.message ||
+          "Employee information already exists.";
+      } else if (status === 401) {
+        userMessage = "Your session has expired. Please log in again.";
+      } else if (status === 403) {
+        userMessage = "You do not have permission to update this employee.";
+      } else if (status >= 500) {
+        userMessage =
+          "Unable to update employee at the moment. Please try again later.";
+      } else if (!error?.response) {
+        userMessage =
+          "Unable to connect to the server. Please check your internet connection.";
+      }
+
+      toast.error(userMessage);
     },
   });
 };
 
+// DELETE EMPLOYEE
 export const useDeleteEmployee = () => {
   const queryClient = useQueryClient();
 
@@ -144,34 +276,38 @@ export const useDeleteEmployee = () => {
       queryClient.invalidateQueries({
         queryKey: ["employees"],
       });
+
+      queryClient.invalidateQueries({
+        queryKey: ["employee-filter-options"],
+      });
+
+      queryClient.invalidateQueries({
+        queryKey: ["dashboard"],
+      });
+
+      queryClient.invalidateQueries({
+        queryKey: ["report-allocation"],
+      });
     },
 
     onError: (error: any) => {
-      // ========================= UPDATED: Log backend error for debugging =========================
       console.error("Delete Employee Error:", error);
 
-      // ========================= UPDATED: Get backend error message =========================
-      const errorMessage =
+      const message =
         error?.response?.data?.message ||
         error?.response?.data?.error ||
-        "Failed to delete employee!";
+        "Failed to delete employee.";
 
-      // ========================= UPDATED: Show actual backend message to user =========================
-      // toast.error("Failed to delete employee: ");
-      console.log("Delete Employee Error Message:", errorMessage);
+      toast.error(message);
     },
   });
 };
 
-
-// GET ALL EMPLOYEES FOR EXPORT
+// EXPORT EMPLOYEES
 export const useExportEmployees = () => {
   return useMutation({
     mutationFn: async () => {
-      const response =
-        await axiosInstance.get(
-          "/employees/export",
-        );
+      const response = await axiosInstance.get("/employees/export");
 
       return response.data?.data || [];
     },
@@ -181,35 +317,32 @@ export const useExportEmployees = () => {
         error?.response?.data?.message ||
         error?.response?.data?.error ||
         "Failed to export employees.";
+
       toast.error(message);
     },
   });
 };
 
-
-// GET EMPLOYEE FILTER OPTIONS
 export const useGetEmployeeFilterOptions = () => {
   return useQuery({
     queryKey: ["employee-filter-options"],
 
-    queryFn: async () => {
-      const response =
-        await axiosInstance.get(
-          "/employees/filter-options",
-        );
+    queryFn: async ({ signal }) => {
+      const response = await axiosInstance.get("/employees/filter-options", {
+        signal,
+      });
 
       return {
-        departments:
-          response.data?.data?.departments || [],
+        departments: response.data?.data?.departments || [],
 
-        positions:
-          response.data?.data?.positions || [],
+        positions: response.data?.data?.positions || [],
       };
     },
 
     staleTime: 5 * 60 * 1000,
+
     refetchOnWindowFocus: false,
+
+    retry: 1,
   });
 };
-
-

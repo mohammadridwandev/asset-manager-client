@@ -1,6 +1,7 @@
 import { useState } from "react";
 import DatePicker from "react-datepicker";
 import { useCreateLicense } from "../../context/useLicenses";
+import toast from "react-hot-toast";
 
 const MAX_FILE_SIZE = 2 * 1024 * 1024;
 
@@ -64,43 +65,61 @@ const Add_License = ({
   };
 
   const handlerLicense = (
-    e: React.FormEvent<HTMLFormElement>,
-  ) => {
-    e.preventDefault();
+  event: React.FormEvent<HTMLFormElement>,
+) => {
+  event.preventDefault();
 
-    if (fileError) {
-      return;
-    }
+  if (fileError) {
+    return;
+  }
 
-    const form = e.currentTarget;
-    const formData = new FormData(form);
+  if (!selectedDate) {
+    toast.error("Please select a purchase date.");
+    return;
+  }
 
-    if (selectedDate) {
-      formData.set(
-        "purchaseDate",
-        selectedDate.toISOString(),
-      );
-    }
+  const form = event.currentTarget;
+  const formData = new FormData(form);
 
-    createLicense.mutate(formData, {
-      onSuccess: () => {
-        form.reset();
-        setSelectedDate(new Date());
-        setSelectedFileName("No file chosen");
-        setFileError("");
-        setOpenLicense(false);
-      },
-    });
+  // Clean purchase date backend-এ পাঠাবে
+  formData.set(
+    "purchaseDate",
+    selectedDate.toISOString().split("T")[0],
+  );
 
-    console.log(
-      "Form Data:",
-      Object.fromEntries(formData.entries()),
-    );
-  };
+  // Empty image field পাঠাবে না
+  const imageFile = formData.get("image") as File | null;
+
+  if (!imageFile || imageFile.size === 0) {
+    formData.delete("image");
+  }
+
+  createLicense.mutate(formData, {
+    onSuccess: () => {
+      // শুধু সফল হলে form reset হবে
+      form.reset();
+      setSelectedDate(new Date());
+      setSelectedFileName("No file chosen");
+      setFileError("");
+      setOpenLicense(false);
+    },
+
+    onError: () => {
+      // Duplicate license key বা অন্য professional error
+      // useCreateLicense hook থেকে দেখাবে।
+      // Form data unchanged থাকবে।
+    },
+  });
+};
+
+
+
+  
 
   return (
     <div className="bg-app-bg py-5 text-app-text transition-colors duration-300">
       <div className="rounded-md border border-app-gray/10 bg-app-bg p-6 shadow-sm md:p-8">
+
         <h2 className="mb-4 text-xl font-bold">
           Add New License
         </h2>
@@ -305,6 +324,8 @@ const Add_License = ({
             </button>
           </div>
         </form>
+
+
       </div>
     </div>
   );
