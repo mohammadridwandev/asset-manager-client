@@ -12,7 +12,7 @@ export default function DataLoading({
   return (
 
     <div
-      className={`flex  items-center justify-center px-4 ${
+      className={`flex  items-center  h-screen justify-center px-4 ${
         fullScreen
           ? "fixed inset-0 z-50 bg-app-bg/90 backdrop-blur-sm"
           : "min-h-75 w-full"

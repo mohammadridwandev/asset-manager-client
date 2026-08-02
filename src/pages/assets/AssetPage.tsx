@@ -3,7 +3,10 @@ import Add_Asset from "../../components/Asset_Compo/Add_Asset";
 import { useEffect, useRef, useState } from "react";
 import { MdKeyboardArrowRight } from "react-icons/md";
 import Asset_Card from "../../components/Asset_Compo/Asset_Card";
-import { useGetAssets } from "../../context/useAssets";
+import {
+  useGetAssets,
+  useGetAssetFilterOptions,
+} from "../../context/useAssets";
 import Asset_Import from "../../components/Asset_Compo/Asset_Import";
 import Asset_Export from "../../components/Asset_Compo/Asset_Export";
 import Asset_Pagination from "../../components/Asset_Compo/Asset_Pagination";
@@ -17,15 +20,28 @@ export default function AssetPage() {
   const [page, setPage] = useState(1);
   const assetListRef = useRef<HTMLDivElement>(null);
 
-  const [assetTypeOpen, setAssetTypeOpen] = useState(false);
-  const [selectedType, setSelectedType] = useState("All Types");
+  const [assetTypeOpen, setAssetTypeOpen] =
+    useState(false);
+  const [selectedType, setSelectedType] =
+    useState("All Types");
 
-  const [assignmentOpen, setAssignmentOpen] = useState(false);
-  const [selectedAssignment, setSelectedAssignment] = useState("All Status");
+  const [assignmentOpen, setAssignmentOpen] =
+    useState(false);
+  const [
+    selectedAssignment,
+    setSelectedAssignment,
+  ] = useState("All Status");
 
-  const assignmentTypes = ["Assigned", "Unassigned"];
+  const assignmentTypes = [
+    "Assigned",
+    "Unassigned",
+  ];
 
-  const { data, isLoading, isError } = useGetAssets(
+  const {
+    data,
+    isLoading,
+    isError,
+  } = useGetAssets(
     page,
     10,
     searchText,
@@ -33,32 +49,43 @@ export default function AssetPage() {
     selectedAssignment,
   );
 
+  const {
+    data: filterOptions,
+    isLoading: filterOptionsLoading,
+    isError: filterOptionsError,
+  } = useGetAssetFilterOptions();
+
   const assets = data?.assets || [];
   const pagination = data?.pagination;
 
-  const assetTypes: string[] = assets
-    .map((asset: any) => String(asset.assetType || "").trim())
-    .filter((type: string) => type.length > 0)
-    .filter((type: string, index: number, array: string[]) => {
-      return array.indexOf(type) === index;
-    })
-    .sort();
+  const assetTypes: string[] =
+    filterOptions?.assetTypes || [];
 
-  const handleSelect = (assetType: string) => {
+  const handleSelect = (
+    assetType: string,
+  ) => {
     setSelectedType(assetType);
     setAssetTypeOpen(false);
   };
 
-  const handleAssignmentSelect = (assignmentType: string) => {
+  const handleAssignmentSelect = (
+    assignmentType: string,
+  ) => {
     setSelectedAssignment(assignmentType);
     setAssignmentOpen(false);
   };
 
   useEffect(() => {
     setPage(1);
-  }, [searchText, selectedType, selectedAssignment]);
+  }, [
+    searchText,
+    selectedType,
+    selectedAssignment,
+  ]);
 
-  const handlePageChange = (newPage: number) => {
+  const handlePageChange = (
+    newPage: number,
+  ) => {
     setPage(newPage);
 
     setTimeout(() => {
@@ -78,13 +105,12 @@ export default function AssetPage() {
     );
   }
 
-  
-
-
   return (
     <>
       <Helmet>
-        <title>Asset Manager | Assets</title>
+        <title>
+          Asset Manager | Assets
+        </title>
       </Helmet>
 
       <div className="mt-3 bg-app-bg pb-16 text-app-text transition-colors duration-300">
@@ -107,7 +133,9 @@ export default function AssetPage() {
 
               <button
                 type="button"
-                onClick={() => setAssetOpen(!assetOpen)}
+                onClick={() =>
+                  setAssetOpen(!assetOpen)
+                }
                 className="flex w-full cursor-pointer items-center justify-center gap-2 rounded-lg bg-app-brand px-5 py-2.5 text-sm font-bold text-white shadow-md transition-all hover:opacity-90 active:scale-95 md:w-auto"
               >
                 {assetOpen ? (
@@ -134,7 +162,11 @@ export default function AssetPage() {
               <input
                 type="text"
                 value={searchText}
-                onChange={(e) => setSearchText(e.target.value)}
+                onChange={(event) =>
+                  setSearchText(
+                    event.target.value,
+                  )
+                }
                 placeholder="Search by asset name, serial number, invoice number, type, employee name, email, or Iqama..."
                 className="w-full rounded-md border border-app-gray/30 bg-transparent py-2.5 pl-12 text-sm outline-none transition-all placeholder:text-app-gray/50 focus:border-app-brand"
               />
@@ -143,37 +175,71 @@ export default function AssetPage() {
             <div className="relative">
               <button
                 type="button"
-                onClick={() => setAssetTypeOpen(!assetTypeOpen)}
+                onClick={() =>
+                  setAssetTypeOpen(
+                    !assetTypeOpen,
+                  )
+                }
                 className="flex w-full items-center justify-between rounded-md border border-app-gray/30 bg-transparent px-4 py-2.5 text-left text-sm font-medium shadow-xs hover:bg-app-gray/5 focus:outline-none sm:w-48"
               >
                 <span>{selectedType}</span>
 
                 <MdKeyboardArrowRight
                   className={`transform transition-transform duration-200 ${
-                    assetTypeOpen ? "rotate-90" : ""
+                    assetTypeOpen
+                      ? "rotate-90"
+                      : ""
                   }`}
                   size={18}
                 />
               </button>
 
               {assetTypeOpen && (
-                <ul className="absolute z-10 mt-1 w-full rounded-lg border border-app-gray/20 bg-app-bg py-1 text-sm shadow-md sm:w-48">
+                <ul className="absolute z-10 mt-1 max-h-64 w-full overflow-y-auto rounded-lg border border-app-gray/20 bg-app-bg py-1 text-sm shadow-md sm:w-48">
                   <li
                     className="cursor-pointer px-4 py-2 font-semibold transition-colors hover:bg-app-brand hover:text-white"
-                    onClick={() => handleSelect("All Types")}
+                    onClick={() =>
+                      handleSelect(
+                        "All Types",
+                      )
+                    }
                   >
                     All Types
                   </li>
 
-                  {assetTypes.map((assetType) => (
-                    <li
-                      key={assetType}
-                      className="cursor-pointer px-4 py-2 transition-colors hover:bg-app-brand hover:text-white"
-                      onClick={() => handleSelect(assetType)}
-                    >
-                      {assetType}
+                  {filterOptionsLoading ? (
+                    <li className="px-4 py-2 text-app-gray">
+                      Loading asset types...
                     </li>
-                  ))}
+                  ) : filterOptionsError ? (
+                    <li className="px-4 py-2 text-red-500">
+                      Failed to load asset
+                      types
+                    </li>
+                  ) : assetTypes.length >
+                    0 ? (
+                    assetTypes.map(
+                      (
+                        assetType: string,
+                      ) => (
+                        <li
+                          key={assetType}
+                          className="cursor-pointer px-4 py-2 transition-colors hover:bg-app-brand hover:text-white"
+                          onClick={() =>
+                            handleSelect(
+                              assetType,
+                            )
+                          }
+                        >
+                          {assetType}
+                        </li>
+                      ),
+                    )
+                  ) : (
+                    <li className="px-4 py-2 text-app-gray">
+                      No asset types found
+                    </li>
+                  )}
                 </ul>
               )}
             </div>
@@ -181,14 +247,22 @@ export default function AssetPage() {
             <div className="relative">
               <button
                 type="button"
-                onClick={() => setAssignmentOpen(!assignmentOpen)}
+                onClick={() =>
+                  setAssignmentOpen(
+                    !assignmentOpen,
+                  )
+                }
                 className="flex w-full items-center justify-between rounded-md border border-app-gray/30 bg-transparent px-4 py-2.5 text-left text-sm font-medium shadow-xs hover:bg-app-gray/5 focus:outline-none sm:w-48"
               >
-                <span>{selectedAssignment}</span>
+                <span>
+                  {selectedAssignment}
+                </span>
 
                 <MdKeyboardArrowRight
                   className={`transform transition-transform duration-200 ${
-                    assignmentOpen ? "rotate-90" : ""
+                    assignmentOpen
+                      ? "rotate-90"
+                      : ""
                   }`}
                   size={18}
                 />
@@ -198,46 +272,77 @@ export default function AssetPage() {
                 <ul className="absolute z-10 mt-1 w-full rounded-lg border border-app-gray/20 bg-app-bg py-1 text-sm shadow-md sm:w-48">
                   <li
                     className="cursor-pointer px-4 py-2 font-semibold transition-colors hover:bg-app-brand hover:text-white"
-                    onClick={() => handleAssignmentSelect("All Status")}
+                    onClick={() =>
+                      handleAssignmentSelect(
+                        "All Status",
+                      )
+                    }
                   >
                     All Status
                   </li>
 
-                  {assignmentTypes.map((assignmentType) => (
-                    <li
-                      key={assignmentType}
-                      className="cursor-pointer px-4 py-2 transition-colors hover:bg-app-brand hover:text-white"
-                      onClick={() => handleAssignmentSelect(assignmentType)}
-                    >
-                      {assignmentType}
-                    </li>
-                  ))}
+                  {assignmentTypes.map(
+                    (assignmentType) => (
+                      <li
+                        key={assignmentType}
+                        className="cursor-pointer px-4 py-2 transition-colors hover:bg-app-brand hover:text-white"
+                        onClick={() =>
+                          handleAssignmentSelect(
+                            assignmentType,
+                          )
+                        }
+                      >
+                        {assignmentType}
+                      </li>
+                    ),
+                  )}
                 </ul>
               )}
             </div>
           </div>
 
           <div className="transition-all duration-300">
-            {assetOpen && <Add_Asset setAssetOpen={setAssetOpen} />}
+            {assetOpen && (
+              <Add_Asset
+                setAssetOpen={setAssetOpen}
+              />
+            )}
           </div>
         </div>
 
         <div>
-          <div ref={assetListRef} className="scroll-mt-24">
+          <div
+            ref={assetListRef}
+            className="scroll-mt-24"
+          >
             <Asset_Card
               assets={assets}
-              totalAssets={pagination?.totalData}
+              totalAssets={
+                pagination?.totalData
+              }
               isLoading={isLoading}
               isError={isError}
             />
           </div>
 
           <Asset_Pagination
-            currentPage={pagination?.currentPage || 1}
-            totalPages={pagination?.totalPages || 1}
-            hasNextPage={pagination?.hasNextPage || false}
-            hasPreviousPage={pagination?.hasPreviousPage || false}
-            onPageChange={handlePageChange}
+            currentPage={
+              pagination?.currentPage || 1
+            }
+            totalPages={
+              pagination?.totalPages || 1
+            }
+            hasNextPage={
+              pagination?.hasNextPage ||
+              false
+            }
+            hasPreviousPage={
+              pagination?.hasPreviousPage ||
+              false
+            }
+            onPageChange={
+              handlePageChange
+            }
           />
         </div>
       </div>

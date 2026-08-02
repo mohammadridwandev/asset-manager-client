@@ -58,35 +58,37 @@ export default function Licenses_to_Employee({
       employee.status === "ACTIVE",
   );
 
-  const filteredEmployees =
-    searchText.trim().length > 0
-      ? activeEmployees.filter(
-          (employee: any) => {
-            const search = searchText
-              .trim()
-              .toLowerCase();
 
-            return (
-              employee.fullName
-                ?.toLowerCase()
-                .includes(search) ||
-              String(
-                employee.iqamaNumber || "",
-              )
-                .toLowerCase()
-                .includes(search) ||
-              employee.email
-                ?.toLowerCase()
-                .includes(search) ||
-              String(
-                employee.phoneNumber || "",
-              )
-                .toLowerCase()
-                .includes(search)
-            );
-          },
-        )
-      : activeEmployees;
+  const filteredEmployees =
+  searchText.trim().length > 0
+    ? activeEmployees.filter(
+        (employee: any) => {
+          const search = searchText
+            .trim()
+            .toLowerCase();
+
+          return (
+            employee.fullName
+              ?.toLowerCase()
+              .includes(search) ||
+            String(employee.iqamaNumber || "")
+              .toLowerCase()
+              .includes(search) ||
+            employee.email
+              ?.toLowerCase()
+              .includes(search) ||
+            String(employee.phoneNumber || "")
+              .toLowerCase()
+              .includes(search)
+          );
+        },
+      )
+    : [];
+
+
+
+
+
 
   const handleAssignLicense = (
     employee: any,
@@ -136,6 +138,8 @@ export default function Licenses_to_Employee({
       },
     );
   };
+
+
 
   return (
     <div
@@ -284,7 +288,7 @@ export default function Licenses_to_Employee({
             )
           ) : (
             <p className="py-6 text-center text-sm text-app-gray">
-              No active employee found
+              Search an active employee to assign this license.
             </p>
           )}
         </div>

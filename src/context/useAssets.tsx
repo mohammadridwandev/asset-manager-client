@@ -1,10 +1,13 @@
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import {
+  useMutation,
+  useQuery,
+  useQueryClient,
+} from "@tanstack/react-query";
 
 import toast from "react-hot-toast";
 import axiosInstance from "../config/axiosInstance";
 
-
-// create asset:
+// CREATE ASSET
 export const useCreateAsset = () => {
   const queryClient = useQueryClient();
 
@@ -21,32 +24,43 @@ export const useCreateAsset = () => {
       queryClient.invalidateQueries({
         queryKey: ["employees"],
       });
+
+      queryClient.invalidateQueries({
+        queryKey: ["asset-filter-options"],
+      });
     },
 
     onError: (error: any) => {
       console.error(error);
+
       const errorMessage =
         error.response?.data?.error ||
         error.response?.data?.message ||
         "Failed to create assets";
+
       console.log(errorMessage);
+
       toast.error("Failed to create assets");
     },
   });
 };
 
+// GET SINGLE ASSET
 export const useGetSingleAsset = (id?: string) => {
   return useQuery({
     queryKey: ["assets", id],
 
     queryFn: async () => {
       const response = await axiosInstance.get(`/assets/${id}`);
+
       return response.data?.data || response.data;
     },
+
     enabled: !!id,
   });
 };
 
+// GET ALL ASSETS
 export const useGetAssets = (
   page: number = 1,
   limit: number = 10,
@@ -55,7 +69,14 @@ export const useGetAssets = (
   assignmentStatus: string = "",
 ) => {
   return useQuery({
-    queryKey: ["assets", page, limit, search, assetType, assignmentStatus],
+    queryKey: [
+      "assets",
+      page,
+      limit,
+      search,
+      assetType,
+      assignmentStatus,
+    ],
 
     queryFn: async () => {
       const response = await axiosInstance.get("/assets", {
@@ -90,14 +111,24 @@ export const useUpdateAsset = () => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async ({ id, updateData }: { id: string; updateData: any }) => {
+    mutationFn: async ({
+      id,
+      updateData,
+    }: {
+      id: string;
+      updateData: any;
+    }) => {
       const token = localStorage.getItem("token");
 
-      return axiosInstance.patch(`/assets/${id}`, updateData, {
-        headers: {
-          Authorization: `Bearer ${token}`,
+      return axiosInstance.patch(
+        `/assets/${id}`,
+        updateData,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
         },
-      });
+      );
     },
 
     onSuccess: () => {
@@ -108,11 +139,14 @@ export const useUpdateAsset = () => {
       queryClient.invalidateQueries({
         queryKey: ["employees"],
       });
+
+      queryClient.invalidateQueries({
+        queryKey: ["asset-filter-options"],
+      });
     },
 
     onError: (error: any) => {
       console.error(error);
-      // toast.error("Failed to update asset!",);
     },
   });
 };
@@ -140,20 +174,25 @@ export const useDeleteAsset = () => {
       queryClient.invalidateQueries({
         queryKey: ["employees"],
       });
+
+      queryClient.invalidateQueries({
+        queryKey: ["asset-filter-options"],
+      });
     },
 
     onError: (error: any) => {
       console.error(error);
-      // toast.error("Failed to delete asset!");
     },
   });
 };
 
-// GET ALL ASSETS FOR EXPORT
+// EXPORT ASSETS
 export const useExportAssets = () => {
   return useMutation({
     mutationFn: async () => {
-      const response = await axiosInstance.get("/assets/export");
+      const response = await axiosInstance.get(
+        "/assets/export",
+      );
 
       return response.data?.data || [];
     },
@@ -166,5 +205,26 @@ export const useExportAssets = () => {
 
       toast.error(message);
     },
+  });
+};
+
+// GET ASSET FILTER OPTIONS
+export const useGetAssetFilterOptions = () => {
+  return useQuery({
+    queryKey: ["asset-filter-options"],
+
+    queryFn: async () => {
+      const response = await axiosInstance.get(
+        "/assets/filter-options",
+      );
+
+      return {
+        assetTypes:
+          response.data?.data?.assetTypes || [],
+      };
+    },
+
+    staleTime: 5 * 60 * 1000,
+    refetchOnWindowFocus: false,
   });
 };

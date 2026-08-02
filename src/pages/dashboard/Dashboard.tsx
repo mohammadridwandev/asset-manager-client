@@ -6,38 +6,25 @@ import {
   FiAlertCircle,
 } from "react-icons/fi";
 
-import {
-  ResponsiveContainer,
-  AreaChart,
-  Area,
-  XAxis,
-  YAxis,
-  Tooltip,
-  CartesianGrid,
-  BarChart,
-  Bar,
-} from "recharts";
 import { useDashboard } from "../../context/useDashboard.";
 import { Helmet } from "react-helmet-async";
+import DataLoading from "../../DataLoading";
 
-
-// UPDATED: one-file dashboard with dashboard API
 export default function Dashboard() {
-  // ========================= UPDATED: Dashboard API Data =========================
   const {
     data: dashboardData,
     isLoading,
     isError,
   } = useDashboard();
 
-  // ========================= UPDATED: Employee Data =========================
+  // Employee data
   const totalEmployees =
     dashboardData?.employees?.totalEmployees || 0;
 
   const activeEmployees =
     dashboardData?.employees?.activeEmployees || 0;
 
-  // ========================= UPDATED: Asset Data =========================
+  // Asset data
   const totalAssets =
     dashboardData?.assets?.totalAssets || 0;
 
@@ -47,7 +34,7 @@ export default function Dashboard() {
   const availableAssets =
     dashboardData?.assets?.availableAssets || 0;
 
-  // ========================= UPDATED: License Data =========================
+  // License data
   const totalLicenses =
     dashboardData?.licenses?.totalLicenses || 0;
 
@@ -57,45 +44,27 @@ export default function Dashboard() {
   const availableLicenses =
     dashboardData?.licenses?.availableLicenses || 0;
 
-  // ========================= UPDATED: Report Data =========================
+  // Report data
   const totalReports =
     dashboardData?.reports?.totalReports || 0;
 
-  const approvedReports =
-    dashboardData?.reports?.approvedReports || 0;
-
-  const rejectedReports =
-    dashboardData?.reports?.rejectedReports || 0;
-
-  const pendingReports =
-    dashboardData?.reports?.pendingReports || 0;
-
-  const finalizedReports =
-    dashboardData?.reports?.finalizedReports || 0;
-
-  // ========================= UPDATED: Recent Assignments =========================
+  // Recent assignments
   const recentAssignments =
     dashboardData?.recentAssignments || [];
 
-  // ========================= UPDATED: Loading =========================
   if (isLoading) {
     return (
-      <div className="flex min-h-[400px] items-center justify-center bg-app-bg text-app-text">
-        <div className="text-center">
-          <div className="mx-auto h-10 w-10 animate-spin rounded-full border-4 border-app-brand/20 border-t-app-brand" />
-
-          <p className="mt-4 text-sm text-app-gray">
-            Loading dashboard...
-          </p>
-        </div>
-      </div>
+      <DataLoading
+      title="Loading Dashboard"
+      message="Please wait while we fetch the dashboard data."
+      
+      ></DataLoading>
     );
   }
 
-  // ========================= UPDATED: Error =========================
   if (isError) {
     return (
-      <div className="flex min-h-[400px] items-center justify-center bg-app-bg">
+      <div className="flex min-h-100 items-center justify-center bg-app-bg">
         <div className="rounded-xl border border-red-500/20 bg-red-500/10 px-6 py-4 text-sm text-red-500">
           Failed to load dashboard data.
         </div>
@@ -103,7 +72,6 @@ export default function Dashboard() {
     );
   }
 
-  // ========================= UPDATED: Stats Cards =========================
   const stats = [
     {
       title: "Employees",
@@ -131,48 +99,11 @@ export default function Dashboard() {
     },
   ];
 
-  // ========================= UPDATED: Asset Chart =========================
-  const assetChart = [
-    {
-      name: "Assigned",
-      total: assignedAssets,
-    },
-    {
-      name: "Available",
-      total: availableAssets,
-    },
-  ];
-
-  // ========================= UPDATED: Report Chart =========================
-  const reportChart = [
-    {
-      name: "Approved",
-      total: approvedReports,
-    },
-    {
-      name: "Rejected",
-      total: rejectedReports,
-    },
-    {
-      name: "Pending",
-      total: pendingReports,
-    },
-    {
-      name: "Finalized",
-      total: finalizedReports,
-    },
-  ];
-
   return (
-
-
     <div className="min-h-screen space-y-8 bg-app-bg py-6 text-app-text">
-      {/* UPDATED: Header */}
-
- <Helmet>
+      <Helmet>
         <title>Asset Manager | Dashboard</title>
       </Helmet>
-
 
       <div>
         <h1 className="text-2xl font-bold">
@@ -180,12 +111,10 @@ export default function Dashboard() {
         </h1>
 
         <p className="mt-1 text-sm text-app-gray">
-          Simple overview of employees, assets, licenses,
-          and reports.
+          Simple overview of employees, assets, licenses, and reports.
         </p>
       </div>
 
-      {/* UPDATED: Stats Cards */}
       <div className="grid grid-cols-1 gap-5 md:grid-cols-2 xl:grid-cols-4">
         {stats.map((item) => (
           <div
@@ -213,10 +142,8 @@ export default function Dashboard() {
         ))}
       </div>
 
-      {/* UPDATED: Dashboard Content */}
       <div className="grid grid-cols-1 gap-6 xl:grid-cols-3">
         <div className="space-y-6 xl:col-span-2">
-          {/* UPDATED: Recent Asset Assignments */}
           <div className="rounded-2xl border border-app-gray/15 bg-app-bg p-6 shadow-sm">
             <h3 className="mb-5 font-bold">
               Recent Asset Assignments
@@ -263,72 +190,9 @@ export default function Dashboard() {
               </div>
             )}
           </div>
-
-          {/* UPDATED: Report Chart */}
-          <div className="rounded-2xl border border-app-gray/15 bg-app-bg p-6 shadow-sm">
-            <h3 className="mb-5 font-bold">
-              Report Status Overview
-            </h3>
-
-            <div className="h-[280px] w-full">
-              <ResponsiveContainer
-                width="100%"
-                height="100%"
-              >
-                <AreaChart data={reportChart}>
-                  <CartesianGrid strokeDasharray="3 3" />
-
-                  <XAxis dataKey="name" />
-
-                  <YAxis allowDecimals={false} />
-
-                  <Tooltip />
-
-                  <Area
-                    type="monotone"
-                    dataKey="total"
-                    stroke="var(--brand)"
-                    fill="var(--brand)"
-                    fillOpacity={0.18}
-                  />
-                </AreaChart>
-              </ResponsiveContainer>
-            </div>
-          </div>
         </div>
 
         <div className="space-y-6">
-          {/* UPDATED: Asset Chart */}
-          <div className="rounded-2xl border border-app-gray/15 bg-app-bg p-6 shadow-sm">
-            <h3 className="mb-5 font-bold">
-              Asset Summary
-            </h3>
-
-            <div className="h-[260px] w-full">
-              <ResponsiveContainer
-                width="100%"
-                height="100%"
-              >
-                <BarChart data={assetChart}>
-                  <CartesianGrid strokeDasharray="3 3" />
-
-                  <XAxis dataKey="name" />
-
-                  <YAxis allowDecimals={false} />
-
-                  <Tooltip />
-
-                  <Bar
-                    dataKey="total"
-                    radius={[8, 8, 0, 0]}
-                    fill="var(--brand)"
-                  />
-                </BarChart>
-              </ResponsiveContainer>
-            </div>
-          </div>
-
-          {/* UPDATED: System Status */}
           <div className="rounded-2xl border border-app-gray/15 bg-app-bg p-6 shadow-sm">
             <h3 className="mb-5 font-bold">
               System Status
@@ -357,7 +221,6 @@ export default function Dashboard() {
             </div>
           </div>
 
-          {/* UPDATED: Notice */}
           <div className="flex gap-3 rounded-2xl border border-app-brand/20 bg-app-brand/10 p-5 text-app-brand">
             <FiAlertCircle className="mt-0.5 shrink-0" />
 
@@ -367,8 +230,8 @@ export default function Dashboard() {
               </h4>
 
               <p className="mt-1 text-xs leading-5">
-                Please verify employee details, asset
-                assignments, and license usage regularly.
+                Please verify employee details, asset assignments, and
+                license usage regularly.
               </p>
             </div>
           </div>
@@ -381,25 +244,19 @@ export default function Dashboard() {
 const StatusRow = ({
   label,
   value,
-  danger,
 }: {
   label: string;
   value: string;
-  danger?: boolean;
-}) => (
-  <div className="flex items-center justify-between">
-    <span className="text-app-gray">
-      {label}
-    </span>
+}) => {
+  return (
+    <div className="flex items-center justify-between">
+      <span className="text-app-gray">
+        {label}
+      </span>
 
-    <span
-      className={`rounded-full px-3 py-1 text-xs font-bold ${
-        danger
-          ? "bg-orange-500/10 text-orange-500"
-          : "bg-app-brand/10 text-app-brand"
-      }`}
-    >
-      {value}
-    </span>
-  </div>
-);
+      <span className="rounded-full bg-app-brand/10 px-3 py-1 text-xs font-bold text-app-brand">
+        {value}
+      </span>
+    </div>
+  );
+};

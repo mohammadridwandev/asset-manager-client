@@ -172,6 +172,7 @@ export default function View_Employee({
               </div>
 
               <div className="mt-2  pt-2">
+
                 <h4 className="font-semibold text-sm text-app-gray">
                   Assign License ({employee.licenseAssignments?.length || 0})
                 </h4>
@@ -181,6 +182,7 @@ export default function View_Employee({
                     ? "Licenses assigned"
                     : "No licenses assigned"}
                 </p>
+
               </div>
             </div>
 
@@ -190,6 +192,7 @@ export default function View_Employee({
               </h4>
 
               <div className=" gap-4 lg:flex items-center justify-between">
+                
                 <button
                   onClick={() =>
                     navigate(`/dashboard/employees/update/${employee.id}`)
@@ -214,6 +217,7 @@ export default function View_Employee({
 
               <div className="mt-4">
                 <div className="mt-3 space-y-2">
+                  
                   <h4 className="font-semibold text-sm text-app-gray">
                     Assigned Assets ({employee.assetAssignments?.length || 0})
                   </h4>
@@ -269,6 +273,9 @@ export default function View_Employee({
                   )}
                 </div>
               </div>
+
+
+
             </div>
           </div>
 
@@ -280,6 +287,8 @@ export default function View_Employee({
               Close
             </button>
           </div>
+
+
         </div>
       </div>
     </>

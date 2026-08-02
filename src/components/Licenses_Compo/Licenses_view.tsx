@@ -158,6 +158,7 @@ export default function Licenses_view({ license, onClose }: LicenseProps) {
               <h4 className="mb-4 font-bold text-app-text">Quick Actions</h4>
 
               <div className="space-y-2">
+
                 <button
                   onClick={() =>
                     navigate(`/dashboard/licenses/update/${license.id}`)
@@ -179,6 +180,7 @@ export default function Licenses_view({ license, onClose }: LicenseProps) {
                     ? "Deleting..."
                     : "Delete License"}
                 </button>
+
 
                 <button
                   onClick={() => setAssignOpen(true)}
