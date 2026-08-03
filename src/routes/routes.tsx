@@ -149,7 +149,7 @@ const router = createBrowserRouter(
         {
           path: "search",
           element: (
-            <RoleRoute roles={["ADMIN", "IT", "FINANCE", ]}>
+            <RoleRoute roles={["ADMIN", "FINANCE", ]}>
               <SearchPage />
             </RoleRoute>
           ),

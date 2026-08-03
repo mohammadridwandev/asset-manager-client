@@ -194,6 +194,8 @@ export const useDeleteUser = () => {
 };
 
 // UPDATE LOGGED-IN USER PROFILE
+// UPDATE LOGGED-IN USER PROFILE
+// UPDATE LOGGED-IN USER PROFILE
 export const useUpdateProfile = () => {
   const queryClient = useQueryClient();
 
@@ -222,27 +224,62 @@ export const useUpdateProfile = () => {
     },
 
     onSuccess: () => {
+      // ========================= UPDATED: USER CACHE REFRESH =========================
+      // কেন:
+      // Profile name/image update হলে user list-এর cached data refresh হবে।
       queryClient.invalidateQueries({
         queryKey: ["users"],
       });
 
-      toast.success(
-        "Profile updated successfully!",
-      );
+      // ========================= UPDATED: SUCCESS TOAST এখানে নেই =========================
+      // কেন:
+      // সাধারণ profile update এবং password update-এর success behavior আলাদা।
+      // Profile component নিজে সঠিক message দেখাবে।
+      //
+      // Profile update:
+      // "Profile updated successfully."
+      //
+      // Password update:
+      // "Password updated successfully. Please log in with your new password."
     },
 
     onError: (error: any) => {
+      // ========================= UPDATED: FULL ERROR DEVELOPER CONSOLE-এ =========================
       console.error(
         "Update Profile Error:",
         error,
       );
 
-      const message =
-        error?.response?.data?.message ||
-        error?.response?.data?.error ||
-        "Failed to update profile!";
+      const status =
+        error?.response?.status;
+
+      let message =
+        "Profile could not be updated. Please try again.";
+
+      // ========================= UPDATED: BACKEND VALIDATION MESSAGE =========================
+      // কেন:
+      // Current password ভুল, new-confirm mismatch,
+      // অথবা current এবং new একই হলে backend-এর message দেখাবে।
+      if (status === 400) {
+        message =
+          error?.response?.data?.message ||
+          "Please check your profile and password information.";
+      } else if (status === 404) {
+        message =
+          "User account was not found.";
+      } else if (status === 401) {
+        message =
+          "Your session has expired. Please log in again.";
+      } else if (status === 403) {
+        message =
+          "You do not have permission to update this profile.";
+      } else if (!error?.response) {
+        message =
+          "Unable to connect to the server. Please check your internet connection.";
+      }
 
       toast.error(message);
     },
   });
 };
+

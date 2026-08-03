@@ -10,6 +10,7 @@ interface Props {
 export default function Search_Info({ data }: Props) {
   return (
     <div className="mt-8 space-y-6">
+      
       {/* UPDATED: Section 1 */}
       <Employee_Info data={data} />
 

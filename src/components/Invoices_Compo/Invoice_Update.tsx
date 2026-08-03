@@ -7,6 +7,7 @@ import {
   useGetSingleInvoice,
   useUpdateInvoice,
 } from "../../context/useInvoice";
+import DataLoading from "../../DataLoading";
 
 export default function Invoice_Update() {
   const navigate = useNavigate();
@@ -171,9 +172,19 @@ export default function Invoice_Update() {
 
   const isPdf = selectedFile?.type === "application/pdf";
 
-  if (isLoading) {
-    return <p className="p-6 text-app-text">Loading invoice...</p>;
-  }
+
+  
+   if (isLoading) {
+      return (
+        <DataLoading
+          title="Update invoice"
+          message="Loading invoice data..."
+        ></DataLoading>
+      );
+    }
+
+
+
 
   if (!invoice) {
     return <p className="p-6 text-red-500">Invoice not found!</p>;

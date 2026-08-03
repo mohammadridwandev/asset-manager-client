@@ -26,8 +26,6 @@ import {
 } from "../../context/useEmployee";
 import { useDebounce } from "../../context/useDebounce";
 
-
-
 const EmployeesPage = () => {
   const [openEmployee, setOpenEmployee] =
     useState(false);
@@ -70,7 +68,6 @@ const EmployeesPage = () => {
   const employeeListRef =
     useRef<HTMLDivElement>(null);
 
- 
   const {
     data,
     isLoading,
@@ -84,7 +81,6 @@ const EmployeesPage = () => {
     selectedPosition,
     selectedStatus,
   );
-
 
   const {
     data: filterOptions,
@@ -218,10 +214,10 @@ const EmployeesPage = () => {
             </div>
           </div>
 
-          <div className="flex flex-col items-stretch gap-3 sm:flex-row sm:items-center">
-            {/* Search */}
-            <div className="relative flex-1">
-              <div className="pointer-events-none absolute inset-y-0 left-4 flex items-center">
+          {/* ========================= UPDATED: FULL WIDTH SEARCH ========================= */}
+          <div className="mb-3 w-full">
+            <div className="relative w-full">
+              <div className="pointer-events-none absolute inset-y-0 left-4 flex items-center text-app-gray">
                 <FiSearch size={18} />
               </div>
 
@@ -234,7 +230,7 @@ const EmployeesPage = () => {
                   )
                 }
                 placeholder="Search employees by name, email, phone, iqama, department or position..."
-                className="w-full rounded-md border border-app-gray/15 bg-app-bg py-3.5 pr-30 pl-12 text-sm outline-none transition-all focus:border-app-brand"
+                className="w-full rounded-md border border-app-gray/15 bg-app-bg py-3.5 pr-14 pl-12 text-sm text-app-text outline-none transition-all placeholder:text-app-gray/50 focus:border-app-brand"
               />
 
               {isFetching && !isLoading && (
@@ -247,9 +243,12 @@ const EmployeesPage = () => {
                 </div>
               )}
             </div>
+          </div>
 
+          {/* ========================= UPDATED: FULL WIDTH RESPONSIVE FILTERS ========================= */}
+          <div className="grid w-full grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-3">
             {/* Department Filter */}
-            <div className="relative">
+            <div className="relative w-full">
               <button
                 type="button"
                 onClick={() => {
@@ -260,7 +259,7 @@ const EmployeesPage = () => {
                   setPositionOpen(false);
                   setStatusOpen(false);
                 }}
-                className="flex w-full items-center justify-between rounded-md border border-app-gray/30 bg-transparent px-4 py-3.5 text-left text-sm font-medium shadow-xs hover:bg-app-gray/5 focus:outline-none sm:w-52"
+                className="flex w-full items-center justify-between rounded-md border border-app-gray/30 bg-transparent px-4 py-3.5 text-left text-sm font-medium shadow-xs hover:bg-app-gray/5 focus:outline-none"
               >
                 <span className="truncate">
                   {selectedDepartment}
@@ -277,7 +276,7 @@ const EmployeesPage = () => {
               </button>
 
               {departmentOpen && (
-                <ul className="absolute z-20 mt-1 max-h-64 w-full overflow-y-auto rounded-lg border border-app-gray/20 bg-app-bg py-1 text-sm shadow-md sm:w-52">
+                <ul className="absolute z-20 mt-1 max-h-64 w-full overflow-y-auto rounded-lg border border-app-gray/20 bg-app-bg py-1 text-sm shadow-md">
                   <li
                     className="cursor-pointer px-4 py-2 font-semibold transition-colors hover:bg-app-brand hover:text-white"
                     onClick={() => {
@@ -297,8 +296,7 @@ const EmployeesPage = () => {
                     </li>
                   ) : filterOptionsError ? (
                     <li className="px-4 py-2 text-red-500">
-                      Failed to load
-                      departments
+                      Failed to load departments
                     </li>
                   ) : departments.length >
                     0 ? (
@@ -333,7 +331,7 @@ const EmployeesPage = () => {
             </div>
 
             {/* Position Filter */}
-            <div className="relative">
+            <div className="relative w-full">
               <button
                 type="button"
                 onClick={() => {
@@ -344,7 +342,7 @@ const EmployeesPage = () => {
                   setDepartmentOpen(false);
                   setStatusOpen(false);
                 }}
-                className="flex w-full items-center justify-between rounded-md border border-app-gray/30 bg-transparent px-4 py-3.5 text-left text-sm font-medium shadow-xs hover:bg-app-gray/5 focus:outline-none sm:w-52"
+                className="flex w-full items-center justify-between rounded-md border border-app-gray/30 bg-transparent px-4 py-3.5 text-left text-sm font-medium shadow-xs hover:bg-app-gray/5 focus:outline-none"
               >
                 <span className="truncate">
                   {selectedPosition}
@@ -361,7 +359,7 @@ const EmployeesPage = () => {
               </button>
 
               {positionOpen && (
-                <ul className="absolute z-20 mt-1 max-h-64 w-full overflow-y-auto rounded-lg border border-app-gray/20 bg-app-bg py-1 text-sm shadow-md sm:w-52">
+                <ul className="absolute z-20 mt-1 max-h-64 w-full overflow-y-auto rounded-lg border border-app-gray/20 bg-app-bg py-1 text-sm shadow-md">
                   <li
                     className="cursor-pointer px-4 py-2 font-semibold transition-colors hover:bg-app-brand hover:text-white"
                     onClick={() => {
@@ -413,7 +411,7 @@ const EmployeesPage = () => {
             </div>
 
             {/* Status Filter */}
-            <div className="relative">
+            <div className="relative w-full">
               <button
                 type="button"
                 onClick={() => {
@@ -424,9 +422,11 @@ const EmployeesPage = () => {
                   setDepartmentOpen(false);
                   setPositionOpen(false);
                 }}
-                className="flex w-full items-center justify-between rounded-md border border-app-gray/30 bg-transparent px-4 py-3.5 text-left text-sm font-medium shadow-xs hover:bg-app-gray/5 focus:outline-none sm:w-48"
+                className="flex w-full items-center justify-between rounded-md border border-app-gray/30 bg-transparent px-4 py-3.5 text-left text-sm font-medium shadow-xs hover:bg-app-gray/5 focus:outline-none"
               >
-                <span>{selectedStatus}</span>
+                <span className="truncate">
+                  {selectedStatus}
+                </span>
 
                 <MdKeyboardArrowRight
                   className={`shrink-0 transform transition-transform duration-200 ${
@@ -439,7 +439,7 @@ const EmployeesPage = () => {
               </button>
 
               {statusOpen && (
-                <ul className="absolute z-20 mt-1 w-full rounded-lg border border-app-gray/20 bg-app-bg py-1 text-sm shadow-md sm:w-48">
+                <ul className="absolute z-20 mt-1 w-full rounded-lg border border-app-gray/20 bg-app-bg py-1 text-sm shadow-md">
                   <li
                     className="cursor-pointer px-4 py-2 font-semibold transition-colors hover:bg-app-brand hover:text-white"
                     onClick={() => {
@@ -517,9 +517,6 @@ const EmployeesPage = () => {
         }
         onPageChange={handlePageChange}
       />
-
-
-      
     </>
   );
 };

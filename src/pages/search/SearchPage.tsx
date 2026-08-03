@@ -10,21 +10,15 @@ import Search_Instructions from "../../components/SearchInfo/Search_Instructions
 export default function SearchPage() {
   const [searchText, setSearchText] = useState("");
 
-  const searchMutation =
-    useSearchEmployeeProfile();
+  const searchMutation = useSearchEmployeeProfile();
 
-  const cleanSearchText =
-    searchText.trim();
+  const cleanSearchText = searchText.trim();
 
-  const handleSearch = (
-    event?: React.FormEvent<HTMLFormElement>,
-  ) => {
+  const handleSearch = (event?: React.FormEvent<HTMLFormElement>) => {
     event?.preventDefault();
 
     if (!cleanSearchText) {
-      toast.error(
-        "Please enter name, Iqama, phone number or email.",
-      );
+      toast.error("Please enter name, Iqama, phone number or email.");
 
       return;
     }
@@ -41,18 +35,14 @@ export default function SearchPage() {
     searchMutation.reset();
   };
 
-  const handleInputChange = (
-    event: React.ChangeEvent<HTMLInputElement>,
-  ) => {
+  const handleInputChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     setSearchText(event.target.value);
   };
 
   return (
     <div>
       <Helmet>
-        <title>
-          Asset Manager | Search
-        </title>
+        <title>Asset Manager | Search</title>
       </Helmet>
 
       <div className="py-4 md:py-8">
@@ -64,8 +54,7 @@ export default function SearchPage() {
             </h1>
 
             <p className="mt-1 text-sm opacity-60">
-              Search employee profile, assets,
-              licenses and reports.
+              Search employee profile, assets, licenses and reports.
             </p>
           </div>
         </div>
@@ -76,8 +65,7 @@ export default function SearchPage() {
             htmlFor="employee-search"
             className="mb-2 block text-xs font-semibold"
           >
-            Search by Name, Iqama, Email or
-            Phone Number
+            Search by Name, Iqama, Email or Phone Number
           </label>
 
           <form
@@ -110,10 +98,7 @@ export default function SearchPage() {
             <div className="flex gap-2">
               <button
                 type="submit"
-                disabled={
-                  searchMutation.isPending ||
-                  !cleanSearchText
-                }
+                disabled={searchMutation.isPending || !cleanSearchText}
                 className="flex min-w-30 cursor-pointer items-center justify-center gap-2 rounded-md bg-app-brand px-5 py-2 font-semibold text-white transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60"
               >
                 {searchMutation.isPending ? (
@@ -134,15 +119,14 @@ export default function SearchPage() {
               <button
                 type="button"
                 onClick={handleClear}
-                disabled={
-                  !searchText &&
-                  !searchMutation.data
-                }
+                disabled={!searchText && !searchMutation.data}
                 className="cursor-pointer rounded-md border border-app-gray/30 px-5 py-2 transition hover:bg-app-gray/5 disabled:cursor-not-allowed disabled:opacity-50"
               >
                 Clear
               </button>
             </div>
+
+
           </form>
 
           {searchMutation.isPending && (
@@ -150,16 +134,16 @@ export default function SearchPage() {
               Searching employee records...
             </p>
           )}
+
         </div>
 
         {/* Search Result */}
         {searchMutation.data && (
           <div className="mt-6">
-            <Search_Info
-              data={searchMutation.data}
-            />
+            <Search_Info data={searchMutation.data} />
           </div>
         )}
+        
       </div>
 
       <Search_Instructions />

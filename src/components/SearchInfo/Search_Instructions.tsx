@@ -1,4 +1,8 @@
 export default function Search_Instructions() {
+
+  
+
+
   return (
     <div className="rounded-md border border-gray-200 bg-app-brand/10 px-5 py-4">
 

@@ -33,6 +33,7 @@ const Navbar = () => {
     href: string;
     roles: Role[];
   }[] = [
+
     {
       name: "Dashboard",
       icon: <LuLayoutDashboard size={18} />,
@@ -67,7 +68,7 @@ const Navbar = () => {
       name: "Search",
       icon: <LuSearch size={18} />,
       href: "/dashboard/search",
-      roles: ["ADMIN", "IT", "FINANCE"],
+      roles: ["ADMIN", "FINANCE"],
     },
     {
       name: "Reports",

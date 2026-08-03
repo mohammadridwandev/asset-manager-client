@@ -178,15 +178,22 @@ export default function Employee_Print({
                 </span>
               </div>
 
-              <div className="grid lowercase grid-cols-[30mm_1fr] gap-[3mm]">
-                <span className={labelClass}>
-                  Email Address:
-                </span>
+              <div className="grid grid-cols-[30mm_1fr] gap-[3mm]">
+  <span className={`${valueClass} capitalize`}>
+    Email Address:
+  </span>
 
-                <span className={`${valueClass} lowercase`}>
-                  {displayValue(employee?.email)}
-                </span>
-              </div>
+  <span
+    className={`${valueClass} ${
+      employee?.email ? "lowercase" : "uppercase"
+    }`}
+  >
+    {displayValue(employee?.email)}
+  </span>
+</div>
+
+
+
 
               <div className="grid grid-cols-[30mm_1fr] gap-[3mm]">
                 <span className={labelClass}>

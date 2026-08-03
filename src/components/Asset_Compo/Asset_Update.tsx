@@ -3,6 +3,7 @@ import DatePicker from "react-datepicker";
 import { useNavigate, useParams } from "react-router-dom";
 import { useGetSingleAsset, useUpdateAsset } from "../../context/useAssets";
 import Swal from "sweetalert2";
+import DataLoading from "../../DataLoading";
 
 export default function Asset_Update() {
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
@@ -180,12 +181,16 @@ const handlerAssetsUpdate = async (
 
 
 
+   if (isLoading) {
+      return (
+        <DataLoading
+          title="Update asset"
+          message="Loading asset data..."
+        ></DataLoading>
+      );
+    }
 
 
-
-  if (isLoading) {
-    return <p className="p-6">Loading asset...</p>;
-  }
 
   if (!asset) {
     return <p className="p-6 text-red-500">Asset not found!</p>;

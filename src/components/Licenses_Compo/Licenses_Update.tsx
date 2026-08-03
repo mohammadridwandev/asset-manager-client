@@ -6,6 +6,7 @@ import {
   useGetSingleLicense,
   useUpdateLicense,
 } from "../../context/useLicenses";
+import DataLoading from "../../DataLoading";
 
 const MAX_FILE_SIZE = 2 * 1024 * 1024; // 2 MB
 
@@ -136,9 +137,18 @@ export default function Licenses_Update() {
     );
   };
 
-  if (isLoading) {
-    return <p className="p-6">Loading license...</p>;
-  }
+
+   if (isLoading) {
+      return (
+        <DataLoading
+          title="Update license"
+          message="Loading license data..."
+        ></DataLoading>
+      );
+    }
+
+
+
 
   if (!license) {
     return <p className="p-6 text-red-500">License not found!</p>;
