@@ -13,6 +13,8 @@ import { Button } from "@heroui/react/button";
 import View_Employee from "./View_Employee";
 
 import Asset_Doc from "./Asset_Doc";
+import { useUpdateEmployeeNote } from "../../context/useEmployee";
+import toast from "react-hot-toast";
 
 export default function Employee_Card({
   employees: filteredEmployees,
@@ -24,6 +26,8 @@ export default function Employee_Card({
   const employees = filteredEmployees || [];
 
   const [selectedEmployee, setSelectedEmployee] = useState<any>(null);
+
+  const { mutate: updateEmployeeNote } = useUpdateEmployeeNote();
 
   const [isUpdateOpen] = useState(false);
 
@@ -39,11 +43,6 @@ export default function Employee_Card({
     return `${API_BASE_URL.replace(/\/$/, "")}/${image.replace(/^\//, "")}`;
   };
 
-
-
-
-
-
   return (
     <>
       <div>
@@ -54,12 +53,9 @@ export default function Employee_Card({
 
       <div className="bg-app-bg py-4 text-app-text transition-colors duration-300 md:py-6">
         {employees.length === 0 ? (
-
           <div className="flex min-h-75 items-center justify-center text-lg font-medium text-app-gray">
             No employee found!
           </div>
-
-          
         ) : (
           <div className="grid grid-cols-1 gap-5 md:grid-cols-2 2xl:grid-cols-3">
             {employees.map((employee: any) => (
@@ -105,8 +101,62 @@ export default function Employee_Card({
                           employeeId={employee.id}
                           initialDocuments={employee.assetDocuments || []}
                         />
+
+                        {/* person note */}
+
+                        {/* Person Note */}
+                        {employee.note ? (
+                          <button
+                            type="button"
+                            title="Edit Note"
+                            onClick={() => {
+                              const note = window.prompt(
+                                "Update Note",
+                                employee.note,
+                              );
+
+                              if (note === null) return;
+
+                              const trimmedNote = note.trim();
+
+                              if (trimmedNote.length > 15) {
+                                toast.error(
+                                  "Note cannot exceed 15 characters.",
+                                );
+                                return;
+                              }
+
+                              updateEmployeeNote({
+                                id: String(employee.id),
+                                note: trimmedNote,
+                              });
+                            }}
+                            className="rounded-full border border-yellow-500/20 bg-yellow-500/10 px-2.5 py-1 text-[10px] font-medium text-yellow-600 transition hover:bg-yellow-500/20"
+                          >
+                            {employee.note}
+                          </button>
+                        ) : (
+                          <button
+                            type="button"
+                            title="Add Note"
+                            onClick={() => {
+                              const note = window.prompt("Add Note");
+
+                              if (!note) return;
+
+                              updateEmployeeNote({
+                                id: String(employee.id),
+                                note: note.slice(0, 15),
+                              });
+                            }}
+                            className="rounded-full border border-app-gray/20 px-2.5 py-1 text-[10px] text-app-gray transition hover:border-app-brand hover:text-app-brand"
+                          >
+                            + Add Note
+                          </button>
+                        )}
                       </div>
                     </div>
+
                     <span
                       className={`shrink-0 rounded-full px-3 py-1 text-xs font-normal capitalize ${
                         employee.status === "ACTIVE"

@@ -176,7 +176,7 @@ export default function LicensePage() {
                 )
               }
               placeholder="Search by software name, vendor or license key..."
-              className="w-full rounded-md border border-app-gray/15 py-3.5 pr-30 pl-12 text-sm text-light_Gray outline-none transition-all placeholder:text-light_Gray/40 focus:border-app-brand dark_Gray"
+              className="w-full rounded-md border border-app-gray/15 py-2.5 pr-30 pl-12 text-sm text-light_Gray outline-none transition-all placeholder:text-light_Gray/40 focus:border-app-brand dark_Gray"
             />
 
             {isFetching && !isLoading && (

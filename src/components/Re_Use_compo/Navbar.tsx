@@ -70,12 +70,22 @@ const Navbar = () => {
       href: "/dashboard/search",
       roles: ["ADMIN", "FINANCE"],
     },
+
     {
       name: "Reports",
       icon: <LuClipboardList size={18} />,
       href: "/dashboard/reports",
       roles: ["ADMIN"],
     },
+
+    {
+      name: "Department",
+      icon: <LuClipboardList size={18} />,
+      href: "/dashboard/department",
+      roles: ["ADMIN"],
+    },
+
+
   ];
 
   const allowedNavItems = navItems.filter((item) => hasRole(item.roles));
@@ -111,7 +121,8 @@ const Navbar = () => {
   };
 
   return (
-    <header className="fixed w-full  z-50 bg-app-bg  border border-app-gray/15 ">
+    <header className="fixed w-full z-50 bg-app-bg  border border-app-gray/15 ">
+
       <nav className="container px-4 m-auto  py-4  flex items-center justify-between relative ">
         {/* Logo Section */}
 
@@ -119,11 +130,11 @@ const Navbar = () => {
           <div className="bg-app-brand text-app-secondary p-1.5 rounded-md">
             <LuPackage size={18} />
           </div>
-          <span className="font-bold lg:text-xl ">Asset-Manager</span>
+          <span className="font-bold lg:text-lg ">Asset-Manager</span>
         </Link>
 
         {/* Desktop Menu */}
-        <div className="hidden md:flex items-center bg-app-bg  rounded-full  py-1.5 gap-1">
+        <div className="hidden lg:flex items-center bg-app-bg  rounded-full  py-1.5 gap-1">
           {allowedNavItems.map((item) => (
             <NavLink
               key={item.name}
@@ -251,6 +262,8 @@ const Navbar = () => {
           </div>
         )}
       </nav>
+
+
     </header>
   );
 };

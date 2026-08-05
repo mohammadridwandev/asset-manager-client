@@ -364,13 +364,7 @@ export default function Update_Employee() {
               >
                 <option value="ACTIVE">Active</option>
 
-                <option value="ON_LEAVE">On Leave</option>
-
-                <option value="VACATION">Vacation</option>
-
                 <option value="INACTIVE">Inactive</option>
-
-                <option value="RESIGNED">Resigned</option>
               </select>
             </div>
 

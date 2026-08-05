@@ -134,7 +134,7 @@ export default function InvoicePage() {
               )
             }
             placeholder="Search by invoice number..."
-            className="w-full rounded-md border border-app-gray/15 bg-app-bg py-3.5 pr-30 pl-12 text-sm text-light_Gray outline-none transition-all placeholder:text-light_Gray/40 focus:border-app-brand dark_Gray"
+            className="w-full rounded-md border border-app-gray/15 bg-app-bg py-2.5 pr-30 pl-12 text-sm text-light_Gray outline-none transition-all placeholder:text-light_Gray/40 focus:border-app-brand dark_Gray"
           />
 
           {isFetching && !isLoading && (

@@ -20,6 +20,9 @@ import Licenses_Update from "../components/Licenses_Compo/Licenses_Update";
 import Invoice_Update from "../components/Invoices_Compo/Invoice_Update";
 import Printer_Page from "../components/Invoices_Compo/Printer_Page";
 import RoleRoute from "./RoleRoute";
+import Department from "../pages/department/Department";
+import Depart_asset_list from "../components/Department/Depart_asset_list";
+
 
 const router = createBrowserRouter(
   [
@@ -122,7 +125,7 @@ const router = createBrowserRouter(
         {
           path: "invoices/update/:id",
           element: (
-            <RoleRoute roles={["ADMIN", ]}>
+            <RoleRoute roles={["ADMIN"]}>
               <Invoice_Update />
             </RoleRoute>
           ),
@@ -147,17 +150,36 @@ const router = createBrowserRouter(
         },
 
         {
+          path: "department",
+          element: (
+            <RoleRoute roles={["ADMIN"]}>
+              <Department />
+            </RoleRoute>
+          ),
+        },
+
+        {
+          path: "department/:departmentId/assets",
+          element: (
+            <RoleRoute roles={["ADMIN"]}>
+              <Depart_asset_list />
+            </RoleRoute>
+          ),
+        },
+
+        {
           path: "search",
           element: (
-            <RoleRoute roles={["ADMIN", "FINANCE", ]}>
+            <RoleRoute roles={["ADMIN", "FINANCE"]}>
               <SearchPage />
             </RoleRoute>
           ),
         },
+
         {
           path: "profile-setting",
           element: (
-            <RoleRoute roles={["ADMIN", "IT", "FINANCE",]}>
+            <RoleRoute roles={["ADMIN", "IT", "FINANCE"]}>
               <Profile_Setting />
             </RoleRoute>
           ),

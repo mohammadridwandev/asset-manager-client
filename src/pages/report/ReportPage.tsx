@@ -7,6 +7,7 @@ import Clearance_Records from "../../components/Report_Compo/Clearance_Records/C
 
 
 
+
 export default function ReportPage() {
   return (
     <div className="w-full py-16">
@@ -33,9 +34,7 @@ export default function ReportPage() {
         <Allocation_Report />
       </div>
 
-      <div>
-        {/* <Employee_Details /> */}
-      </div>
+      
     </div>
   );
 }

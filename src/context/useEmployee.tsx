@@ -106,8 +106,7 @@ export const useGetSingleEmployee = (id?: string) => {
   });
 };
 
-// GET EMPLOYEES
-// GET EMPLOYEES
+
 export const useGetEmployee = (
   page: number = 1,
   limit: number = 10,
@@ -179,11 +178,6 @@ export const useGetEmployee = (
     retry: 1,
   });
 };
-
-
-
-
-
 
 export const useUpdateEmployee = () => {
   const queryClient = useQueryClient();
@@ -323,6 +317,8 @@ export const useExportEmployees = () => {
   });
 };
 
+
+
 export const useGetEmployeeFilterOptions = () => {
   return useQuery({
     queryKey: ["employee-filter-options"],
@@ -344,5 +340,56 @@ export const useGetEmployeeFilterOptions = () => {
     refetchOnWindowFocus: false,
 
     retry: 1,
+  });
+};
+
+
+
+
+// UPDATE EMPLOYEE NOTE
+export const useUpdateEmployeeNote = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({
+      id,
+      note,
+    }: {
+      id: string;
+      note: string;
+    }) => {
+      
+      const token = localStorage.getItem("token");
+
+      return axiosInstance.patch(
+        `/employees/${id}`,
+        { note },
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        },
+      );
+    },
+
+    onSuccess: () => {
+      toast.success("Note updated.");
+
+      queryClient.invalidateQueries({
+        queryKey: ["employees"],
+      });
+
+      queryClient.invalidateQueries({
+        queryKey: ["employee"],
+      });
+    },
+
+    onError: (error: any) => {
+      const message =
+        error?.response?.data?.message ||
+        "Failed to update note.";
+
+      toast.error(message);
+    },
   });
 };

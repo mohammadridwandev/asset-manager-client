@@ -102,22 +102,13 @@ const EmployeesPage = () => {
       label: "Active",
       value: "ACTIVE",
     },
-    {
-      label: "On Leave",
-      value: "ON_LEAVE",
-    },
-    {
-      label: "Vacation",
-      value: "VACATION",
-    },
+    
+    
     {
       label: "Inactive",
       value: "INACTIVE",
     },
-    {
-      label: "Resigned",
-      value: "RESIGNED",
-    },
+   
   ];
 
   // Search বা filter change হলে page 1-এ যাবে
@@ -230,7 +221,7 @@ const EmployeesPage = () => {
                   )
                 }
                 placeholder="Search employees by name, email, phone, iqama, department or position..."
-                className="w-full rounded-md border border-app-gray/15 bg-app-bg py-3.5 pr-14 pl-12 text-sm text-app-text outline-none transition-all placeholder:text-app-gray/50 focus:border-app-brand"
+                className="w-full rounded-md border border-app-gray/15 bg-app-bg py-2.5 pr-14 pl-12 text-sm text-app-text outline-none transition-all placeholder:text-app-gray/50 focus:border-app-brand"
               />
 
               {isFetching && !isLoading && (
@@ -259,7 +250,7 @@ const EmployeesPage = () => {
                   setPositionOpen(false);
                   setStatusOpen(false);
                 }}
-                className="flex w-full items-center justify-between rounded-md border border-app-gray/30 bg-transparent px-4 py-3.5 text-left text-sm font-medium shadow-xs hover:bg-app-gray/5 focus:outline-none"
+                className="flex w-full items-center justify-between rounded-md border border-app-gray/30 bg-transparent px-4 py-2.5 text-left text-sm font-medium shadow-xs hover:bg-app-gray/5 focus:outline-none"
               >
                 <span className="truncate">
                   {selectedDepartment}
@@ -342,7 +333,7 @@ const EmployeesPage = () => {
                   setDepartmentOpen(false);
                   setStatusOpen(false);
                 }}
-                className="flex w-full items-center justify-between rounded-md border border-app-gray/30 bg-transparent px-4 py-3.5 text-left text-sm font-medium shadow-xs hover:bg-app-gray/5 focus:outline-none"
+                className="flex w-full items-center justify-between rounded-md border border-app-gray/30 bg-transparent px-4 py-2.5 text-left text-sm font-medium shadow-xs hover:bg-app-gray/5 focus:outline-none"
               >
                 <span className="truncate">
                   {selectedPosition}
@@ -422,7 +413,7 @@ const EmployeesPage = () => {
                   setDepartmentOpen(false);
                   setPositionOpen(false);
                 }}
-                className="flex w-full items-center justify-between rounded-md border border-app-gray/30 bg-transparent px-4 py-3.5 text-left text-sm font-medium shadow-xs hover:bg-app-gray/5 focus:outline-none"
+                className="flex w-full items-center justify-between rounded-md border border-app-gray/30 bg-transparent px-4 py-2.5 text-left text-sm font-medium shadow-xs hover:bg-app-gray/5 focus:outline-none"
               >
                 <span className="truncate">
                   {selectedStatus}
