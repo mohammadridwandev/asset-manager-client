@@ -362,9 +362,11 @@ export default function Update_Employee() {
                 defaultValue={employee.status || "ACTIVE"}
                 className="my-2 w-full rounded-lg border border-app-gray/30 bg-app-bg px-4 py-2.5 transition-colors focus:border-app-brand focus:outline-none"
               >
-                <option value="ACTIVE">Active</option>
 
+                <option value="ACTIVE">Active</option>
                 <option value="INACTIVE">Inactive</option>
+                <option value="VACATION">Vacation</option>
+
               </select>
             </div>
 
@@ -424,6 +426,7 @@ export default function Update_Employee() {
               <p className="text-[11px] text-app-gray">
                 jpg | jpeg | png | webp | Max 2MB
               </p>
+              
             </div>
           </div>
 

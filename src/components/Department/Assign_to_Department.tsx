@@ -186,6 +186,7 @@ export default function Assign_to_Department({
         <form onSubmit={handleSubmit}>
           {/* Header */}
           <div className="flex items-center justify-between border-b border-app-gray/20 px-6 py-4">
+          
             <div>
               <h2 className="text-lg font-bold">
                 Manage Departments

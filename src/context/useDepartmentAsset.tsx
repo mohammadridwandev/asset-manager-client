@@ -7,6 +7,7 @@ import {
 import toast from "react-hot-toast";
 import axiosInstance from "../config/axiosInstance";
 
+
 // CREATE DEPARTMENT ASSET
 export const useCreateDepartmentAsset = () => {
   const queryClient = useQueryClient();
@@ -118,6 +119,7 @@ export const useGetAssetDepartments = (
   });
 };
 
+
 // UPDATE DEPARTMENT ASSET
 export const useUpdateDepartmentAsset = () => {
   const queryClient = useQueryClient();
@@ -180,6 +182,7 @@ export const useUpdateDepartmentAsset = () => {
     },
   });
 };
+
 
 // DELETE DEPARTMENT ASSET
 export const useDeleteDepartmentAsset = () => {
@@ -340,6 +343,7 @@ export const useAssignDepartmentAsset = () => {
     },
   });
 };
+
 
 // UNASSIGN ASSET FROM DEPARTMENT
 export const useUnassignDepartmentAsset =

@@ -8,47 +8,60 @@ export const useCreateAsset = () => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async (createAsset: any) => {
-      return axiosInstance.post("/assets", createAsset);
+    mutationFn: async (
+      createAsset: FormData,
+    ) => {
+      return axiosInstance.post(
+        "/assets",
+        createAsset,
+        {
+          headers: {
+            "Content-Type":
+              "multipart/form-data",
+          },
+        },
+      );
     },
 
     onSuccess: () => {
-      // Asset list refresh করবে
       queryClient.invalidateQueries({
         queryKey: ["assets"],
       });
 
-      // Employee-related asset information refresh করবে
       queryClient.invalidateQueries({
         queryKey: ["employees"],
       });
 
-      // Asset Type dropdown refresh করবে
       queryClient.invalidateQueries({
         queryKey: ["asset-filter-options"],
       });
 
-      // Dashboard asset count refresh করবে
       queryClient.invalidateQueries({
         queryKey: ["dashboard"],
       });
 
-      // Allocation Report asset value/count refresh করবে
       queryClient.invalidateQueries({
         queryKey: ["report-allocation"],
       });
     },
 
     onError: (error: any) => {
-      console.error("Create Asset Error:", error);
+      console.error(
+        "Create Asset Error:",
+        error,
+      );
 
-      const status = error?.response?.status;
+      const status =
+        error?.response?.status;
 
       const message =
         status === 409
-          ? error?.response?.data?.message ||
+          ? error?.response?.data
+              ?.message ||
             "This serial number already exists."
-          : "Asset could not be created. Please try again.";
+          : error?.response?.data
+              ?.message ||
+            "Asset could not be created. Please try again.";
 
       toast.error(message);
     },
@@ -124,53 +137,68 @@ export const useUpdateAsset = () => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async ({ id, updateData }: { id: string; updateData: any }) => {
-      const token = localStorage.getItem("token");
+    mutationFn: async ({
+      id,
+      updateData,
+    }: {
+      id: string;
+      updateData: FormData;
+    }) => {
+      const token =
+        localStorage.getItem("token");
 
-      return axiosInstance.patch(`/assets/${id}`, updateData, {
-        headers: {
-          Authorization: `Bearer ${token}`,
+      return axiosInstance.patch(
+        `/assets/${id}`,
+        updateData,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type":
+              "multipart/form-data",
+          },
         },
-      });
+      );
     },
 
     onSuccess: () => {
-      // Asset list এবং single asset cache refresh করবে
       queryClient.invalidateQueries({
         queryKey: ["assets"],
       });
 
-      // Employee asset information refresh করবে
       queryClient.invalidateQueries({
         queryKey: ["employees"],
       });
 
-      // Asset Type পরিবর্তন হলে dropdown refresh করবে
       queryClient.invalidateQueries({
         queryKey: ["asset-filter-options"],
       });
 
-      // Dashboard total/count refresh করবে
       queryClient.invalidateQueries({
         queryKey: ["dashboard"],
       });
 
-      // Allocation Report value/count refresh করবে
       queryClient.invalidateQueries({
         queryKey: ["report-allocation"],
       });
     },
 
     onError: (error: any) => {
-      console.error("Update Asset Error:", error);
+      console.error(
+        "Update Asset Error:",
+        error,
+      );
 
-      const status = error?.response?.status;
+      const status =
+        error?.response?.status;
 
       const message =
         status === 409
-          ? error?.response?.data?.message ||
+          ? error?.response?.data
+              ?.message ||
             "This serial number is already used by another asset."
-          : "Asset could not be updated. Please try again.";
+          : error?.response?.data
+              ?.message ||
+            "Asset could not be updated. Please try again.";
 
       toast.error(message);
     },

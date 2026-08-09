@@ -87,6 +87,7 @@ export const useCreateEmployee = () => {
   });
 };
 
+
 // GET SINGLE EMPLOYEE
 export const useGetSingleEmployee = (id?: string) => {
   return useQuery({
@@ -96,15 +97,16 @@ export const useGetSingleEmployee = (id?: string) => {
       const response = await axiosInstance.get(`/employees/${id}`, {
         signal,
       });
-
       return response.data?.data || response.data;
     },
-
     enabled: !!id,
-
     refetchOnWindowFocus: false,
   });
 };
+
+
+
+
 
 
 export const useGetEmployee = (
@@ -317,8 +319,6 @@ export const useExportEmployees = () => {
   });
 };
 
-
-
 export const useGetEmployeeFilterOptions = () => {
   return useQuery({
     queryKey: ["employee-filter-options"],
@@ -342,9 +342,6 @@ export const useGetEmployeeFilterOptions = () => {
     retry: 1,
   });
 };
-
-
-
 
 // UPDATE EMPLOYEE NOTE
 export const useUpdateEmployeeNote = () => {
@@ -388,6 +385,126 @@ export const useUpdateEmployeeNote = () => {
       const message =
         error?.response?.data?.message ||
         "Failed to update note.";
+
+      toast.error(message);
+    },
+  });
+};
+
+
+// ========================= GET EMPLOYEE ASSET DOCUMENTS =========================
+export const useGetEmployeeAssetDocuments = (
+  employeeId?: number,
+  enabled: boolean = false,
+) => {
+  return useQuery({
+    queryKey: [
+      "employee-asset-documents",
+      employeeId,
+    ],
+
+    queryFn: async ({ signal }) => {
+      const response = await axiosInstance.get(
+        `/employees/${employeeId}/asset-documents`,
+        {
+          signal,
+        },
+      );
+
+      return response.data?.data || [];
+    },
+
+    enabled: !!employeeId && enabled,
+
+    refetchOnWindowFocus: false,
+
+    retry: 1,
+  });
+};
+
+
+// ========================= UPLOAD EMPLOYEE ASSET DOCUMENTS =========================
+export const useUploadEmployeeAssetDocuments = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({
+      employeeId,
+      formData,
+    }: {
+      employeeId: number;
+      formData: FormData;
+    }) => {
+      return axiosInstance.post(
+        `/employees/${employeeId}/asset-documents`,
+        formData,
+        {
+          headers: {
+            "Content-Type": "multipart/form-data",
+          },
+        },
+      );
+    },
+
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({
+        queryKey: [
+          "employee-asset-documents",
+          variables.employeeId,
+        ],
+      });
+
+      toast.success(
+        "Asset document uploaded successfully.",
+      );
+    },
+
+    onError: (error: any) => {
+      const message =
+        error?.response?.data?.message ||
+        error?.response?.data?.error ||
+        "Asset document upload failed.";
+
+      toast.error(message);
+    },
+  });
+};
+
+
+// ========================= DELETE EMPLOYEE ASSET DOCUMENT =========================
+export const useDeleteEmployeeAssetDocument = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({
+      documentId,
+    }: {
+      documentId: number;
+      employeeId: number;
+    }) => {
+      return axiosInstance.delete(
+        `/employees/asset-documents/${documentId}`,
+      );
+    },
+
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({
+        queryKey: [
+          "employee-asset-documents",
+          variables.employeeId,
+        ],
+      });
+
+      toast.success(
+        "Asset document deleted successfully.",
+      );
+    },
+
+    onError: (error: any) => {
+      const message =
+        error?.response?.data?.message ||
+        error?.response?.data?.error ||
+        "Asset document delete failed.";
 
       toast.error(message);
     },

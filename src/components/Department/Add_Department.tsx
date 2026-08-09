@@ -5,7 +5,12 @@ import {
   FiSearch,
   FiTrash2,
 } from "react-icons/fi";
-import { useMemo, useState } from "react";
+
+import {
+  useMemo,
+  useState,
+} from "react";
+
 import { useNavigate } from "react-router-dom";
 import { Helmet } from "react-helmet-async";
 import Swal from "sweetalert2";
@@ -20,7 +25,11 @@ import {
 } from "../../context/useDepartment";
 
 import { useGetEmployeeFilterOptions } from "../../context/useEmployee";
+
 import { useGetDepartmentAssets } from "../../context/useDepartmentAsset";
+
+import { useGetAssets } from "../../context/useAssets";
+
 import { useDebounce } from "../../context/useDebounce";
 
 type DepartmentType = {
@@ -49,27 +58,58 @@ type DepartmentAssetType = {
   departmentAssignments?: DepartmentAssignmentType[];
 };
 
+type MainAssetDepartmentAssignmentType = {
+  id: number;
+  assetId: number;
+  departmentId: number;
+  assignedAt: string;
+
+  department: {
+    id: number;
+    name: string;
+  };
+};
+
+type MainAssetType = {
+  id: number;
+  quantity: number;
+
+  departmentAssignments?: MainAssetDepartmentAssignmentType[];
+};
+
 export default function Add_Department() {
   const navigate = useNavigate();
 
-  const [departmentOpen, setDepartmentOpen] =
-    useState(false);
+  const [
+    departmentOpen,
+    setDepartmentOpen,
+  ] = useState(false);
 
   const [searchText, setSearchText] =
     useState("");
 
-  const debouncedSearchText = useDebounce(
-    searchText.trim(),
-    300,
-  );
+  const debouncedSearchText =
+    useDebounce(
+      searchText.trim(),
+      300,
+    );
 
-  const [departmentName, setDepartmentName] =
-    useState("");
+  const [
+    departmentName,
+    setDepartmentName,
+  ] = useState("");
 
   const [
     editingDepartment,
     setEditingDepartment,
-  ] = useState<DepartmentType | null>(null);
+  ] =
+    useState<DepartmentType | null>(
+      null,
+    );
+
+  // =========================
+  // DEPARTMENTS
+  // =========================
 
   const {
     data: departments = [],
@@ -77,75 +117,169 @@ export default function Add_Department() {
     isError,
   } = useGetDepartments();
 
+  // =========================
+  // EMPLOYEE DEPARTMENT OPTIONS
+  // =========================
+
   const {
     data: employeeFilterOptions,
-    isLoading: isDepartmentOptionsLoading,
-    isError: isDepartmentOptionsError,
-  } = useGetEmployeeFilterOptions();
+    isLoading:
+      isDepartmentOptionsLoading,
+    isError:
+      isDepartmentOptionsError,
+  } =
+    useGetEmployeeFilterOptions();
 
-  const employeeDepartments: string[] =
-    employeeFilterOptions?.departments || [];
+  const employeeDepartments:
+    string[] =
+    employeeFilterOptions?.departments ||
+    [];
+
+  // =========================
+  // DEPARTMENT ASSETS
+  // =========================
 
   const {
     data: departmentAssets = [],
-    isLoading: isDepartmentAssetsLoading,
-    isError: isDepartmentAssetsError,
+    isLoading:
+      isDepartmentAssetsLoading,
+    isError:
+      isDepartmentAssetsError,
   } = useGetDepartmentAssets();
 
+  // =========================
+  // MAIN ASSETS
+  // =========================
+
   const {
-    mutateAsync: createDepartment,
+    data: assetData,
+    isLoading: isAssetsLoading,
+    isError: isAssetsError,
+  } = useGetAssets(
+    1,
+    100,
+    "",
+    "",
+    "",
+  );
+
+  const regularAssets =
+    assetData?.assets || [];
+
+  const isAllAssetsLoading =
+    isDepartmentAssetsLoading ||
+    isAssetsLoading;
+
+  // =========================
+  // MUTATIONS
+  // =========================
+
+  const {
+    mutateAsync:
+      createDepartment,
     isPending: isCreating,
   } = useCreateDepartment();
 
   const {
-    mutateAsync: updateDepartment,
+    mutateAsync:
+      updateDepartment,
     isPending: isUpdating,
   } = useUpdateDepartment();
 
   const {
-    mutateAsync: deleteDepartment,
+    mutateAsync:
+      deleteDepartment,
     isPending: isDeleting,
   } = useDeleteDepartment();
 
-  const filteredDepartments = useMemo(() => {
-    const keyword =
-      debouncedSearchText.toLowerCase();
+  // =========================
+  // SEARCH
+  // =========================
 
-    if (!keyword) {
-      return departments;
-    }
+  const filteredDepartments =
+    useMemo(() => {
+      const keyword =
+        debouncedSearchText.toLowerCase();
 
-    return departments.filter(
-      (department: DepartmentType) =>
-        department.name
-          ?.toLowerCase()
-          .includes(keyword),
-    );
-  }, [
-    departments,
-    debouncedSearchText,
-  ]);
+      if (!keyword) {
+        return departments;
+      }
+
+      return departments.filter(
+        (
+          department: DepartmentType,
+        ) =>
+          department.name
+            ?.toLowerCase()
+            .includes(keyword),
+      );
+    }, [
+      departments,
+      debouncedSearchText,
+    ]);
+
+  // =========================
+  // DEPARTMENT ASSET COUNT
+  // =========================
 
   const getDepartmentAssetCount = (
     departmentId: number,
   ) => {
-    if (!Array.isArray(departmentAssets)) {
-      return 0;
-    }
+    // DepartmentAsset module
+    const departmentAssetCount =
+      Array.isArray(
+        departmentAssets,
+      )
+        ? departmentAssets.filter(
+            (
+              asset: DepartmentAssetType,
+            ) =>
+              Array.isArray(
+                asset.departmentAssignments,
+              ) &&
+              asset.departmentAssignments.some(
+                (assignment) =>
+                  Number(
+                    assignment.departmentId,
+                  ) ===
+                  Number(
+                    departmentId,
+                  ),
+              ),
+          ).length
+        : 0;
 
-    return departmentAssets.filter(
-      (asset: DepartmentAssetType) =>
-        Array.isArray(
-          asset.departmentAssignments,
-        ) &&
-        asset.departmentAssignments.some(
-          (assignment) =>
-            Number(
-              assignment.departmentId,
-            ) === Number(departmentId),
-        ),
-    ).length;
+    // Main Asset -> multiple departments
+    const regularAssetCount =
+      Array.isArray(regularAssets)
+        ? regularAssets.filter(
+            (
+              asset: MainAssetType,
+            ) =>
+              Array.isArray(
+                asset.departmentAssignments,
+              ) &&
+              asset.departmentAssignments.some(
+                (assignment) =>
+                  Number(
+                    assignment.departmentId,
+                  ) ===
+                  Number(
+                    departmentId,
+                  ),
+              ),
+          ).length
+        : 0;
+
+    return (
+      departmentAssetCount +
+      regularAssetCount
+    );
   };
+
+  // =========================
+  // RESET FORM
+  // =========================
 
   const resetForm = () => {
     setDepartmentName("");
@@ -157,12 +291,17 @@ export default function Add_Department() {
     setDepartmentOpen(false);
   };
 
+  // =========================
+  // CREATE / UPDATE
+  // =========================
+
   const handleSubmit = async (
     event: React.FormEvent<HTMLFormElement>,
   ) => {
     event.preventDefault();
 
-    const name = departmentName.trim();
+    const name =
+      departmentName.trim();
 
     if (!name) {
       return;
@@ -171,7 +310,9 @@ export default function Add_Department() {
     try {
       if (editingDepartment) {
         await updateDepartment({
-          id: String(editingDepartment.id),
+          id: String(
+            editingDepartment.id,
+          ),
 
           updateData: {
             name,
@@ -193,11 +334,21 @@ export default function Add_Department() {
     }
   };
 
+  // =========================
+  // EDIT
+  // =========================
+
   const handleEdit = (
     department: DepartmentType,
   ) => {
-    setEditingDepartment(department);
-    setDepartmentName(department.name);
+    setEditingDepartment(
+      department,
+    );
+
+    setDepartmentName(
+      department.name,
+    );
+
     setDepartmentOpen(true);
 
     window.scrollTo({
@@ -206,19 +357,34 @@ export default function Add_Department() {
     });
   };
 
+  // =========================
+  // DELETE
+  // =========================
+
   const handleDelete = async (
     department: DepartmentType,
   ) => {
-    const confirmation = await Swal.fire({
-      title: "Delete department?",
-      text: `"${department.name}" will be removed permanently.`,
-      icon: "warning",
-      showCancelButton: true,
-      confirmButtonText: "Delete",
-      cancelButtonText: "Cancel",
-    });
+    const confirmation =
+      await Swal.fire({
+        title:
+          "Delete department?",
 
-    if (!confirmation.isConfirmed) {
+        text: `"${department.name}" will be removed permanently.`,
+
+        icon: "warning",
+
+        showCancelButton: true,
+
+        confirmButtonText:
+          "Delete",
+
+        cancelButtonText:
+          "Cancel",
+      });
+
+    if (
+      !confirmation.isConfirmed
+    ) {
       return;
     }
 
@@ -234,6 +400,10 @@ export default function Add_Department() {
     }
   };
 
+  // =========================
+  // OPEN DEPARTMENT
+  // =========================
+
   const handleOpenDepartment = (
     departmentId: number,
   ) => {
@@ -241,6 +411,10 @@ export default function Add_Department() {
       `/dashboard/department/${departmentId}/assets`,
     );
   };
+
+  // =========================
+  // LOADING
+  // =========================
 
   if (isLoading) {
     return (
@@ -251,10 +425,15 @@ export default function Add_Department() {
     );
   }
 
+  // =========================
+  // ERROR
+  // =========================
+
   if (isError) {
     return (
       <div className="flex min-h-75 items-center justify-center text-lg font-medium text-red-500">
-        Failed to load department data!
+        Failed to load department
+        data!
       </div>
     );
   }
@@ -263,9 +442,12 @@ export default function Add_Department() {
     <div className="pb-16">
       <Helmet>
         <title>
-          Asset Manager | Departments
+          Asset Manager |
+          Departments
         </title>
       </Helmet>
+
+      {/* ================= HEADER ================= */}
 
       <div className="py-4 md:py-8">
         <div className="mb-6 flex flex-col justify-between gap-4 md:flex-row md:items-center">
@@ -275,34 +457,45 @@ export default function Add_Department() {
             </h1>
 
             <p className="mt-1 text-sm text-app-gray">
-              Manage company departments
+              Manage company
+              departments
             </p>
           </div>
 
           <button
             type="button"
             onClick={() => {
-              if (departmentOpen) {
+              if (
+                departmentOpen
+              ) {
                 handleCloseForm();
               } else {
-                setDepartmentOpen(true);
+                setDepartmentOpen(
+                  true,
+                );
               }
             }}
             className="flex w-full items-center justify-center gap-2 rounded-md bg-app-brand px-4 py-2.5 text-sm font-semibold text-app-secondary hover:opacity-90 md:w-auto"
           >
             {departmentOpen ? (
               <>
-                <FiMinus size={17} />
+                <FiMinus
+                  size={17}
+                />
                 Close
               </>
             ) : (
               <>
-                <FiPlus size={17} />
+                <FiPlus
+                  size={17}
+                />
                 Add Department
               </>
             )}
           </button>
         </div>
+
+        {/* ================= SEARCH ================= */}
 
         <div className="relative mb-5">
           <FiSearch
@@ -323,9 +516,13 @@ export default function Add_Department() {
           />
         </div>
 
+        {/* ================= FORM ================= */}
+
         {departmentOpen && (
           <form
-            onSubmit={handleSubmit}
+            onSubmit={
+              handleSubmit
+            }
             className="mb-6 rounded-md border border-app-gray/20 p-4"
           >
             <label
@@ -341,10 +538,15 @@ export default function Add_Department() {
                   id="departmentName"
                   list="employee-department-list"
                   type="text"
-                  value={departmentName}
-                  onChange={(event) =>
+                  value={
+                    departmentName
+                  }
+                  onChange={(
+                    event,
+                  ) =>
                     setDepartmentName(
-                      event.target.value,
+                      event.target
+                        .value,
                     )
                   }
                   placeholder="Enter or select department"
@@ -353,10 +555,16 @@ export default function Add_Department() {
 
                 <datalist id="employee-department-list">
                   {employeeDepartments.map(
-                    (department: string) => (
+                    (
+                      department: string,
+                    ) => (
                       <option
-                        key={department}
-                        value={department}
+                        key={
+                          department
+                        }
+                        value={
+                          department
+                        }
                       />
                     ),
                   )}
@@ -364,13 +572,16 @@ export default function Add_Department() {
 
                 {isDepartmentOptionsLoading && (
                   <p className="mt-1.5 text-xs text-app-gray">
-                    Loading departments...
+                    Loading
+                    departments...
                   </p>
                 )}
 
                 {isDepartmentOptionsError && (
                   <p className="mt-1.5 text-xs text-red-500">
-                    Failed to load department suggestions.
+                    Failed to load
+                    department
+                    suggestions.
                   </p>
                 )}
               </div>
@@ -384,7 +595,8 @@ export default function Add_Department() {
                 }
                 className="rounded-md bg-app-brand px-5 py-2.5 text-sm font-semibold text-app-secondary disabled:cursor-not-allowed disabled:opacity-50"
               >
-                {isCreating || isUpdating
+                {isCreating ||
+                isUpdating
                   ? "Saving..."
                   : editingDepartment
                     ? "Update"
@@ -393,7 +605,9 @@ export default function Add_Department() {
 
               <button
                 type="button"
-                onClick={handleCloseForm}
+                onClick={
+                  handleCloseForm
+                }
                 className="rounded-md border border-app-gray/20 px-5 py-2.5 text-sm font-medium"
               >
                 Cancel
@@ -403,6 +617,8 @@ export default function Add_Department() {
         )}
       </div>
 
+      {/* ================= LIST ================= */}
+
       <div className="rounded-md border border-app-gray/20">
         <div className="border-b border-app-gray/20 px-4 py-3">
           <h2 className="font-semibold">
@@ -410,17 +626,24 @@ export default function Add_Department() {
           </h2>
 
           <p className="mt-1 text-sm text-app-gray">
-            Total {filteredDepartments.length}
+            Total{" "}
+            {
+              filteredDepartments.length
+            }
           </p>
         </div>
 
-        {isDepartmentAssetsError && (
+        {(isDepartmentAssetsError ||
+          isAssetsError) && (
           <div className="border-b border-red-500/20 bg-red-500/5 px-4 py-3 text-sm text-red-500">
-            Failed to load department asset counts.
+            Failed to load
+            department asset
+            counts.
           </div>
         )}
 
-        {filteredDepartments.length === 0 ? (
+        {filteredDepartments.length ===
+        0 ? (
           <div className="px-4 py-10 text-center text-sm text-app-gray">
             {searchText.trim()
               ? "No matching departments found."
@@ -439,7 +662,9 @@ export default function Add_Department() {
 
                 return (
                   <div
-                    key={department.id}
+                    key={
+                      department.id
+                    }
                     className="group flex min-h-36 flex-col justify-between rounded-md border border-app-gray/20 bg-app-bg p-4 transition-all hover:border-app-brand"
                   >
                     <button
@@ -454,14 +679,17 @@ export default function Add_Department() {
                       <div className="flex items-start justify-between gap-3">
                         <div className="min-w-0">
                           <h3 className="truncate font-semibold transition-colors group-hover:text-app-brand">
-                            {department.name}
+                            {
+                              department.name
+                            }
                           </h3>
 
                           <p className="mt-1 text-xs text-app-gray">
-                            {isDepartmentAssetsLoading
+                            {isAllAssetsLoading
                               ? "Loading assets..."
                               : `${assetCount} ${
-                                  assetCount === 1
+                                  assetCount ===
+                                  1
                                     ? "Asset"
                                     : "Assets"
                                 }`}
@@ -469,14 +697,15 @@ export default function Add_Department() {
                         </div>
 
                         <span className="shrink-0 rounded-md bg-app-brand/10 px-2.5 py-1 text-xs font-semibold text-app-brand">
-                          {isDepartmentAssetsLoading
+                          {isAllAssetsLoading
                             ? "..."
                             : assetCount}
                         </span>
                       </div>
 
                       <p className="mt-3 text-xs font-medium text-app-brand">
-                        Click to view assets
+                        Click to view
+                        assets
                       </p>
                     </button>
 
@@ -484,23 +713,33 @@ export default function Add_Department() {
                       <button
                         type="button"
                         onClick={() =>
-                          handleEdit(department)
+                          handleEdit(
+                            department,
+                          )
                         }
                         className="flex flex-1 items-center justify-center gap-2 rounded-md border border-app-gray/20 px-3 py-2 text-sm transition-colors hover:border-app-brand hover:text-app-brand"
                       >
-                        <FiEdit2 size={15} />
+                        <FiEdit2
+                          size={15}
+                        />
                         Edit
                       </button>
 
                       <button
                         type="button"
-                        disabled={isDeleting}
+                        disabled={
+                          isDeleting
+                        }
                         onClick={() =>
-                          handleDelete(department)
+                          handleDelete(
+                            department,
+                          )
                         }
                         className="flex flex-1 items-center justify-center gap-2 rounded-md border border-red-500/20 px-3 py-2 text-sm text-red-500 transition-colors hover:bg-red-500/5 disabled:cursor-not-allowed disabled:opacity-50"
                       >
-                        <FiTrash2 size={15} />
+                        <FiTrash2
+                          size={15}
+                        />
                         Delete
                       </button>
                     </div>

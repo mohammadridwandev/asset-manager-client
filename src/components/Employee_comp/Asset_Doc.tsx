@@ -56,6 +56,7 @@ export default function Asset_Doc({
     setDocuments(initialDocuments);
   }, [initialDocuments]);
 
+
   // Complete image URL
   const getFileUrl = (fileUrl?: string | null) => {
     if (!fileUrl) return "";
@@ -148,6 +149,7 @@ export default function Asset_Doc({
     // একই image আবার select করার সুবিধার জন্য input clear
     event.target.value = "";
   };
+
 
   // Remove selected image before upload
   const removeSelectedFile = (fileIndex: number) => {
@@ -252,165 +254,11 @@ export default function Asset_Doc({
     }
   };
 
-  // Print all uploaded images
-  // const handlePrintAll = () => {
-  //   if (documents.length === 0) {
-  //     toast.error("No asset documents available to print.");
-  //     return;
-  //   }
 
-  //   const printWindow = window.open("", "_blank");
-
-  //   if (!printWindow) {
-  //     toast.error("Please allow browser popups to print documents.");
-  //     return;
-  //   }
-
-  //   const documentHtml = documents
-  //     .map((document, index) => {
-  //       const fileUrl = getFileUrl(document.fileUrl);
-
-  //       return `
-  //         <section class="document-page">
-  //           <div class="document-header">
-  //             <h2>${document.fileName}</h2>
-
-  //             <span>
-  //               Document ${index + 1} of ${documents.length}
-  //             </span>
-  //           </div>
-
-  //           <div class="image-container">
-  //             <img
-  //               src="${fileUrl}"
-  //               alt="${document.fileName}"
-  //               class="image-preview"
-  //             />
-  //           </div>
-  //         </section>
-  //       `;
-  //     })
-  //     .join("");
-
-  //   printWindow.document.write(`
-  //     <!DOCTYPE html>
-
-  //     <html>
-  //       <head>
-  //         <title>Employee Asset Documents</title>
-
-  //         <style>
-  //           * {
-  //             box-sizing: border-box;
-  //           }
-
-  //           body {
-  //             margin: 0;
-  //             padding: 20px;
-  //             font-family: Arial, sans-serif;
-  //             color: #111827;
-  //             background: #ffffff;
-  //           }
-
-  //           .document-page {
-  //             width: 100%;
-  //             min-height: 100vh;
-  //             page-break-after: always;
-  //             break-after: page;
-  //           }
-
-  //           .document-page:last-child {
-  //             page-break-after: auto;
-  //             break-after: auto;
-  //           }
-
-  //           .document-header {
-  //             display: flex;
-  //             align-items: center;
-  //             justify-content: space-between;
-  //             gap: 20px;
-  //             padding-bottom: 12px;
-  //             margin-bottom: 15px;
-  //             border-bottom: 1px solid #d1d5db;
-  //           }
-
-  //           .document-header h2 {
-  //             margin: 0;
-  //             font-size: 16px;
-  //             overflow-wrap: anywhere;
-  //           }
-
-  //           .document-header span {
-  //             flex-shrink: 0;
-  //             font-size: 12px;
-  //             color: #6b7280;
-  //           }
-
-  //           .image-container {
-  //             display: flex;
-  //             align-items: center;
-  //             justify-content: center;
-  //             width: 100%;
-  //           }
-
-  //           .image-preview {
-  //             display: block;
-  //             max-width: 100%;
-  //             max-height: calc(100vh - 110px);
-  //             margin: 0 auto;
-  //             object-fit: contain;
-  //           }
-
-  //           @page {
-  //             size: auto;
-  //             margin: 10mm;
-  //           }
-
-  //           @media print {
-  //             body {
-  //               padding: 0;
-  //             }
-
-  //             .document-page {
-  //               min-height: auto;
-  //             }
-  //           }
-  //         </style>
-  //       </head>
-
-  //       <body>
-  //         ${documentHtml}
-
-  //         <script>
-  //           const images = Array.from(
-  //             document.querySelectorAll("img")
-  //           );
-
-  //           Promise.all(
-  //             images.map((image) => {
-  //               if (image.complete) {
-  //                 return Promise.resolve();
-  //               }
-
-  //               return new Promise((resolve) => {
-  //                 image.onload = resolve;
-  //                 image.onerror = resolve;
-  //               });
-  //             })
-  //           ).then(() => {
-  //             window.focus();
-  //             window.print();
-  //           });
-  //         </script>
-  //       </body>
-  //     </html>
-  //   `);
-
-  //   printWindow.document.close();
-  // };
 
   return (
     <>
+
       {/* Asset document button */}
       <button
         type="button"
@@ -462,17 +310,7 @@ export default function Asset_Doc({
               </div>
 
               <div className="flex shrink-0 items-center gap-2">
-
-                {/* <button
-                  type="button"
-                  onClick={handlePrintAll}
-                  disabled={documents.length === 0}
-                  className="flex cursor-pointer items-center gap-2 rounded-lg border border-app-brand/20 bg-app-brand/5 px-3 py-2 text-sm font-medium text-app-brand transition hover:bg-app-brand/10 disabled:cursor-not-allowed disabled:opacity-40"
-                >
-                  <FaPrint />
-
-                  <span className="hidden sm:inline">Print All</span>
-                </button> */}
+              
 
                 <button
                   type="button"
@@ -691,6 +529,8 @@ export default function Asset_Doc({
           </div>
         </div>
       )}
+
+      
     </>
   );
 }

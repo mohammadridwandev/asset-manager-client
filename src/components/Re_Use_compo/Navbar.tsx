@@ -162,6 +162,7 @@ const Navbar = () => {
             {/* Profile Section */}
             <div className="md:flex  items-center gap-3 text-app-text lg:pl-4 lg:border-l-app-gray/15">
               <div className="">
+
                 <button
                   onClick={() => setProfileOpen(!profileOpen)}
                   className="w-10 h-10 overflow-hidden rounded-full bg-app-brand/20 border border-app-brand/20 flex items-center justify-center hover:bg-app-brand/30 transition-all cursor-pointer"
@@ -224,6 +225,7 @@ const Navbar = () => {
                         <LuLogOut size={14} className="mb-1" />
                         Logout
                       </button>
+
                     </div>
                   </div>
                 )}
@@ -234,10 +236,11 @@ const Navbar = () => {
           {/* Mobile Menu Button */}
           <button
             onClick={() => setMenuOpen(!menuOpen)}
-            className="md:hidden p-2  bg-transparent border-0 cursor-pointer"
+            className="lg:hidden p-2 bg-transparent border-0 cursor-pointer"
           >
             {menuOpen ? <IoMdClose size={25} /> : <AiOutlineMenu size={25} />}
           </button>
+          
         </div>
 
         {/* Mobile Dropdown Menu */}

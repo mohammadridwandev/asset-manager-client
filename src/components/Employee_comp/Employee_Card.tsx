@@ -88,7 +88,8 @@ export default function Employee_Card({
                         {employee.fullName || "Not Available"}
                       </h3>
 
-                      <div className="mt-1 flex items-center gap-2">
+                      <div className="mt-1 flex  items-center gap-2  w-full">
+
                         <p
                           className=" inline-block max-w-full truncate rounded-full border border-app-brand/20 bg-app-brand/5 px-2.5 py-1 text-[10px] font-medium text-app-brand"
                           title={employee.position || "Not Available"}
@@ -96,15 +97,13 @@ export default function Employee_Card({
                           {employee.position || "Not Available"}
                         </p>
 
+
                         {/* Asset Document */}
                         <Asset_Doc
                           employeeId={employee.id}
                           initialDocuments={employee.assetDocuments || []}
                         />
 
-                        {/* person note */}
-
-                        {/* Person Note */}
                         {employee.note ? (
                           <button
                             type="button"
@@ -131,7 +130,7 @@ export default function Employee_Card({
                                 note: trimmedNote,
                               });
                             }}
-                            className="rounded-full border border-yellow-500/20 bg-yellow-500/10 px-2.5 py-1 text-[10px] font-medium text-yellow-600 transition hover:bg-yellow-500/20"
+                            className="rounded-full border truncate border-yellow-500/20 bg-yellow-500/10 px-2.5 py-1 text-[10px] font-medium text-yellow-600 transition hover:bg-yellow-500/20"
                           >
                             {employee.note}
                           </button>
@@ -151,7 +150,7 @@ export default function Employee_Card({
                             }}
                             className="rounded-full border border-app-gray/20 px-2.5 py-1 text-[10px] text-app-gray transition hover:border-app-brand hover:text-app-brand"
                           >
-                            + Add Note
+                            Note
                           </button>
                         )}
                       </div>
@@ -172,6 +171,9 @@ export default function Employee_Card({
                     >
                       {employee.status?.replace("_", " ") || "ACTIVE"}
                     </span>
+
+                        
+
                   </div>
                 </div>
 

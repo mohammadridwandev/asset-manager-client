@@ -1,18 +1,67 @@
 import { useState } from "react";
 import DatePicker from "react-datepicker";
+import toast from "react-hot-toast";
+
 import { useCreateAsset } from "../../context/useAssets";
+
+const MAX_FILE_SIZE = 2 * 1024 * 1024; // 2 MB
 
 const Add_Asset = ({
   setAssetOpen,
 }: {
   setAssetOpen: React.Dispatch<React.SetStateAction<boolean>>;
 }) => {
-  const [selectedDate, setSelectedDate] = useState(new Date());
+  const [selectedDate, setSelectedDate] = useState<Date | null>(new Date());
+
+  const [imagePreview, setImagePreview] = useState<string | null>(null);
+
+  const [fileName, setFileName] = useState("No file chosen");
 
   const useAssetsData = useCreateAsset();
 
-  const handleChange = (date: any) => {
+  const handleChange = (date: Date | null) => {
     setSelectedDate(date);
+  };
+
+  // ========================= NEW: OPTIONAL ASSET IMAGE =========================
+  const handleImageChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+
+    if (!file) {
+      return;
+    }
+
+    const allowedTypes = ["image/jpeg", "image/jpg", "image/png", "image/webp"];
+
+    if (!allowedTypes.includes(file.type)) {
+      toast.error("Only JPG, JPEG, PNG or WebP images are allowed.");
+
+      event.target.value = "";
+      setImagePreview(null);
+      setFileName("No file chosen");
+
+      return;
+    }
+
+    if (file.size > MAX_FILE_SIZE) {
+      toast.error("Image must be 2 MB or smaller.");
+
+      event.target.value = "";
+      setImagePreview(null);
+      setFileName("No file chosen");
+
+      return;
+    }
+
+    setFileName(file.name);
+
+    const reader = new FileReader();
+
+    reader.onloadend = () => {
+      setImagePreview(reader.result as string);
+    };
+
+    reader.readAsDataURL(file);
   };
 
   const handlerAssets = (event: React.FormEvent<HTMLFormElement>) => {
@@ -21,7 +70,8 @@ const Add_Asset = ({
     const form = event.currentTarget;
 
     if (!selectedDate) {
-      // DatePicker clear করা থাকলে submit বন্ধ করবে
+      toast.error("Please select a purchase date.");
+
       return;
     }
 
@@ -44,115 +94,138 @@ const Add_Asset = ({
     const price = Number(formData.get("price"));
 
     if (!assetName || !assetType) {
+      toast.error("Asset name and type are required.");
+
       return;
     }
 
     if (!Number.isInteger(quantity) || quantity < 1) {
+      toast.error("Quantity must be at least 1.");
+
       return;
     }
 
     if (Number.isNaN(price) || price < 0) {
+      toast.error("Please enter a valid price.");
+
       return;
     }
 
-    const assetData = {
-      assetName,
-      assetType,
+    // ========================= UPDATED: CLEAN FORM DATA =========================
 
-      // Empty serial backend-এ null হবে
-      serialNumber: serialNumber || null,
+    formData.set("assetName", assetName);
 
-      quantity,
+    formData.set("assetType", assetType);
 
-      invoiceNumber: invoiceNumber || null,
+    formData.set("serialNumber", serialNumber);
 
-      purchaseDate: selectedDate.toISOString().split("T")[0],
+    formData.set("quantity", String(quantity));
 
-      price,
+    formData.set("invoiceNumber", invoiceNumber);
 
-      condition: condition || null,
+    formData.set("purchaseDate", selectedDate.toISOString().split("T")[0]);
 
-      notes: notes || null,
-    };
+    formData.set("price", String(price));
 
-    useAssetsData.mutate(assetData, {
+    formData.set("condition", condition);
+
+    formData.set("notes", notes);
+
+    // ========================= UPDATED: IMAGE OPTIONAL =========================
+    const imageFile = formData.get("image");
+
+    if (imageFile instanceof File && imageFile.size === 0) {
+      formData.delete("image");
+    }
+
+    useAssetsData.mutate(formData, {
       onSuccess: () => {
-        // শুধু successful create হলে reset হবে
         form.reset();
+
         setSelectedDate(new Date());
+
+        setImagePreview(null);
+
+        setFileName("No file chosen");
+
         setAssetOpen(false);
       },
 
       onError: () => {
-        // Professional message useCreateAsset hook দেখাবে
-        // Duplicate serial হলে form data থাকবে
+        // Error message hook থেকে আসবে
       },
     });
   };
 
   return (
-    <div className="min-h-screen transition-all duration-300 py-4 bg-app-bg text-app-text">
-      <div className=" bg-app-bg border border-app-gray/10 rounded-xl shadow-sm p-6 md:p-8">
+    <div className="min-h-screen bg-app-bg py-5 text-app-text transition-colors duration-300">
+      <div className="rounded-xl border border-app-gray/10 bg-app-bg p-6 shadow-sm md:p-8">
         {/* Title */}
-        <h2 className="text-xl font-bold mb-4">Add New Asset</h2>
+        <h2 className="mb-5 text-xl font-bold">Add New Asset</h2>
 
         <form onSubmit={handlerAssets} className="space-y-6">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6">
+          <div className="grid grid-cols-1 gap-x-8 gap-y-6 md:grid-cols-2">
             {/* Asset Name */}
             <div className="space-y-2">
               <label className="text-sm font-medium">Asset Name *</label>
+
               <input
                 type="text"
                 name="assetName"
                 required
                 placeholder="Asset Name"
-                className="w-full px-4 my-2 py-2.5 rounded-lg border border-app-gray/30 bg-transparent focus:outline-none focus:border-app-brand transition-colors"
+                className="my-2 w-full rounded-lg border border-app-gray/30 bg-transparent px-4 py-2.5 transition-colors focus:border-app-brand focus:outline-none"
               />
             </div>
 
-            {/* Type */}
+            {/* Asset Type */}
             <div className="space-y-2">
               <label className="text-sm font-medium">Type *</label>
+
               <input
                 type="text"
-                placeholder="Asset Type"
-                required
                 name="assetType"
-                className="w-full px-4 my-2 py-2.5 rounded-lg border border-app-gray/30 bg-transparent focus:outline-none focus:border-app-brand transition-colors"
+                required
+                placeholder="Asset Type"
+                className="my-2 w-full rounded-lg border border-app-gray/30 bg-transparent px-4 py-2.5 transition-colors focus:border-app-brand focus:outline-none"
               />
             </div>
 
             {/* Serial Number */}
             <div className="space-y-2">
               <label className="text-sm font-medium">Serial Number</label>
+
               <input
                 type="text"
                 name="serialNumber"
                 placeholder="Serial Number"
-                className="w-full px-4 my-2 py-2.5 rounded-lg border border-app-gray/30 bg-transparent focus:outline-none focus:border-app-brand transition-colors"
+                className="my-2 w-full rounded-lg border border-app-gray/30 bg-transparent px-4 py-2.5 transition-colors focus:border-app-brand focus:outline-none"
               />
             </div>
 
             {/* Quantity */}
             <div className="space-y-2">
               <label className="text-sm font-medium">Quantity *</label>
+
               <input
                 type="number"
                 name="quantity"
                 required
+                min="1"
                 placeholder="Quantity"
-                className="w-full px-4 my-2 py-2.5 rounded-lg border border-app-gray/30 bg-transparent focus:outline-none focus:border-app-brand transition-colors"
+                className="my-2 w-full rounded-lg border border-app-gray/30 bg-transparent px-4 py-2.5 transition-colors focus:border-app-brand focus:outline-none"
               />
             </div>
 
             {/* Invoice Number */}
             <div className="space-y-2">
               <label className="text-sm font-medium">Invoice Number</label>
+
               <input
                 type="text"
                 name="invoiceNumber"
                 placeholder="Type to search invoice number"
-                className="w-full px-4 my-2 py-2.5 rounded-lg border border-app-gray/30 bg-transparent focus:outline-none focus:border-app-brand transition-colors"
+                className="my-2 w-full rounded-lg border border-app-gray/30 bg-transparent px-4 py-2.5 transition-colors focus:border-app-brand focus:outline-none"
               />
             </div>
 
@@ -171,13 +244,14 @@ const Add_Asset = ({
                 popperPlacement="bottom-start"
                 name="purchaseDate"
                 required
-                className="w-full px-4 my-2 py-2.5 rounded-lg border border-app-gray/30 bg-transparent focus:outline-none focus:border-app-brand transition-colors text-app-gray"
+                className="my-2 w-full rounded-lg border border-app-gray/30 bg-transparent px-4 py-2.5 text-app-gray transition-colors focus:border-app-brand focus:outline-none"
               />
             </div>
 
-            {/* Price (SAR) */}
+            {/* Price */}
             <div className="space-y-2">
               <label className="text-sm font-medium">Price (SAR) *</label>
+
               <input
                 type="number"
                 name="price"
@@ -185,43 +259,98 @@ const Add_Asset = ({
                 min="0"
                 step="0.01"
                 required
-                className="w-full px-4 my-2 py-2.5 rounded-lg border border-app-gray/30 bg-transparent focus:outline-none focus:border-app-brand transition-colors"
+                className="my-2 w-full rounded-lg border border-app-gray/30 bg-transparent px-4 py-2.5 transition-colors focus:border-app-brand focus:outline-none"
               />
             </div>
 
-            {/* Condition Dropdown */}
+            {/* Condition */}
             <div className="space-y-2">
               <label className="text-sm font-medium">Condition</label>
+
               <select
                 name="condition"
-                className="w-full px-4 my-2 py-2.5 rounded-lg border border-app-gray/30 bg-app-bg focus:outline-none focus:border-app-brand transition-colors appearance-none cursor-pointer"
+                className="my-2 w-full cursor-pointer appearance-none rounded-lg border border-app-gray/30 bg-app-bg px-4 py-2.5 transition-colors focus:border-app-brand focus:outline-none"
               >
                 <option value="">Select Condition</option>
+
                 <option value="good">Good</option>
+
                 <option value="fair">Fair</option>
+
                 <option value="damaged">Damaged</option>
+
                 <option value="new">New</option>
               </select>
             </div>
           </div>
 
-          {/* Notes (Optional) - Full Width */}
-          <div className="space-y-2 mt-6">
-            <label className="text-sm font-medium">Notes (Optional)</label>
-            <textarea
-              rows={4}
-              name="notes"
-              placeholder="Add any additional details about the asset..."
-              className="w-full px-4 py-2.5 my-2 rounded-lg border border-app-gray/30 bg-transparent focus:outline-none focus:border-app-brand transition-colors resize-y"
-            />
+          {/* ========================= NEW: OPTIONAL IMAGE ========================= */}
+          <div className="rounded-xl border border-dashed border-app-gray/30 p-5">
+            <div className="mt-6 space-y-2">
+              <label className="text-sm font-medium">Notes (Optional)</label>
+
+              <textarea
+                rows={4}
+                name="notes"
+                placeholder="Add any additional details about the asset..."
+                className="my-2 w-full resize-y rounded-lg border border-app-gray/30 bg-transparent px-4 py-2.5 transition-colors focus:border-app-brand focus:outline-none"
+              />
+            </div>
+
+            <label className="mb-3 block text-sm font-medium">
+              Asset Image <span className="text-app-gray">(Optional)</span>
+            </label>
+
+            <div className="flex items-center gap-4">
+              <div className="flex h-16 w-16 shrink-0 items-center justify-center overflow-hidden rounded-lg border border-app-gray/20 bg-app-gray/5 text-xs text-app-gray">
+                {imagePreview ? (
+                  <img
+                    src={imagePreview}
+                    alt="Asset Preview"
+                    className="h-full w-full object-cover"
+                  />
+                ) : (
+                  <span>Preview</span>
+                )}
+              </div>
+
+              <div className="min-w-0">
+                <div className="flex flex-wrap items-center gap-3">
+                  <label className="cursor-pointer rounded-md bg-app-brand/20 px-4 py-2 text-sm font-medium text-app-brand transition-colors hover:bg-app-brand/30">
+                    Choose Image
+                    <input
+                      type="file"
+                      name="image"
+                      accept=".jpg,.jpeg,.png,.webp"
+                      onChange={handleImageChange}
+                      className="hidden"
+                    />
+                  </label>
+
+                  <span
+                    className="max-w-60 truncate text-sm text-app-gray"
+                    title={fileName}
+                  >
+                    {fileName}
+                  </span>
+                </div>
+
+                <p className="mt-2 text-xs text-app-gray">
+                  JPG, JPEG, PNG, WebP • Max 2 MB
+                </p>
+              </div>
+            </div>
           </div>
 
+          {/* Notes */}
+
           {/* Action Buttons */}
-          <div className="flex justify-end gap-4 mt-10">
+          <div className="mt-10 flex justify-end gap-4">
             <button
               onClick={() => setAssetOpen(false)}
+              disabled={useAssetsData.isPending}
               type="button"
-              className="px-8 py-2 rounded-lg border border-app-gray/30 font-medium hover:bg-app-gray/5 transition-colors"
+              className="rounded-lg border border-app-gray/30 px-8 py-2 font-medium transition-colors hover:bg-app-gray/5 disabled:cursor-not-allowed disabled:opacity-50"
             >
               Cancel
             </button>
@@ -229,7 +358,7 @@ const Add_Asset = ({
             <button
               disabled={useAssetsData.isPending}
               type="submit"
-              className="px-8 py-2 rounded-lg bg-app-brand text-white font-medium hover:opacity-90 transition-opacity disabled:cursor-not-allowed disabled:opacity-50"
+              className="rounded-lg bg-app-brand px-8 py-2 font-medium text-white transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
             >
               {useAssetsData.isPending ? "Adding..." : "Add Asset"}
             </button>

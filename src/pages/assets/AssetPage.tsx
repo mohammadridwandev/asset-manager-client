@@ -44,10 +44,13 @@ export default function AssetPage() {
     setSelectedAssignment,
   ] = useState("All Status");
 
+  
   const assignmentTypes = [
     "Assigned",
     "Unassigned",
   ];
+
+
 
   const {
     data,

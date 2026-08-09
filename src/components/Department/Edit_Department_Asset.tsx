@@ -1,4 +1,8 @@
-import { useEffect, useState } from "react";
+import {
+  useEffect,
+  useState,
+} from "react";
+
 import { FiX } from "react-icons/fi";
 
 import { useUpdateDepartmentAsset } from "../../context/useDepartmentAsset";
@@ -47,17 +51,24 @@ export default function Edit_Department_Asset({
   asset,
   onClose,
 }: Props) {
-  const [formData, setFormData] =
-    useState(initialForm);
+  const [
+    formData,
+    setFormData,
+  ] = useState(initialForm);
 
-  const [formErrors, setFormErrors] =
-    useState<FormErrors>({});
+  const [
+    formErrors,
+    setFormErrors,
+  ] = useState<FormErrors>({});
 
-  const [submitError, setSubmitError] =
-    useState("");
+  const [
+    submitError,
+    setSubmitError,
+  ] = useState("");
 
   const {
-    mutateAsync: updateDepartmentAsset,
+    mutateAsync:
+      updateDepartmentAsset,
     isPending: isUpdating,
   } = useUpdateDepartmentAsset();
 
@@ -67,29 +78,47 @@ export default function Edit_Department_Asset({
     }
 
     setFormData({
-      assetName: asset.assetName || "",
-      assetType: asset.assetType || "",
-      serialNumber: asset.serialNumber || "",
-      quantity: String(asset.quantity || 1),
-      invoiceNumber: asset.invoiceNumber || "",
+      assetName:
+        asset.assetName || "",
 
-      purchaseDate: asset.purchaseDate
-        ? new Date(asset.purchaseDate)
-            .toISOString()
-            .split("T")[0]
-        : "",
+      assetType:
+        asset.assetType || "",
+
+      serialNumber:
+        asset.serialNumber || "",
+
+      quantity: String(
+        asset.quantity || 1,
+      ),
+
+      invoiceNumber:
+        asset.invoiceNumber || "",
+
+      purchaseDate:
+        asset.purchaseDate
+          ? new Date(
+              asset.purchaseDate,
+            )
+              .toISOString()
+              .split("T")[0]
+          : "",
 
       price:
         asset.price !== null &&
-        asset.price !== undefined
+        asset.price !==
+          undefined
           ? String(asset.price)
           : "",
 
-      condition: asset.condition || "",
-      notes: asset.notes || "",
+      condition:
+        asset.condition || "",
+
+      notes:
+        asset.notes || "",
     });
 
     setFormErrors({});
+
     setSubmitError("");
   }, [open, asset]);
 
@@ -102,52 +131,80 @@ export default function Edit_Department_Asset({
       | React.ChangeEvent<HTMLInputElement>
       | React.ChangeEvent<HTMLTextAreaElement>,
   ) => {
-    const { name, value } = event.target;
+    const {
+      name,
+      value,
+    } = event.target;
 
-    setFormData((previous) => ({
-      ...previous,
-      [name]: value,
-    }));
+    setFormData(
+      (previous) => ({
+        ...previous,
 
-    setFormErrors((previous) => ({
-      ...previous,
-      [name]: undefined,
-    }));
+        [name]: value,
+      }),
+    );
+
+    setFormErrors(
+      (previous) => ({
+        ...previous,
+
+        [name]: undefined,
+      }),
+    );
 
     setSubmitError("");
   };
 
   const validateForm = () => {
-    const errors: FormErrors = {};
+    const errors: FormErrors =
+      {};
 
-    if (!formData.assetName.trim()) {
+    if (
+      !formData.assetName.trim()
+    ) {
       errors.assetName =
         "Asset name is required.";
     }
 
-    if (!formData.assetType.trim()) {
+    if (
+      !formData.assetType.trim()
+    ) {
       errors.assetType =
         "Asset type is required.";
     }
 
     if (
       !formData.quantity ||
-      Number.isNaN(Number(formData.quantity)) ||
-      Number(formData.quantity) < 1
+      Number.isNaN(
+        Number(
+          formData.quantity,
+        ),
+      ) ||
+      Number(
+        formData.quantity,
+      ) < 1
     ) {
       errors.quantity =
         "Quantity must be at least 1.";
     }
 
-    if (!formData.purchaseDate) {
+    if (
+      !formData.purchaseDate
+    ) {
       errors.purchaseDate =
         "Purchase date is required.";
     }
 
     if (
       formData.price &&
-      (Number.isNaN(Number(formData.price)) ||
-        Number(formData.price) < 0)
+      (Number.isNaN(
+        Number(
+          formData.price,
+        ),
+      ) ||
+        Number(
+          formData.price,
+        ) < 0)
     ) {
       errors.price =
         "Price must be 0 or greater.";
@@ -155,7 +212,10 @@ export default function Edit_Department_Asset({
 
     setFormErrors(errors);
 
-    return Object.keys(errors).length === 0;
+    return (
+      Object.keys(errors)
+        .length === 0
+    );
   };
 
   const handleClose = () => {
@@ -163,9 +223,14 @@ export default function Edit_Department_Asset({
       return;
     }
 
-    setFormData(initialForm);
+    setFormData(
+      initialForm,
+    );
+
     setFormErrors({});
+
     setSubmitError("");
+
     onClose();
   };
 
@@ -185,33 +250,49 @@ export default function Edit_Department_Asset({
     }
 
     const updateData = {
-      assetName: formData.assetName.trim(),
-      assetType: formData.assetType.trim(),
+      assetName:
+        formData.assetName.trim(),
+
+      assetType:
+        formData.assetType.trim(),
 
       serialNumber:
-        formData.serialNumber.trim() || null,
+        formData.serialNumber.trim() ||
+        null,
 
-      quantity: Number(formData.quantity),
+      quantity: Number(
+        formData.quantity,
+      ),
 
       invoiceNumber:
-        formData.invoiceNumber.trim() || null,
+        formData.invoiceNumber.trim() ||
+        null,
 
-      purchaseDate: formData.purchaseDate,
+      purchaseDate:
+        formData.purchaseDate,
 
       price:
         formData.price !== ""
-          ? Number(formData.price)
+          ? Number(
+              formData.price,
+            )
           : null,
 
       condition:
-        formData.condition.trim() || null,
+        formData.condition.trim() ||
+        null,
 
-      notes: formData.notes.trim() || null,
+      notes:
+        formData.notes.trim() ||
+        null,
     };
 
     try {
       await updateDepartmentAsset({
-        id: String(asset.id),
+        id: String(
+          asset.id,
+        ),
+
         updateData,
       });
 
@@ -223,87 +304,135 @@ export default function Edit_Department_Asset({
       );
 
       const message =
-        error?.response?.data?.message ||
-        error?.response?.data?.error ||
+        error?.response?.data
+          ?.message ||
+        error?.response?.data
+          ?.error ||
         "Department asset could not be updated.";
 
-      setSubmitError(message);
+      setSubmitError(
+        message,
+      );
     }
   };
 
   return (
     <div
       className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4 backdrop-blur-sm"
-      onClick={handleClose}
+      onClick={
+        handleClose
+      }
     >
       <div
         className="max-h-[90vh] w-full max-w-3xl overflow-y-auto rounded-xl border border-app-gray/20 bg-app-bg shadow-xl"
-        onClick={(event) =>
+        onClick={(
+          event,
+        ) =>
           event.stopPropagation()
         }
       >
+        {/* Header */}
+
         <div className="flex items-start justify-between gap-4 border-b border-app-gray/20 px-5 py-4 md:px-6">
           <div>
             <h2 className="text-lg font-bold">
-              Update Department Asset
+              Update Department
+              Asset
             </h2>
 
             <p className="mt-1 text-sm text-app-gray">
-              Update the asset information below
+              Update the asset
+              information below
             </p>
           </div>
 
           <button
             type="button"
-            onClick={handleClose}
-            disabled={isUpdating}
-            className="rounded-md p-2 text-app-gray transition-colors hover:bg-app-gray/10 disabled:opacity-50"
+            onClick={
+              handleClose
+            }
+            disabled={
+              isUpdating
+            }
+            className="cursor-pointer rounded-md p-2 text-app-gray transition-colors hover:bg-app-gray/10 disabled:cursor-not-allowed disabled:opacity-50"
           >
-            <FiX size={19} />
+            <FiX
+              size={19}
+            />
           </button>
         </div>
 
+        {/* Form */}
+
         <form
-          onSubmit={handleSubmit}
+          onSubmit={
+            handleSubmit
+          }
           className="space-y-5 p-5 md:p-6"
           noValidate
         >
+          {/* Error */}
+
           {submitError && (
             <div className="rounded-md border border-red-500/30 bg-red-500/5 px-4 py-3 text-sm text-red-500">
               <p className="font-semibold">
-                Asset could not be updated
+                Asset could not
+                be updated
               </p>
 
               <p className="mt-1">
-                {submitError}
+                {
+                  submitError
+                }
               </p>
             </div>
           )}
+
+          {/* Fields */}
 
           <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
             <InputField
               label="Asset Name"
               name="assetName"
-              value={formData.assetName}
-              onChange={handleChange}
-              error={formErrors.assetName}
+              placeholder="Enter asset name"
+              value={
+                formData.assetName
+              }
+              onChange={
+                handleChange
+              }
+              error={
+                formErrors.assetName
+              }
               required
             />
 
             <InputField
               label="Asset Type"
               name="assetType"
-              value={formData.assetType}
-              onChange={handleChange}
-              error={formErrors.assetType}
+              placeholder="Enter asset type"
+              value={
+                formData.assetType
+              }
+              onChange={
+                handleChange
+              }
+              error={
+                formErrors.assetType
+              }
               required
             />
 
             <InputField
               label="Serial Number"
               name="serialNumber"
-              value={formData.serialNumber}
-              onChange={handleChange}
+              placeholder="Enter serial number"
+              value={
+                formData.serialNumber
+              }
+              onChange={
+                handleChange
+              }
             />
 
             <InputField
@@ -311,26 +440,44 @@ export default function Edit_Department_Asset({
               name="quantity"
               type="number"
               min="1"
-              value={formData.quantity}
-              onChange={handleChange}
-              error={formErrors.quantity}
+              placeholder="Enter quantity"
+              value={
+                formData.quantity
+              }
+              onChange={
+                handleChange
+              }
+              error={
+                formErrors.quantity
+              }
               required
             />
 
             <InputField
               label="Invoice Number"
               name="invoiceNumber"
-              value={formData.invoiceNumber}
-              onChange={handleChange}
+              placeholder="Enter invoice number"
+              value={
+                formData.invoiceNumber
+              }
+              onChange={
+                handleChange
+              }
             />
 
             <InputField
               label="Purchase Date"
               name="purchaseDate"
               type="date"
-              value={formData.purchaseDate}
-              onChange={handleChange}
-              error={formErrors.purchaseDate}
+              value={
+                formData.purchaseDate
+              }
+              onChange={
+                handleChange
+              }
+              error={
+                formErrors.purchaseDate
+              }
               required
             />
 
@@ -340,18 +487,32 @@ export default function Edit_Department_Asset({
               type="number"
               min="0"
               step="0.01"
-              value={formData.price}
-              onChange={handleChange}
-              error={formErrors.price}
+              placeholder="Enter price"
+              value={
+                formData.price
+              }
+              onChange={
+                handleChange
+              }
+              error={
+                formErrors.price
+              }
             />
 
             <InputField
               label="Condition"
               name="condition"
-              value={formData.condition}
-              onChange={handleChange}
+              placeholder="Enter asset condition"
+              value={
+                formData.condition
+              }
+              onChange={
+                handleChange
+              }
             />
           </div>
+
+          {/* Notes */}
 
           <div>
             <label
@@ -365,26 +526,39 @@ export default function Edit_Department_Asset({
               id="edit-notes"
               name="notes"
               rows={4}
-              value={formData.notes}
-              onChange={handleChange}
-              className="w-full resize-none rounded-md border border-app-gray/20 bg-transparent px-4 py-3 text-sm outline-none focus:border-app-brand"
+              value={
+                formData.notes
+              }
+              onChange={
+                handleChange
+              }
+              placeholder="Enter additional notes about this asset..."
+              className="w-full resize-none rounded-md border border-app-gray/20 bg-transparent px-4 py-3 text-sm outline-none placeholder:text-app-gray/50 focus:border-app-brand"
             />
           </div>
+
+          {/* Buttons */}
 
           <div className="flex flex-col-reverse gap-3 border-t border-app-gray/20 pt-5 sm:flex-row sm:justify-end">
             <button
               type="button"
-              onClick={handleClose}
-              disabled={isUpdating}
-              className="rounded-md border border-app-gray/20 px-5 py-2.5 text-sm font-semibold disabled:opacity-50"
+              onClick={
+                handleClose
+              }
+              disabled={
+                isUpdating
+              }
+              className="cursor-pointer rounded-md border border-app-gray/20 px-5 py-2.5 text-sm font-semibold disabled:cursor-not-allowed disabled:opacity-50"
             >
               Cancel
             </button>
 
             <button
               type="submit"
-              disabled={isUpdating}
-              className="flex items-center justify-center gap-2 rounded-md bg-app-brand px-5 py-2.5 text-sm font-semibold text-app-secondary disabled:opacity-50"
+              disabled={
+                isUpdating
+              }
+              className="flex cursor-pointer items-center justify-center gap-2 rounded-md bg-app-brand px-5 py-2.5 text-sm font-semibold text-app-secondary disabled:cursor-not-allowed disabled:opacity-50"
             >
               {isUpdating && (
                 <span className="h-4 w-4 animate-spin rounded-full border-2 border-white/30 border-t-white" />
@@ -401,18 +575,30 @@ export default function Edit_Department_Asset({
   );
 }
 
+// =========================
+// INPUT FIELD
+// =========================
+
 type InputFieldProps = {
   label: string;
   name: string;
   value: string;
+
   onChange: (
     event: React.ChangeEvent<HTMLInputElement>,
   ) => void;
+
   type?: string;
+
   required?: boolean;
+
   min?: string;
+
   step?: string;
+
   error?: string;
+
+  placeholder?: string;
 };
 
 const InputField = ({
@@ -425,6 +611,7 @@ const InputField = ({
   min,
   step,
   error,
+  placeholder,
 }: InputFieldProps) => {
   return (
     <div>
@@ -446,10 +633,15 @@ const InputField = ({
         name={name}
         type={type}
         value={value}
-        onChange={onChange}
+        onChange={
+          onChange
+        }
         min={min}
         step={step}
-        className={`w-full rounded-md border bg-transparent px-4 py-3 text-sm outline-none ${
+        placeholder={
+          placeholder
+        }
+        className={`w-full rounded-md border bg-transparent px-4 py-3 text-sm outline-none placeholder:text-app-gray/50 ${
           error
             ? "border-red-500"
             : "border-app-gray/20 focus:border-app-brand"

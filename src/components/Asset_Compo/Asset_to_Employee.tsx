@@ -25,7 +25,6 @@ export default function Asset_to_Employee({
   const [searchText, setSearchText] =
     useState("");
 
-  // User typing শেষ করার 400ms পরে API request যাবে
   const debouncedSearchText =
     useDebounce(
       searchText.trim(),
@@ -59,6 +58,42 @@ export default function Asset_to_Employee({
     import.meta.env
       .VITE_BACKEND_URL_LINK || "";
 
+  // =========================
+  // AVAILABLE QUANTITY
+  // =========================
+
+  const totalQuantity =
+    Number(
+      asset?.quantity || 0,
+    );
+
+  const activeAssignments =
+    asset?.assignments?.filter(
+      (assignment: any) =>
+        !assignment.returnedAt,
+    ) || [];
+
+  const departmentAssignments =
+    asset?.departmentAssignments ||
+    [];
+
+  const assignedCount =
+    activeAssignments.length +
+    departmentAssignments.length;
+
+  const availableQuantity =
+    typeof asset?.availableQuantity ===
+    "number"
+      ? asset.availableQuantity
+      : Math.max(
+          totalQuantity -
+            assignedCount,
+          0,
+        );
+
+  const isOutOfStock =
+    availableQuantity <= 0;
+
   const getImageUrl = (
     image?: string,
   ) => {
@@ -79,12 +114,6 @@ export default function Asset_to_Employee({
     )}/${image.replace(/^\//, "")}`;
   };
 
-  /*
-   * Backend-এ status="ACTIVE" পাঠানো হচ্ছে।
-   * তারপরও safety হিসেবে frontend-এ active employee check রাখা হয়েছে।
-   *
-   * Empty search হলে কোনো employee দেখাবে না।
-   */
   const filteredEmployees =
     useMemo(() => {
       if (!debouncedSearchText) {
@@ -93,22 +122,39 @@ export default function Asset_to_Employee({
 
       return employees.filter(
         (employee: any) =>
-          employee.status === "ACTIVE",
+          employee.status ===
+          "ACTIVE",
       );
     }, [
       employees,
       debouncedSearchText,
     ]);
 
+  // =========================
+  // ASSIGN EMPLOYEE
+  // =========================
+
   const handleAssignEmployee = (
     employee: any,
   ) => {
+    // Quantity শেষ হলে block
+    if (isOutOfStock) {
+      toast.error(
+        "No quantity available for assignment.",
+      );
+
+      return;
+    }
+
     const alreadyAssigned =
       asset.assignments?.some(
         (assignment: any) =>
           Number(
             assignment.employeeId,
-          ) === Number(employee.id) &&
+          ) ===
+            Number(
+              employee.id,
+            ) &&
           !assignment.returnedAt,
       );
 
@@ -134,8 +180,9 @@ export default function Asset_to_Employee({
           onClose();
         },
 
-        onError: (error: any) => {
-          // Full technical error developer console-এ থাকবে
+        onError: (
+          error: any,
+        ) => {
           console.error(
             "Assign Asset Error:",
             error,
@@ -152,18 +199,26 @@ export default function Asset_to_Employee({
               error?.response?.data
                 ?.message ||
               "Please check the assignment information.";
-          } else if (status === 409) {
+          } else if (
+            status === 409
+          ) {
             message =
               error?.response?.data
                 ?.message ||
               "This asset is already assigned.";
-          } else if (status === 401) {
+          } else if (
+            status === 401
+          ) {
             message =
               "Your session has expired. Please log in again.";
-          } else if (status === 403) {
+          } else if (
+            status === 403
+          ) {
             message =
               "You do not have permission to assign this asset.";
-          } else if (!error?.response) {
+          } else if (
+            !error?.response
+          ) {
             message =
               "Unable to connect to the server. Please check your connection.";
           }
@@ -222,6 +277,8 @@ export default function Asset_to_Employee({
           </button>
         </div>
 
+        {/* Asset Info */}
+
         <div className="mb-4 text-sm">
           <p>
             Asset:{" "}
@@ -235,176 +292,237 @@ export default function Asset_to_Employee({
             {asset.assetType ||
               "N/A"}
           </p>
+
+          <p
+            className={`mt-1 text-xs font-medium ${
+              isOutOfStock
+                ? "text-red-500"
+                : "text-app-brand"
+            }`}
+          >
+            Available Quantity:{" "}
+            {availableQuantity}
+          </p>
         </div>
 
-        <div className="relative mb-4">
-          <div className="pointer-events-none absolute inset-y-0 left-3.5 flex items-center text-app-gray opacity-50">
-            <FiSearch size={17} />
+        {/* No Quantity */}
+
+        {isOutOfStock ? (
+          <div className="rounded-lg border border-red-500/20 bg-red-500/5 px-4 py-8 text-center">
+            <p className="text-sm font-semibold text-red-500">
+              No quantity
+              available
+            </p>
+
+            <p className="mt-1 text-xs text-app-gray">
+              All available
+              quantities of this
+              asset are already
+              assigned.
+            </p>
           </div>
+        ) : (
+          <>
+            {/* Search */}
 
-          <input
-            type="text"
-            value={searchText}
-            autoComplete="off"
-            onChange={(event) =>
-              setSearchText(
-                event.target.value,
-              )
-            }
-            placeholder="Search active employee by name, email, Iqama or phone..."
-            className="w-full rounded-lg border border-app-gray/30 bg-transparent py-3 pr-28 pl-10 text-sm placeholder:text-app-gray/40 focus:border-app-brand focus:outline-none"
-          />
-
-          {isSearching &&
-            hasSearchText && (
-              <div className="pointer-events-none absolute inset-y-0 right-3 flex items-center gap-2 text-xs text-app-brand">
-                <span className="h-4 w-4 animate-spin rounded-full border-2 border-app-brand/20 border-t-app-brand" />
-
-                <span className="hidden sm:inline">
-                  Searching...
-                </span>
+            <div className="relative mb-4">
+              <div className="pointer-events-none absolute inset-y-0 left-3.5 flex items-center text-app-gray opacity-50">
+                <FiSearch
+                  size={17}
+                />
               </div>
-            )}
-        </div>
 
-        <div className="max-h-80 space-y-2 overflow-y-auto pr-1">
-          {!hasSearchText ? (
-            <div className="py-6 text-center">
-              <p className="text-sm font-medium text-app-text">
-                Search for an employee
-              </p>
+              <input
+                type="text"
+                value={
+                  searchText
+                }
+                autoComplete="off"
+                disabled={
+                  isOutOfStock ||
+                  createAssetAssignment.isPending
+                }
+                onChange={(
+                  event,
+                ) =>
+                  setSearchText(
+                    event.target
+                      .value,
+                  )
+                }
+                placeholder="Search active employee by name, email, Iqama or phone..."
+                className="w-full rounded-lg border border-app-gray/30 bg-transparent py-3 pr-28 pl-10 text-sm placeholder:text-app-gray/40 focus:border-app-brand focus:outline-none disabled:cursor-not-allowed disabled:opacity-50"
+              />
 
-              <p className="mt-1 text-xs text-app-gray">
-                Enter a name, email,
-                Iqama number or phone
-                number.
-              </p>
-            </div>
-          ) : isSearching ? (
-            <div className="flex items-center justify-center gap-2 py-6 text-sm text-app-brand">
-              <span className="h-4 w-4 animate-spin rounded-full border-2 border-app-brand/20 border-t-app-brand" />
+              {isSearching &&
+                hasSearchText && (
+                  <div className="pointer-events-none absolute inset-y-0 right-3 flex items-center gap-2 text-xs text-app-brand">
+                    <span className="h-4 w-4 animate-spin rounded-full border-2 border-app-brand/20 border-t-app-brand" />
 
-              <span>
-                Searching employees...
-              </span>
-            </div>
-          ) : isError ? (
-            <div className="py-6 text-center">
-              <p className="text-sm font-medium text-red-500">
-                Failed to search
-                employees
-              </p>
-
-              <p className="mt-1 text-xs text-app-gray">
-                Please try again.
-              </p>
-            </div>
-          ) : filteredEmployees.length >
-            0 ? (
-            filteredEmployees.map(
-              (employee: any) => {
-                const alreadyAssigned =
-                  asset.assignments?.some(
-                    (
-                      assignment: any,
-                    ) =>
-                      Number(
-                        assignment.employeeId,
-                      ) ===
-                        Number(
-                          employee.id,
-                        ) &&
-                      !assignment.returnedAt,
-                  );
-
-                return (
-                  <div
-                    key={employee.id}
-                    className="flex items-center justify-between gap-3 rounded-lg border border-app-gray/10 p-3 transition-all hover:border-app-brand/20 hover:bg-app-brand/5"
-                  >
-                    <div className="flex min-w-0 items-center gap-3">
-                      <div className="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-full border border-app-gray/20 bg-app-brand/5">
-                        {employee.image ? (
-                          <img
-                            src={getImageUrl(
-                              employee.image,
-                            )}
-                            alt={
-                              employee.fullName ||
-                              "Employee"
-                            }
-                            className="h-full w-full object-cover"
-                            loading="lazy"
-                          />
-                        ) : (
-                          <span className="text-xs font-bold text-app-brand">
-                            {(
-                              employee.fullName ||
-                              "E"
-                            )
-                              .charAt(0)
-                              .toUpperCase()}
-                          </span>
-                        )}
-                      </div>
-
-                      <div className="min-w-0">
-                        <h4 className="truncate text-sm font-semibold text-app-text">
-                          {employee.fullName}
-                        </h4>
-
-                        <p className="truncate text-xs text-app-gray">
-                          {employee.position ||
-                            "No Position"}
-                        </p>
-
-                        <p className="mt-0.5 truncate text-[11px] text-app-gray">
-                          {employee.iqamaNumber ||
-                            employee.email ||
-                            employee.phoneNumber ||
-                            "No additional information"}
-                        </p>
-                      </div>
-                    </div>
-
-                    <button
-                      type="button"
-                      disabled={
-                        createAssetAssignment.isPending ||
-                        alreadyAssigned
-                      }
-                      onClick={() =>
-                        handleAssignEmployee(
-                          employee,
-                        )
-                      }
-                      className="shrink-0 cursor-pointer rounded-md bg-app-brand px-4 py-1.5 text-xs font-semibold text-white transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
-                    >
-                      {alreadyAssigned
-                        ? "Assigned"
-                        : createAssetAssignment.isPending
-                          ? "Sending..."
-                          : "Send"}
-                    </button>
+                    <span className="hidden sm:inline">
+                      Searching...
+                    </span>
                   </div>
-                );
-              },
-            )
-          ) : (
-            <div className="py-6 text-center">
-              <p className="text-sm font-medium text-app-text">
-                No active employee
-                found
-              </p>
-
-              <p className="mt-1 text-xs text-app-gray">
-                Try another name,
-                email, Iqama number or
-                phone number.
-              </p>
+                )}
             </div>
-          )}
-        </div>
+
+            {/* Employees */}
+
+            <div className="max-h-80 space-y-2 overflow-y-auto pr-1">
+              {!hasSearchText ? (
+                <div className="py-6 text-center">
+                  <p className="text-sm font-medium text-app-text">
+                    Search for an
+                    employee
+                  </p>
+
+                  <p className="mt-1 text-xs text-app-gray">
+                    Enter a name,
+                    email, Iqama
+                    number or phone
+                    number.
+                  </p>
+                </div>
+              ) : isSearching ? (
+                <div className="flex items-center justify-center gap-2 py-6 text-sm text-app-brand">
+                  <span className="h-4 w-4 animate-spin rounded-full border-2 border-app-brand/20 border-t-app-brand" />
+
+                  <span>
+                    Searching
+                    employees...
+                  </span>
+                </div>
+              ) : isError ? (
+                <div className="py-6 text-center">
+                  <p className="text-sm font-medium text-red-500">
+                    Failed to
+                    search
+                    employees
+                  </p>
+
+                  <p className="mt-1 text-xs text-app-gray">
+                    Please try
+                    again.
+                  </p>
+                </div>
+              ) : filteredEmployees.length >
+                0 ? (
+                filteredEmployees.map(
+                  (
+                    employee: any,
+                  ) => {
+                    const alreadyAssigned =
+                      asset.assignments?.some(
+                        (
+                          assignment: any,
+                        ) =>
+                          Number(
+                            assignment.employeeId,
+                          ) ===
+                            Number(
+                              employee.id,
+                            ) &&
+                          !assignment.returnedAt,
+                      );
+
+                    return (
+                      <div
+                        key={
+                          employee.id
+                        }
+                        className="flex items-center justify-between gap-3 rounded-lg border border-app-gray/10 p-3 transition-all hover:border-app-brand/20 hover:bg-app-brand/5"
+                      >
+                        <div className="flex min-w-0 items-center gap-3">
+                          <div className="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-full border border-app-gray/20 bg-app-brand/5">
+                            {employee.image ? (
+                              <img
+                                src={getImageUrl(
+                                  employee.image,
+                                )}
+                                alt={
+                                  employee.fullName ||
+                                  "Employee"
+                                }
+                                className="h-full w-full object-cover"
+                                loading="lazy"
+                              />
+                            ) : (
+                              <span className="text-xs font-bold text-app-brand">
+                                {(
+                                  employee.fullName ||
+                                  "E"
+                                )
+                                  .charAt(
+                                    0,
+                                  )
+                                  .toUpperCase()}
+                              </span>
+                            )}
+                          </div>
+
+                          <div className="min-w-0">
+                            <h4 className="truncate text-sm font-semibold text-app-text">
+                              {
+                                employee.fullName
+                              }
+                            </h4>
+
+                            <p className="truncate text-xs text-app-gray">
+                              {employee.position ||
+                                "No Position"}
+                            </p>
+
+                            <p className="mt-0.5 truncate text-[11px] text-app-gray">
+                              {employee.iqamaNumber ||
+                                employee.email ||
+                                employee.phoneNumber ||
+                                "No additional information"}
+                            </p>
+                          </div>
+                        </div>
+
+                        <button
+                          type="button"
+                          disabled={
+                            createAssetAssignment.isPending ||
+                            alreadyAssigned ||
+                            isOutOfStock
+                          }
+                          onClick={() =>
+                            handleAssignEmployee(
+                              employee,
+                            )
+                          }
+                          className="shrink-0 cursor-pointer rounded-md bg-app-brand px-4 py-1.5 text-xs font-semibold text-white transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
+                        >
+                          {alreadyAssigned
+                            ? "Assigned"
+                            : createAssetAssignment.isPending
+                              ? "Sending..."
+                              : "Send"}
+                        </button>
+                      </div>
+                    );
+                  },
+                )
+              ) : (
+                <div className="py-6 text-center">
+                  <p className="text-sm font-medium text-app-text">
+                    No active
+                    employee found
+                  </p>
+
+                  <p className="mt-1 text-xs text-app-gray">
+                    Try another
+                    name, email,
+                    Iqama number or
+                    phone number.
+                  </p>
+                </div>
+              )}
+            </div>
+          </>
+        )}
       </div>
     </div>
   );
