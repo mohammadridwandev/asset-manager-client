@@ -1,7 +1,19 @@
-import { FiMinus, FiPlus, FiSearch } from "react-icons/fi";
+import {
+  FiMinus,
+  FiPlus,
+  FiSearch,
+} from "react-icons/fi";
+
 import Add_Asset from "../../components/Asset_Compo/Add_Asset";
-import { useEffect, useRef, useState } from "react";
+
+import {
+  useEffect,
+  useRef,
+  useState,
+} from "react";
+
 import { MdKeyboardArrowRight } from "react-icons/md";
+
 import Asset_Card from "../../components/Asset_Compo/Asset_Card";
 
 import {
@@ -12,46 +24,74 @@ import {
 import Asset_Import from "../../components/Asset_Compo/Asset_Import";
 import Asset_Export from "../../components/Asset_Compo/Asset_Export";
 import Asset_Pagination from "../../components/Asset_Compo/Asset_Pagination";
+
 import { Helmet } from "react-helmet-async";
+
 import DataLoading from "../../DataLoading";
+
 import { useDebounce } from "../../context/useDebounce";
 
-
 export default function AssetPage() {
-  const [assetOpen, setAssetOpen] = useState(false);
-  const [searchText, setSearchText] = useState("");
+  const [assetOpen, setAssetOpen] =
+    useState(false);
+
+  const [searchText, setSearchText] =
+    useState("");
+
+  // =========================
+  // DEPARTMENT ASSET FILTER
+  // =========================
+  // false = সব asset
+  // true = শুধু department assigned asset
+  const [
+    departmentOnly,
+    setDepartmentOnly,
+  ] = useState(false);
 
   // Search typing শেষ হওয়ার 400ms পরে API request যাবে
-  const debouncedSearchText = useDebounce(
-    searchText.trim(),
-    400,
-  );
+  const debouncedSearchText =
+    useDebounce(
+      searchText.trim(),
+      400,
+    );
 
-  const [page, setPage] = useState(1);
-  const assetListRef = useRef<HTMLDivElement>(null);
+  const [page, setPage] =
+    useState(1);
 
-  const [assetTypeOpen, setAssetTypeOpen] =
-    useState(false);
+  const assetListRef =
+    useRef<HTMLDivElement>(null);
 
-  const [selectedType, setSelectedType] =
-    useState("All Types");
+  const [
+    assetTypeOpen,
+    setAssetTypeOpen,
+  ] = useState(false);
 
-  const [assignmentOpen, setAssignmentOpen] =
-    useState(false);
+  const [
+    selectedType,
+    setSelectedType,
+  ] = useState("All Types");
+
+  const [
+    assignmentOpen,
+    setAssignmentOpen,
+  ] = useState(false);
 
   const [
     selectedAssignment,
     setSelectedAssignment,
   ] = useState("All Status");
 
-  
   const assignmentTypes = [
     "Assigned",
     "Unassigned",
   ];
 
-
-
+  // =========================
+  // GET ASSETS
+  // =========================
+  // NEW:
+  // departmentOnly backend-এ পাঠানো হচ্ছে।
+  // true হলে backend শুধু department assigned assets return করবে।
   const {
     data,
     isLoading,
@@ -63,42 +103,81 @@ export default function AssetPage() {
     debouncedSearchText,
     selectedType,
     selectedAssignment,
+
+    // NEW
+    departmentOnly,
   );
+
+  // =========================
+  // GET FILTER OPTIONS
+  // =========================
 
   const {
     data: filterOptions,
-    isLoading: filterOptionsLoading,
-    isError: filterOptionsError,
-  } = useGetAssetFilterOptions();
+    isLoading:
+      filterOptionsLoading,
+    isError:
+      filterOptionsError,
+  } =
+    useGetAssetFilterOptions();
 
-  const assets = data?.assets || [];
-  const pagination = data?.pagination;
+  const assets =
+    data?.assets || [];
 
-  const assetTypes: string[] =
-    filterOptions?.assetTypes || [];
+  const pagination =
+    data?.pagination;
+
+  const assetTypes:
+    string[] =
+    filterOptions?.assetTypes ||
+    [];
+
+  // =========================
+  // ASSET TYPE
+  // =========================
 
   const handleSelect = (
     assetType: string,
   ) => {
-    setSelectedType(assetType);
+    setSelectedType(
+      assetType,
+    );
+
     setAssetTypeOpen(false);
   };
 
-  const handleAssignmentSelect = (
-    assignmentType: string,
-  ) => {
-    setSelectedAssignment(assignmentType);
-    setAssignmentOpen(false);
-  };
+  // =========================
+  // ASSIGNMENT FILTER
+  // =========================
 
-  // Search বা filter change হলে page 1-এ যাবে
+  const handleAssignmentSelect =
+    (
+      assignmentType: string,
+    ) => {
+      setSelectedAssignment(
+        assignmentType,
+      );
+
+      setAssignmentOpen(false);
+    };
+
+  // =========================
+  // RESET PAGE
+  // =========================
+  // Search / Type / Assignment / Department filter change হলে
+  // সবসময় page 1 থেকে শুরু হবে
   useEffect(() => {
     setPage(1);
   }, [
     debouncedSearchText,
     selectedType,
     selectedAssignment,
+    departmentOnly,
   ]);
+
+  // =========================
+  // PAGE CHANGE
+  // =========================
 
   const handlePageChange = (
     newPage: number,
@@ -106,15 +185,23 @@ export default function AssetPage() {
     setPage(newPage);
 
     setTimeout(() => {
-      assetListRef.current?.scrollIntoView({
-        behavior: "smooth",
-        block: "start",
-      });
+      assetListRef.current?.scrollIntoView(
+        {
+          behavior: "smooth",
+          block: "start",
+        },
+      );
     }, 100);
   };
 
-  // শুধু initial load-এর সময় full loading page দেখাবে
-  if (isLoading && !data) {
+  // =========================
+  // INITIAL LOADING
+  // =========================
+
+  if (
+    isLoading &&
+    !data
+  ) {
     return (
       <DataLoading
         title="Loading Assets"
@@ -123,10 +210,18 @@ export default function AssetPage() {
     );
   }
 
-  if (isError && !data) {
+  // =========================
+  // ERROR
+  // =========================
+
+  if (
+    isError &&
+    !data
+  ) {
     return (
       <div className="flex min-h-75 items-center justify-center text-lg font-medium text-red-500">
-        Failed to load asset data!
+        Failed to load asset
+        data!
       </div>
     );
   }
@@ -141,6 +236,10 @@ export default function AssetPage() {
 
       <div className="mt-3 bg-app-bg pb-16 text-app-text transition-colors duration-300">
         <div className="py-4">
+          {/* =========================
+              PAGE HEADER
+          ========================= */}
+
           <div className="mb-8 flex flex-col justify-between gap-6 lg:flex-row lg:items-center">
             <div>
               <h1 className="text-2xl font-bold tracking-tight">
@@ -148,7 +247,8 @@ export default function AssetPage() {
               </h1>
 
               <p className="mt-1 text-sm text-app-gray opacity-80">
-                Track and manage company assets
+                Track and manage
+                company assets
               </p>
             </div>
 
@@ -161,66 +261,122 @@ export default function AssetPage() {
                 type="button"
                 onClick={() =>
                   setAssetOpen(
-                    (previous) => !previous,
+                    (previous) =>
+                      !previous,
                   )
                 }
                 className="flex w-full cursor-pointer items-center justify-center gap-2 rounded-lg bg-app-brand px-5 py-2.5 text-sm font-bold text-white shadow-md transition-all hover:opacity-90 active:scale-95 md:w-auto"
               >
                 {assetOpen ? (
                   <>
-                    <FiMinus size={18} />
-                    <span>Close</span>
+                    <FiMinus
+                      size={18}
+                    />
+
+                    <span>
+                      Close
+                    </span>
                   </>
                 ) : (
                   <>
-                    <FiPlus size={18} />
-                    <span>Add Asset</span>
+                    <FiPlus
+                      size={18}
+                    />
+
+                    <span>
+                      Add Asset
+                    </span>
                   </>
                 )}
               </button>
             </div>
           </div>
 
+          {/* =========================
+              SEARCH + FILTERS
+          ========================= */}
+
           <div className="mb-8 flex flex-col items-stretch gap-3 sm:flex-row sm:items-center">
-            {/* Search */}
+            {/* =========================
+                SEARCH
+            ========================= */}
+
             <div className="relative flex-1">
               <div className="pointer-events-none absolute inset-y-0 left-4 flex items-center text-app-gray opacity-60">
-                <FiSearch size={18} />
+                <FiSearch
+                  size={18}
+                />
               </div>
 
               <input
                 type="text"
                 value={searchText}
-                onChange={(event) =>
+                onChange={(
+                  event,
+                ) =>
                   setSearchText(
-                    event.target.value,
+                    event.target
+                      .value,
                   )
                 }
                 placeholder="Search by asset name, serial number, invoice number, type, employee name, email, or Iqama..."
                 className="w-full rounded-md border border-app-gray/30 bg-transparent py-2.5 pr-30 pl-12 text-sm outline-none transition-all placeholder:text-app-gray/50 focus:border-app-brand"
               />
 
-              {isFetching && !isLoading && (
-                <div className="pointer-events-none absolute inset-y-0 right-4 flex items-center gap-2 text-xs font-medium text-app-brand">
-                  <span className="h-4 w-4 animate-spin rounded-full border-2 border-app-brand/20 border-t-app-brand" />
+              {isFetching &&
+                !isLoading && (
+                  <div className="pointer-events-none absolute inset-y-0 right-4 flex items-center gap-2 text-xs font-medium text-app-brand">
+                    <span className="h-4 w-4 animate-spin rounded-full border-2 border-app-brand/20 border-t-app-brand" />
 
-                  <span className="hidden lg:inline">
-                    Searching...
-                  </span>
-                </div>
-              )}
+                    <span className="hidden lg:inline">
+                      Loading...
+                    </span>
+                  </div>
+                )}
             </div>
 
-            {/* Asset Type Filter */}
+            {/* =========================
+                DEPARTMENT ASSETS FILTER
+            ========================= */}
+            {/* NEW:
+                Click করলে backend থেকে শুধু department assigned assets আসবে
+            */}
+
+            <button
+              type="button"
+              onClick={() =>
+                setDepartmentOnly(
+                  (previous) =>
+                    !previous,
+                )
+              }
+              className={`w-full cursor-pointer whitespace-nowrap rounded-md border px-4 py-2.5 text-sm font-medium transition sm:w-auto ${
+                departmentOnly
+                  ? "border-app-brand bg-app-brand text-white"
+                  : "border-app-gray/30 bg-transparent text-app-text hover:border-app-brand hover:text-app-brand"
+              }`}
+            >
+              {departmentOnly
+                ? "All Assets"
+                : "Department Assets"}
+            </button>
+
+            {/* =========================
+                ASSET TYPE FILTER
+            ========================= */}
+
             <div className="relative">
               <button
                 type="button"
                 onClick={() => {
                   setAssetTypeOpen(
-                    (previous) => !previous,
+                    (previous) =>
+                      !previous,
                   );
 
-                  setAssignmentOpen(false);
+                  setAssignmentOpen(
+                    false,
+                  );
                 }}
                 className="flex w-full items-center justify-between rounded-md border border-app-gray/30 bg-transparent px-4 py-2.5 text-left text-sm font-medium shadow-xs hover:bg-app-gray/5 focus:outline-none sm:w-48"
               >
@@ -243,7 +399,9 @@ export default function AssetPage() {
                   <li
                     className="cursor-pointer px-4 py-2 font-semibold transition-colors hover:bg-app-brand hover:text-white"
                     onClick={() =>
-                      handleSelect("All Types")
+                      handleSelect(
+                        "All Types",
+                      )
                     }
                   >
                     All Types
@@ -251,17 +409,25 @@ export default function AssetPage() {
 
                   {filterOptionsLoading ? (
                     <li className="px-4 py-2 text-app-gray">
-                      Loading asset types...
+                      Loading asset
+                      types...
                     </li>
                   ) : filterOptionsError ? (
                     <li className="px-4 py-2 text-red-500">
-                      Failed to load asset types
+                      Failed to load
+                      asset types
                     </li>
-                  ) : assetTypes.length > 0 ? (
+                  ) : assetTypes.length >
+                    0 ? (
                     assetTypes.map(
-                      (assetType: string) => (
+                      (
+                        assetType:
+                          string,
+                      ) => (
                         <li
-                          key={assetType}
+                          key={
+                            assetType
+                          }
                           className="cursor-pointer px-4 py-2 transition-colors hover:bg-app-brand hover:text-white"
                           onClick={() =>
                             handleSelect(
@@ -269,34 +435,45 @@ export default function AssetPage() {
                             )
                           }
                         >
-                          {assetType}
+                          {
+                            assetType
+                          }
                         </li>
                       ),
                     )
                   ) : (
                     <li className="px-4 py-2 text-app-gray">
-                      No asset types found
+                      No asset types
+                      found
                     </li>
                   )}
                 </ul>
               )}
             </div>
 
-            {/* Assignment Filter */}
+            {/* =========================
+                ASSIGNMENT FILTER
+            ========================= */}
+
             <div className="relative">
               <button
                 type="button"
                 onClick={() => {
                   setAssignmentOpen(
-                    (previous) => !previous,
+                    (previous) =>
+                      !previous,
                   );
 
-                  setAssetTypeOpen(false);
+                  setAssetTypeOpen(
+                    false,
+                  );
                 }}
                 className="flex w-full items-center justify-between rounded-md border border-app-gray/30 bg-transparent px-4 py-2.5 text-left text-sm font-medium shadow-xs hover:bg-app-gray/5 focus:outline-none sm:w-48"
               >
                 <span>
-                  {selectedAssignment}
+                  {
+                    selectedAssignment
+                  }
                 </span>
 
                 <MdKeyboardArrowRight
@@ -323,9 +500,13 @@ export default function AssetPage() {
                   </li>
 
                   {assignmentTypes.map(
-                    (assignmentType) => (
+                    (
+                      assignmentType,
+                    ) => (
                       <li
-                        key={assignmentType}
+                        key={
+                          assignmentType
+                        }
                         className="cursor-pointer px-4 py-2 transition-colors hover:bg-app-brand hover:text-white"
                         onClick={() =>
                           handleAssignmentSelect(
@@ -333,7 +514,9 @@ export default function AssetPage() {
                           )
                         }
                       >
-                        {assignmentType}
+                        {
+                          assignmentType
+                        }
                       </li>
                     ),
                   )}
@@ -342,14 +525,24 @@ export default function AssetPage() {
             </div>
           </div>
 
+          {/* =========================
+              ADD ASSET
+          ========================= */}
+
           <div className="transition-all duration-300">
             {assetOpen && (
               <Add_Asset
-                setAssetOpen={setAssetOpen}
+                setAssetOpen={
+                  setAssetOpen
+                }
               />
             )}
           </div>
         </div>
+
+        {/* =========================
+            ASSET LIST
+        ========================= */}
 
         <div>
           <div
@@ -357,21 +550,33 @@ export default function AssetPage() {
             className="scroll-mt-24"
           >
             <Asset_Card
+              // NEW:
+              // backend already filter করছে
+              // তাই frontend filteredAssets আর লাগবে না
               assets={assets}
               totalAssets={
                 pagination?.totalData
               }
-              isLoading={isLoading}
+              isLoading={
+                isLoading
+              }
               isError={isError}
             />
           </div>
 
+          {/* =========================
+              PAGINATION
+          ========================= */}
+          {/* সব mode-এই pagination থাকবে */}
+
           <Asset_Pagination
             currentPage={
-              pagination?.currentPage || 1
+              pagination?.currentPage ||
+              1
             }
             totalPages={
-              pagination?.totalPages || 1
+              pagination?.totalPages ||
+              1
             }
             hasNextPage={
               pagination?.hasNextPage ||

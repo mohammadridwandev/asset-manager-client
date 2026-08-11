@@ -6,7 +6,7 @@ export default function MainLayout() {
     <div className="">
       <Navbar></Navbar>
 
-      <main className="container pt-20 m-auto px-4">
+      <main className="container  m-auto px-4">
         <Outlet></Outlet>
       </main>
     </div>

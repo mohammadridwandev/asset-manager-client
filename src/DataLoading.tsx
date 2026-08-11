@@ -10,7 +10,6 @@ export default function DataLoading({
   fullScreen = false,
 }: DataLoadingProps) {
   return (
-
     <div
       className={`flex  items-center  h-screen justify-center px-4 ${
         fullScreen
@@ -27,13 +26,9 @@ export default function DataLoading({
           <div className="h-7 w-7 rounded-full bg-app-brand/10" />
         </div>
 
-        <h2 className="mt-5 text-lg font-bold text-app-text">
-          {title}
-        </h2>
+        <h2 className="mt-5 text-lg font-bold text-app-text">{title}</h2>
 
-        <p className="mt-2 text-sm leading-6 text-app-gray">
-          {message}
-        </p>
+        <p className="mt-2 text-sm leading-6 text-app-gray">{message}</p>
 
         <div className="mt-5 flex items-center gap-1.5">
           <span className="h-2 w-2 animate-bounce rounded-full bg-app-brand [animation-delay:-0.3s]" />

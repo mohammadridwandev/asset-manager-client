@@ -87,7 +87,6 @@ export const useCreateEmployee = () => {
   });
 };
 
-
 // GET SINGLE EMPLOYEE
 export const useGetSingleEmployee = (id?: string) => {
   return useQuery({
@@ -103,11 +102,6 @@ export const useGetSingleEmployee = (id?: string) => {
     refetchOnWindowFocus: false,
   });
 };
-
-
-
-
-
 
 export const useGetEmployee = (
   page: number = 1,
@@ -390,7 +384,6 @@ export const useUpdateEmployeeNote = () => {
     },
   });
 };
-
 
 // ========================= GET EMPLOYEE ASSET DOCUMENTS =========================
 export const useGetEmployeeAssetDocuments = (

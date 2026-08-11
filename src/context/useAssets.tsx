@@ -87,50 +87,78 @@ export const useGetSingleAsset = (id?: string) => {
 };
 
 // GET ALL ASSETS
+// GET ALL ASSETS
 export const useGetAssets = (
   page: number = 1,
   limit: number = 10,
   search: string = "",
   assetType: string = "",
   assignmentStatus: string = "",
+
+  // NEW:
+  // true হলে backend শুধু department assigned assets return করবে
+  departmentOnly: boolean = false,
 ) => {
   return useQuery({
-    queryKey: ["assets", page, limit, search, assetType, assignmentStatus],
+    queryKey: [
+      "assets",
+      page,
+      limit,
+      search,
+      assetType,
+      assignmentStatus,
+      departmentOnly,
+    ],
 
     queryFn: async ({ signal }) => {
-      const response = await axiosInstance.get("/assets", {
-        params: {
-          page,
-          limit,
-          search,
-          assetType,
-          assignmentStatus,
-        },
+      const response =
+        await axiosInstance.get(
+          "/assets",
+          {
+            params: {
+              page,
+              limit,
+              search,
+              assetType,
+              assignmentStatus,
 
-        // Search/filter change হলে পুরোনো request cancel করবে
-        signal,
-      });
+              // NEW
+              departmentOnly,
+            },
+
+            // Search/filter change হলে পুরোনো request cancel করবে
+            signal,
+          },
+        );
 
       return {
-        assets: response.data?.data || [],
+        assets:
+          response.data?.data || [],
 
-        pagination: response.data?.pagination || {
-          currentPage: page,
-          limit,
-          totalData: 0,
-          totalPages: 0,
-          hasNextPage: false,
-          hasPreviousPage: false,
-        },
+        pagination:
+          response.data?.pagination || {
+            currentPage: page,
+            limit,
+            totalData: 0,
+            totalPages: 0,
+            hasNextPage: false,
+            hasPreviousPage: false,
+          },
       };
     },
 
-    // নতুন page/search data আসা পর্যন্ত আগের data রাখবে
-    placeholderData: (previousData) => previousData,
+    // নতুন page/search/filter data আসা পর্যন্ত আগের data রাখবে
+    placeholderData: (
+      previousData,
+    ) => previousData,
 
-    refetchOnWindowFocus: false,
+    refetchOnWindowFocus:
+      false,
   });
 };
+
+
+
 
 // UPDATE ASSET
 export const useUpdateAsset = () => {

@@ -417,7 +417,7 @@ export default function Department_Asset() {
                 <FiPlus size={18} />
 
                 <span>
-                  Add Department Asset
+                  Department Asset
                 </span>
               </>
             )}

@@ -22,6 +22,7 @@ import Printer_Page from "../components/Invoices_Compo/Printer_Page";
 import RoleRoute from "./RoleRoute";
 import Department from "../pages/department/Department";
 import Depart_asset_list from "../components/Department/Depart_asset_list";
+import EmployeeVacation from "../pages/employee_vacation/EmployeeVacation";
 
 
 const router = createBrowserRouter(
@@ -158,6 +159,9 @@ const router = createBrowserRouter(
           ),
         },
 
+
+
+
         {
           path: "department/:departmentId/assets",
           element: (
@@ -166,6 +170,18 @@ const router = createBrowserRouter(
             </RoleRoute>
           ),
         },
+
+
+         {
+          path: "employee-vacation",
+          element: (
+            <RoleRoute roles={["ADMIN"]}>
+              <EmployeeVacation></EmployeeVacation>
+            </RoleRoute>
+          ),
+        },
+
+
 
         {
           path: "search",
