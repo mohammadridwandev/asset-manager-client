@@ -1,9 +1,16 @@
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import {
+  useMutation,
+  useQuery,
+  useQueryClient,
+} from "@tanstack/react-query";
 
 import toast from "react-hot-toast";
 import axiosInstance from "../config/axiosInstance";
 
+// =========================
 // CREATE ASSET
+// =========================
+
 export const useCreateAsset = () => {
   const queryClient = useQueryClient();
 
@@ -68,17 +75,29 @@ export const useCreateAsset = () => {
   });
 };
 
+// =========================
 // GET SINGLE ASSET
-export const useGetSingleAsset = (id?: string) => {
+// =========================
+
+export const useGetSingleAsset = (
+  id?: string,
+) => {
   return useQuery({
     queryKey: ["assets", id],
 
     queryFn: async ({ signal }) => {
-      const response = await axiosInstance.get(`/assets/${id}`, {
-        signal,
-      });
+      const response =
+        await axiosInstance.get(
+          `/assets/${id}`,
+          {
+            signal,
+          },
+        );
 
-      return response.data?.data || response.data;
+      return (
+        response.data?.data ||
+        response.data
+      );
     },
 
     enabled: !!id,
@@ -86,18 +105,24 @@ export const useGetSingleAsset = (id?: string) => {
   });
 };
 
-// GET ALL ASSETS
-// GET ALL ASSETS
+
+
 export const useGetAssets = (
   page: number = 1,
   limit: number = 10,
   search: string = "",
   assetType: string = "",
   assignmentStatus: string = "",
-
-  // NEW:
-  // true হলে backend শুধু department assigned assets return করবে
   departmentOnly: boolean = false,
+
+  // Department filter
+  departmentName: string = "",
+
+  // DIRECT | EMPLOYEE
+  departmentSource:
+    | "DIRECT"
+    | "EMPLOYEE"
+    | "" = "",
 ) => {
   return useQuery({
     queryKey: [
@@ -108,9 +133,13 @@ export const useGetAssets = (
       assetType,
       assignmentStatus,
       departmentOnly,
+      departmentName,
+      departmentSource,
     ],
 
-    queryFn: async ({ signal }) => {
+    queryFn: async ({
+      signal,
+    }) => {
       const response =
         await axiosInstance.get(
           "/assets",
@@ -121,12 +150,15 @@ export const useGetAssets = (
               search,
               assetType,
               assignmentStatus,
-
-              // NEW
               departmentOnly,
+
+              // Department name
+              departmentName,
+
+              // DIRECT or EMPLOYEE
+              departmentSource,
             },
 
-            // Search/filter change হলে পুরোনো request cancel করবে
             signal,
           },
         );
@@ -136,18 +168,21 @@ export const useGetAssets = (
           response.data?.data || [],
 
         pagination:
-          response.data?.pagination || {
+          response.data
+            ?.pagination || {
             currentPage: page,
             limit,
             totalData: 0,
             totalPages: 0,
-            hasNextPage: false,
-            hasPreviousPage: false,
+            hasNextPage:
+              false,
+            hasPreviousPage:
+              false,
           },
       };
     },
 
-    // নতুন page/search/filter data আসা পর্যন্ত আগের data রাখবে
+    // Keep old page while loading new page
     placeholderData: (
       previousData,
     ) => previousData,
@@ -159,8 +194,10 @@ export const useGetAssets = (
 
 
 
-
+// =========================
 // UPDATE ASSET
+// =========================
+
 export const useUpdateAsset = () => {
   const queryClient = useQueryClient();
 
@@ -233,53 +270,61 @@ export const useUpdateAsset = () => {
   });
 };
 
+// =========================
 // DELETE ASSET
+// =========================
+
 export const useDeleteAsset = () => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async (id: string) => {
-      const token = localStorage.getItem("token");
+    mutationFn: async (
+      id: string,
+    ) => {
+      const token =
+        localStorage.getItem("token");
 
-      return axiosInstance.delete(`/assets/${id}`, {
-        headers: {
-          Authorization: `Bearer ${token}`,
+      return axiosInstance.delete(
+        `/assets/${id}`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
         },
-      });
+      );
     },
 
     onSuccess: () => {
-      // Asset list refresh করবে
       queryClient.invalidateQueries({
         queryKey: ["assets"],
       });
 
-      // Employee asset information refresh করবে
       queryClient.invalidateQueries({
         queryKey: ["employees"],
       });
 
-      // Last asset type delete হলে dropdown refresh করবে
       queryClient.invalidateQueries({
         queryKey: ["asset-filter-options"],
       });
 
-      // Dashboard total/count refresh করবে
       queryClient.invalidateQueries({
         queryKey: ["dashboard"],
       });
 
-      // Allocation Report refresh করবে
       queryClient.invalidateQueries({
         queryKey: ["report-allocation"],
       });
     },
 
     onError: (error: any) => {
-      console.error("Delete Asset Error:", error);
+      console.error(
+        "Delete Asset Error:",
+        error,
+      );
 
       const errorMessage =
-        error?.response?.data?.message ||
+        error?.response?.data
+          ?.message ||
         error?.response?.data?.error ||
         "Failed to delete asset.";
 
@@ -288,18 +333,27 @@ export const useDeleteAsset = () => {
   });
 };
 
+// =========================
 // EXPORT ALL ASSETS
+// =========================
+
 export const useExportAssets = () => {
   return useMutation({
     mutationFn: async () => {
-      const response = await axiosInstance.get("/assets/export");
+      const response =
+        await axiosInstance.get(
+          "/assets/export",
+        );
 
-      return response.data?.data || [];
+      return (
+        response.data?.data || []
+      );
     },
 
     onError: (error: any) => {
       const message =
-        error?.response?.data?.message ||
+        error?.response?.data
+          ?.message ||
         error?.response?.data?.error ||
         "Failed to export assets.";
 
@@ -308,24 +362,49 @@ export const useExportAssets = () => {
   });
 };
 
-// GET ASSET FILTER OPTIONS
+
+
 export const useGetAssetFilterOptions = () => {
-  return useQuery({
-    queryKey: ["asset-filter-options"],
+    return useQuery({
+      queryKey: [
+        "asset-filter-options",
+      ],
 
-    queryFn: async ({ signal }) => {
-      const response = await axiosInstance.get("/assets/filter-options", {
+      queryFn: async ({
         signal,
-      });
+      }) => {
+        const response =
+          await axiosInstance.get(
+            "/assets/filter-options",
+            {
+              signal,
+            },
+          );
 
-      return {
-        assetTypes: response.data?.data?.assetTypes || [],
-      };
-    },
+        return {
+          // Asset types
+          assetTypes:
+            response.data?.data
+              ?.assetTypes || [],
 
-    // ৫ মিনিট একই filter option fresh থাকবে
-    staleTime: 5 * 60 * 1000,
+          // Direct department asset counts
+          directDepartmentCounts:
+            response.data?.data
+              ?.directDepartmentCounts ||
+            [],
 
-    refetchOnWindowFocus: false,
-  });
-};
+          // Employee department asset counts
+          employeeDepartmentCounts:
+            response.data?.data
+              ?.employeeDepartmentCounts ||
+            [],
+        };
+      },
+
+      staleTime:
+        5 * 60 * 1000,
+
+      refetchOnWindowFocus:
+        false,
+    });
+  };

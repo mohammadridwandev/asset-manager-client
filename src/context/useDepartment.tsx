@@ -3,18 +3,10 @@ import {
   useQuery,
   useQueryClient,
 } from "@tanstack/react-query";
-
 import toast from "react-hot-toast";
-
 import axiosInstance from "../config/axiosInstance";
-
-// =========================
-// CREATE DEPARTMENT
-// =========================
-
 export const useCreateDepartment = () => {
   const queryClient = useQueryClient();
-
   return useMutation({
     mutationFn: async (
       createDepartment: any,
@@ -24,39 +16,29 @@ export const useCreateDepartment = () => {
         createDepartment,
       );
     },
-
     onSuccess: () => {
       queryClient.invalidateQueries({
         queryKey: ["departments"],
       });
     },
-
     onError: (error: any) => {
       console.error(
         "Create Department Error:",
         error,
       );
-
       const message =
         error?.response?.data?.message ||
         error?.response?.data?.error ||
         "Department could not be created. Please try again.";
-
       toast.error(message);
     },
   });
 };
-
-// =========================
-// GET SINGLE DEPARTMENT
-// =========================
-
 export const useGetSingleDepartment = (
   id?: string,
 ) => {
   return useQuery({
     queryKey: ["departments", id],
-
     queryFn: async ({ signal }) => {
       const response =
         await axiosInstance.get(
@@ -65,27 +47,17 @@ export const useGetSingleDepartment = (
             signal,
           },
         );
-
       return (
         response.data?.data ||
         response.data
       );
     },
-
     enabled: !!id,
-
     refetchOnWindowFocus: false,
   });
 };
-
-// =========================
-// GET ALL DEPARTMENTS
-// =========================
-
-export const useGetDepartments = () => {
-  return useQuery({
+export const useGetDepartments = () => { return useQuery({
     queryKey: ["departments"],
-
     queryFn: async ({ signal }) => {
       const response =
         await axiosInstance.get(
@@ -94,21 +66,12 @@ export const useGetDepartments = () => {
             signal,
           },
         );
-
       return response.data?.data || [];
     },
-
     refetchOnWindowFocus: false,
   });
 };
-
-// =========================
-// UPDATE DEPARTMENT
-// =========================
-
-export const useUpdateDepartment = () => {
-  const queryClient = useQueryClient();
-
+export const useUpdateDepartment = () => { const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async ({
       id,
@@ -119,7 +82,6 @@ export const useUpdateDepartment = () => {
     }) => {
       const token =
         localStorage.getItem("token");
-
       return axiosInstance.patch(
         `/departments/${id}`,
         updateData,
@@ -130,41 +92,29 @@ export const useUpdateDepartment = () => {
         },
       );
     },
-
     onSuccess: () => {
       queryClient.invalidateQueries({
         queryKey: ["departments"],
       });
     },
-
     onError: (error: any) => {
       console.error(
         "Update Department Error:",
         error,
       );
-
       const message =
         error?.response?.data?.message ||
         error?.response?.data?.error ||
         "Department could not be updated. Please try again.";
-
       toast.error(message);
     },
   });
 };
-
-// =========================
-// DELETE DEPARTMENT
-// =========================
-
-export const useDeleteDepartment = () => {
-  const queryClient = useQueryClient();
-
+export const useDeleteDepartment = () => { const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async (id: string) => {
       const token =
         localStorage.getItem("token");
-
       return axiosInstance.delete(
         `/departments/${id}`,
         {
@@ -174,127 +124,146 @@ export const useDeleteDepartment = () => {
         },
       );
     },
-
     onSuccess: () => {
       queryClient.invalidateQueries({
         queryKey: ["departments"],
       });
-
       queryClient.invalidateQueries({
         queryKey: ["assets"],
       });
     },
-
     onError: (error: any) => {
       console.error(
         "Delete Department Error:",
         error,
       );
-
       const message =
         error?.response?.data?.message ||
         error?.response?.data?.error ||
         "Failed to delete department.";
+      toast.error(message);
+    },
+  });
+};
+
+
+export const useAssignAssetToDepartment = () => {
+  const queryClient =
+    useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({
+      assetId,
+      departmentName,
+    }: {
+      assetId: number;
+      departmentName: string;
+    }) => {
+      const token =
+        localStorage.getItem(
+          "token",
+        );
+
+      return axiosInstance.patch(
+        `/departments/assets/${assetId}/assign`,
+        {
+          departmentName,
+        },
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        },
+      );
+    },
+
+    onSuccess: async (
+      response,
+      variables,
+    ) => {
+      const departmentName =
+        response?.data?.data
+          ?.department?.name;
+
+      toast.success(
+        departmentName
+          ? `Asset assigned to ${departmentName} successfully.`
+          : "Asset assigned to department successfully.",
+      );
+
+      // Refresh all asset pages
+      await queryClient.invalidateQueries({
+        queryKey: ["assets"],
+      });
+
+      // Refresh current single asset
+      await queryClient.invalidateQueries({
+        queryKey: [
+          "assets",
+          String(
+            variables.assetId,
+          ),
+        ],
+      });
+
+      // Refresh asset filter counts
+      await queryClient.invalidateQueries({
+        queryKey: [
+          "asset-filter-options",
+        ],
+      });
+
+      // Refresh departments
+      await queryClient.invalidateQueries({
+        queryKey: [
+          "departments",
+        ],
+      });
+
+      // Refresh dashboard
+      await queryClient.invalidateQueries({
+        queryKey: [
+          "dashboard",
+        ],
+      });
+
+      // Refresh allocation report
+      await queryClient.invalidateQueries({
+        queryKey: [
+          "report-allocation",
+        ],
+      });
+    },
+
+    onError: (error: any) => {
+      console.error(
+        "Assign Asset To Department Error:",
+        error,
+      );
+
+      const message =
+        error?.response?.data
+          ?.message ||
+        error?.response?.data
+          ?.error ||
+        "Failed to assign asset to department.";
 
       toast.error(message);
     },
   });
 };
 
-// =========================
-// ASSIGN MAIN ASSET TO DEPARTMENT
-// =========================
 
-export const useAssignAssetToDepartment =
-  () => {
-    const queryClient =
-      useQueryClient();
 
-    return useMutation({
-      mutationFn: async ({
-        assetId,
-        departmentId,
-      }: {
-        assetId: number;
-        departmentId: number;
-      }) => {
-        const token =
-          localStorage.getItem(
-            "token",
-          );
 
-        return axiosInstance.patch(
-          `/departments/assets/${assetId}/assign`,
-          {
-            departmentId,
-          },
-          {
-            headers: {
-              Authorization: `Bearer ${token}`,
-            },
-          },
-        );
-      },
 
-      onSuccess: (
-        response,
-      ) => {
-        const departmentName =
-          response?.data?.data
-            ?.department?.name;
-
-        toast.success(
-          departmentName
-            ? `Asset assigned to ${departmentName} successfully.`
-            : "Asset assigned to department successfully.",
-        );
-
-        queryClient.invalidateQueries({
-          queryKey: ["assets"],
-        });
-
-        queryClient.invalidateQueries({
-          queryKey: ["departments"],
-        });
-
-        queryClient.invalidateQueries({
-          queryKey: ["dashboard"],
-        });
-
-        queryClient.invalidateQueries({
-          queryKey: [
-            "report-allocation",
-          ],
-        });
-      },
-
-      onError: (error: any) => {
-        console.error(
-          "Assign Asset To Department Error:",
-          error,
-        );
-
-        const message =
-          error?.response?.data
-            ?.message ||
-          error?.response?.data
-            ?.error ||
-          "Failed to assign asset to department.";
-
-        toast.error(message);
-      },
-    });
-  };
 
 // =========================
 // UNASSIGN ASSET FROM DEPARTMENT
 // =========================
-
-export const useUnassignAssetFromDepartment =
-  () => {
+export const useUnassignAssetFromDepartment = () => {
     const queryClient =
       useQueryClient();
-
     return useMutation({
       mutationFn: async ({
         assetId,
@@ -307,7 +276,6 @@ export const useUnassignAssetFromDepartment =
           localStorage.getItem(
             "token",
           );
-
         return axiosInstance.delete(
           `/departments/assets/${assetId}/departments/${departmentId}`,
           {
@@ -317,58 +285,46 @@ export const useUnassignAssetFromDepartment =
           },
         );
       },
-
       onSuccess: () => {
-        toast.success(
-          "Asset unassigned from department successfully.",
-        );
-
+        // toast.success(
+        //   "Asset unassigned from department successfully.",
+        // );
         queryClient.invalidateQueries({
           queryKey: ["assets"],
         });
-
         queryClient.invalidateQueries({
           queryKey: ["departments"],
         });
-
         queryClient.invalidateQueries({
           queryKey: ["dashboard"],
         });
-
         queryClient.invalidateQueries({
           queryKey: [
             "report-allocation",
           ],
         });
       },
-
       onError: (error: any) => {
         console.error(
           "Unassign Asset From Department Error:",
           error,
         );
-
         const message =
           error?.response?.data
             ?.message ||
           error?.response?.data
             ?.error ||
           "Failed to unassign asset from department.";
-
         toast.error(message);
       },
     });
   };
-
 // =========================
 // SEND EMPLOYEE TO VACATION
 // =========================
-
-export const useSendEmployeeToVacation =
-  () => {
+export const useSendEmployeeToVacation = () => {
     const queryClient =
       useQueryClient();
-
     return useMutation({
       mutationFn: async ({
         employeeId,
@@ -381,7 +337,6 @@ export const useSendEmployeeToVacation =
           localStorage.getItem(
             "token",
           );
-
         return axiosInstance.patch(
           `/departments/employees/${employeeId}/vacation`,
           {
@@ -394,80 +349,64 @@ export const useSendEmployeeToVacation =
           },
         );
       },
-
       onSuccess: () => {
         queryClient.invalidateQueries({
           queryKey: ["employees"],
         });
-
         queryClient.invalidateQueries({
           queryKey: ["employee"],
         });
-
         queryClient.invalidateQueries({
           queryKey: ["assets"],
         });
-
         queryClient.invalidateQueries({
           queryKey: ["departments"],
         });
-
         queryClient.invalidateQueries({
           queryKey: [
             "asset-assignments",
           ],
         });
-
         queryClient.invalidateQueries({
           queryKey: ["dashboard"],
         });
-
         queryClient.invalidateQueries({
           queryKey: [
             "report-allocation",
           ],
         });
-
         // =========================
         // VACATION RECORD REFRESH
         // =========================
-
         queryClient.invalidateQueries({
           queryKey: [
             "vacation-records",
           ],
         });
       },
-
       onError: (error: any) => {
         console.error(
           "Send Employee To Vacation Error:",
           error,
         );
-
         const message =
           error?.response?.data
             ?.message ||
           error?.response?.data
             ?.error ||
           "Failed to send employee to vacation.";
-
         toast.error(message);
       },
     });
   };
-
 // =========================
 // GET VACATION RECORDS
 // =========================
-
-export const useGetVacationRecords =
-  () => {
+export const useGetVacationRecords = () => {
     return useQuery({
       queryKey: [
         "vacation-records",
       ],
-
       queryFn: async ({
         signal,
       }) => {
@@ -478,27 +417,21 @@ export const useGetVacationRecords =
               signal,
             },
           );
-
         return (
           response.data?.data ||
           []
         );
       },
-
       refetchOnWindowFocus:
         false,
     });
   };
-
 // =========================
 // RETURN EMPLOYEE FROM VACATION
 // =========================
-
-export const useReturnEmployeeFromVacation =
-  () => {
+export const useReturnEmployeeFromVacation = () => {
     const queryClient =
       useQueryClient();
-
     return useMutation({
       mutationFn: async (
         employeeId: number,
@@ -507,7 +440,6 @@ export const useReturnEmployeeFromVacation =
           localStorage.getItem(
             "token",
           );
-
         return axiosInstance.patch(
           `/departments/employees/${employeeId}/return-active`,
           {},
@@ -518,65 +450,52 @@ export const useReturnEmployeeFromVacation =
           },
         );
       },
-
       onSuccess: () => {
         // toast.success(
         //   "Employee returned to Active successfully.",
         // );
-
         queryClient.invalidateQueries({
           queryKey: [
             "vacation-records",
           ],
         });
-
         queryClient.invalidateQueries({
           queryKey: ["employees"],
         });
-
         queryClient.invalidateQueries({
           queryKey: ["employee"],
         });
-
         queryClient.invalidateQueries({
           queryKey: ["assets"],
         });
-
         queryClient.invalidateQueries({
           queryKey: ["departments"],
         });
-
         queryClient.invalidateQueries({
           queryKey: [
             "asset-assignments",
           ],
         });
-
         queryClient.invalidateQueries({
           queryKey: ["dashboard"],
         });
-
         queryClient.invalidateQueries({
           queryKey: [
             "report-allocation",
           ],
         });
       },
-
       onError: (error: any) => {
         console.error(
           "Return Employee From Vacation Error:",
           error,
         );
-
         const message =
           error?.response?.data
             ?.message ||
           error?.response?.data
             ?.error ||
           "Failed to return employee from vacation.";
-
         toast.error(message);
       },
-    });
-  };
+    });};

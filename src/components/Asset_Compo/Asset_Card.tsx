@@ -8,113 +8,113 @@ import {
   FaShieldAlt,
   FaUserMinus,
 } from "react-icons/fa";
-
-import { FaRightLeft } from "react-icons/fa6";
-
-import { useState } from "react";
+import {
+  FaRightLeft,
+} from "react-icons/fa6";
+import {
+  useState,
+} from "react";
 import Swal from "sweetalert2";
-
 import Asset_view from "./Asset_view";
 import Asset_to_Employee from "./Asset_to_Employee";
-
-import { useUnassignAssetAssignment } from "../../context/useAssetAssignment";
-
+import {
+  useUnassignAssetAssignment,
+} from "../../context/useAssetAssignment";
 import DataLoading from "../../DataLoading";
-
 type AssetCardProps = {
   assets: any[];
   totalAssets?: number;
   isLoading: boolean;
   isError: boolean;
 };
-
 export default function Asset_Card({
   assets,
   totalAssets,
   isLoading,
   isError,
 }: AssetCardProps) {
-  const [selectedAsset, setSelectedAsset] =
-    useState<any>(null);
-
-  const [transferAsset, setTransferAsset] =
-    useState<any>(null);
-
+  const [
+    selectedAsset,
+    setSelectedAsset,
+  ] = useState<any>(null);
+  const [
+    transferAsset,
+    setTransferAsset,
+  ] = useState<any>(null);
   const unassignMutation =
     useUnassignAssetAssignment();
-
   const API_BASE_URL =
-    import.meta.env.VITE_BACKEND_URL_LINK ||
-    "";
-
+    import.meta.env
+      .VITE_BACKEND_URL_LINK || "";
+  // Image URL
   const getImageUrl = (
     image?: string,
   ) => {
-    if (!image) return "";
-
+    if (!image) {
+      return "";
+    }
     if (
       image.startsWith("http://") ||
       image.startsWith("https://")
     ) {
       return image;
     }
-
     return `${API_BASE_URL.replace(
       /\/$/,
       "",
-    )}/${image.replace(/^\//, "")}`;
+    )}/${image.replace(
+      /^\//,
+      "",
+    )}`;
   };
-
+  // Employee unassign
   const handleUnassignAsset =
-    async (assignment: any) => {
+    async (
+      assignment: any,
+    ) => {
       const result =
         await Swal.fire({
-          title: "Unassign Asset?",
-
+          title:
+            "Unassign Asset?",
           text: `Remove from ${assignment.employee?.fullName}?`,
-
           icon: "warning",
-
           showCancelButton: true,
-
           confirmButtonColor:
             "#dc2626",
-
           cancelButtonColor:
             "#6b7280",
-
           confirmButtonText:
             "Yes, Unassign",
-
           cancelButtonText:
             "Cancel",
         });
-
       if (!result.isConfirmed) {
         return;
       }
-
       unassignMutation.mutate(
-        String(assignment.id),
+        String(
+          assignment.id,
+        ),
         {
-          onSuccess: async () => {
-            await Swal.fire({
-              title: "Unassigned!",
-
-              text: "Asset unassigned successfully.",
-
-              icon: "success",
-
-              timer: 1500,
-
-              showConfirmButton:
-                false,
-            });
-          },
+          onSuccess:
+            async () => {
+              await Swal.fire({
+                title:
+                  "Unassigned!",
+                text:
+                  "Asset unassigned successfully.",
+                icon:
+                  "success",
+                timer:
+                  1500,
+                showConfirmButton:
+                  false,
+              });
+            },
         },
       );
     };
-
+  // Transfer employee asset
   const handleTransferAsset =
     async (
       asset: any,
@@ -122,41 +122,39 @@ export default function Asset_Card({
     ) => {
       const result =
         await Swal.fire({
-          title: "Transfer Asset?",
-
+          title:
+            "Transfer Asset?",
           text: `This asset will be unassigned from ${assignment.employee?.fullName} first.`,
-
-          icon: "warning",
-
-          showCancelButton: true,
-
+          icon:
+            "warning",
+          showCancelButton:
+            true,
           confirmButtonText:
             "Yes, Transfer",
-
           cancelButtonText:
             "Cancel",
-
           confirmButtonColor:
             "#2563eb",
         });
-
       if (!result.isConfirmed) {
         return;
       }
-
       unassignMutation.mutate(
-        String(assignment.id),
+        String(
+          assignment.id,
+        ),
         {
-          onSuccess: () => {
-            setTransferAsset({
-              ...asset,
-              assignments: [],
-            });
-          },
+          onSuccess:
+            () => {
+              setTransferAsset({
+                ...asset,
+                assignments:
+                  [],
+              });
+            },
         },
       );
     };
-
   if (isLoading) {
     return (
       <DataLoading
@@ -165,7 +163,6 @@ export default function Asset_Card({
       />
     );
   }
-
   if (isError) {
     return (
       <div className="py-10 text-center text-red-500">
@@ -173,17 +170,24 @@ export default function Asset_Card({
       </div>
     );
   }
-
-  if (assets.length === 0) {
+  if (
+    assets.length === 0
+  ) {
     return (
-      <div className="py-10 text-center text-app-gray">
-        No assets found!
+      <div className="rounded-xl border border-dashed border-app-gray/20 py-12 text-center">
+        <p className="text-sm font-medium text-app-text">
+          No assets found
+        </p>
+        <p className="mt-1 text-xs text-app-gray">
+          No matching assets
+          were found.
+        </p>
       </div>
     );
   }
-
   return (
     <>
+      {/* Total */}
       <div className="mb-4">
         <h1 className="font-bold">
           Total Assets:{" "}
@@ -191,62 +195,50 @@ export default function Asset_Card({
             assets.length}
         </h1>
       </div>
-
+      {/* Asset Cards */}
       <div className="grid grid-cols-1 gap-6 md:grid-cols-2 xl:grid-cols-3">
         {assets.map(
           (asset: any) => {
             const employeeAssignments =
-              asset.assignments || [];
-
+              asset.assignments ||
+              [];
             const departmentAssignments =
               asset.departmentAssignments ||
               [];
-
             const hasEmployee =
               employeeAssignments.length >
               0;
-
             const hasDepartments =
               departmentAssignments.length >
               0;
-
-            // =========================
-            // QUANTITY CALCULATION
-            // =========================
-
+            // Quantity
             const totalQuantity =
               Number(
-                asset.quantity || 0,
+                asset.quantity ||
+                  0,
               );
-
             const employeeAssignedCount =
               employeeAssignments.length;
-
             const departmentAssignedCount =
               departmentAssignments.length;
-
             const assignedCount =
               employeeAssignedCount +
               departmentAssignedCount;
-
             const availableQuantity =
               Math.max(
                 totalQuantity -
                   assignedCount,
                 0,
               );
-
             return (
               <div
                 key={asset.id}
                 className="rounded-2xl border border-app-gray/10 bg-app-bg p-5 shadow-sm transition-all duration-300 hover:border-app-brand/30 hover:shadow-md"
               >
-                {/* ================= HEADER ================= */}
-
+                {/* Header */}
                 <div className="flex items-center justify-between gap-3 border-b border-app-gray/10 pb-4">
                   <div className="flex min-w-0 items-center gap-3">
-                    {/* Asset Image */}
-
+                    {/* Image */}
                     <div className="flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-xl border border-app-gray/10 bg-app-brand/5">
                       {asset.image ? (
                         <img
@@ -263,9 +255,7 @@ export default function Asset_Card({
                         <FaLaptop className="text-xl text-app-brand" />
                       )}
                     </div>
-
-                    {/* Asset Name */}
-
+                    {/* Name */}
                     <div className="min-w-0">
                       <h3
                         className="truncate text-base font-semibold text-app-text"
@@ -277,7 +267,6 @@ export default function Asset_Card({
                         {asset.assetName ||
                           "Unnamed Asset"}
                       </h3>
-
                       <p
                         className="mt-0.5 truncate text-xs text-app-gray"
                         title={
@@ -290,9 +279,7 @@ export default function Asset_Card({
                       </p>
                     </div>
                   </div>
-
-                  {/* ================= STATUS ================= */}
-
+                  {/* Status */}
                   <div className="flex shrink-0 flex-col items-end gap-1.5">
                     {availableQuantity ===
                     0 ? (
@@ -314,9 +301,7 @@ export default function Asset_Card({
                     )}
                   </div>
                 </div>
-
-                {/* ================= ASSET INFORMATION ================= */}
-
+                {/* Asset Information */}
                 <div className="mt-4 grid grid-cols-2 gap-3 text-sm">
                   <Info
                     label="Serial Number"
@@ -328,7 +313,6 @@ export default function Asset_Card({
                       <FaHashtag />
                     }
                   />
-
                   <Info
                     label="Type"
                     value={
@@ -339,7 +323,6 @@ export default function Asset_Card({
                       <FaLaptop />
                     }
                   />
-
                   <Info
                     label="Price (SAR)"
                     value={
@@ -350,7 +333,6 @@ export default function Asset_Card({
                         : "Not Available"
                     }
                   />
-
                   <Info
                     label="Quantity"
                     value={
@@ -358,9 +340,7 @@ export default function Asset_Card({
                     }
                   />
                 </div>
-
-                {/* ================= INVOICE / PURCHASE / CONDITION ================= */}
-
+                {/* Invoice / Purchase / Condition */}
                 <div className="mt-4 space-y-3 rounded-xl border border-app-gray/7 bg-app-secondary/5 p-4 text-sm">
                   <Row
                     icon={
@@ -372,7 +352,6 @@ export default function Asset_Card({
                       "Not Available"
                     }
                   />
-
                   <Row
                     icon={
                       <FaShieldAlt />
@@ -386,29 +365,25 @@ export default function Asset_Card({
                         : "Not Available"
                     }
                   />
-
                   <div className="flex items-center justify-between gap-3">
                     <span className="text-app-gray">
                       Condition
                     </span>
-
                     <span className="rounded-full bg-app-brand/10 px-3 py-1 text-xs font-semibold capitalize text-app-brand">
                       {asset.condition ||
                         "Not Available"}
                     </span>
                   </div>
                 </div>
-
-                {/* ================= ASSIGNMENT ================= */}
-
+                {/* Assignments */}
                 <div className="mt-4">
                   {/* Department Assignments */}
-
                   {hasDepartments && (
                     <div className="space-y-2">
                       {departmentAssignments.map(
                         (
-                          assignment: any,
+                          assignment:
+                            any,
                         ) => (
                           <div
                             key={
@@ -418,13 +393,11 @@ export default function Asset_Card({
                           >
                             <div className="flex items-center gap-2">
                               <FaBoxOpen className="text-blue-600" />
-
                               <p className="text-xs font-medium text-app-gray">
                                 Assigned
                                 Department
                               </p>
                             </div>
-
                             <p className="mt-1 text-sm font-semibold text-blue-600">
                               {assignment
                                 .department
@@ -436,9 +409,7 @@ export default function Asset_Card({
                       )}
                     </div>
                   )}
-
                   {/* Employee Assignments */}
-
                   {hasEmployee && (
                     <div
                       className={`space-y-2 ${
@@ -449,7 +420,8 @@ export default function Asset_Card({
                     >
                       {employeeAssignments.map(
                         (
-                          assignment: any,
+                          assignment:
+                            any,
                         ) => (
                           <div
                             key={
@@ -464,7 +436,12 @@ export default function Asset_Card({
                                   ?.fullName ||
                                   "Unknown Employee"}
                               </h4>
-
+                              <p className="mt-0.5 truncate text-xs text-app-gray">
+                                {assignment
+                                  .employee
+                                  ?.department ||
+                                  "No department"}
+                              </p>
                               <p className="mt-0.5 truncate text-xs text-app-gray">
                                 {assignment
                                   .employee
@@ -472,8 +449,8 @@ export default function Asset_Card({
                                   "No email available"}
                               </p>
                             </div>
-
                             <div className="flex shrink-0 items-center gap-2">
+                              {/* Transfer */}
                               <button
                                 type="button"
                                 title="Transfer Asset"
@@ -490,7 +467,7 @@ export default function Asset_Card({
                               >
                                 <FaRightLeft className="text-sm" />
                               </button>
-
+                              {/* Unassign */}
                               <button
                                 type="button"
                                 title="Unassign Asset"
@@ -512,20 +489,16 @@ export default function Asset_Card({
                       )}
                     </div>
                   )}
-
-                  {/* Nothing Assigned */}
-
+                  {/* Available */}
                   {!hasEmployee &&
                     !hasDepartments && (
                       <div>
                         <div className="flex items-center gap-2 text-sm font-semibold text-app-text">
                           <FaBoxOpen className="text-app-brand" />
-
                           <span>
                             Unassigned
                           </span>
                         </div>
-
                         <p className="mt-1 text-xs text-app-gray">
                           This asset is
                           available for
@@ -534,9 +507,7 @@ export default function Asset_Card({
                       </div>
                     )}
                 </div>
-
-                {/* ================= FOOTER ================= */}
-
+                {/* Footer */}
                 <div className="mt-5 flex items-center justify-between gap-3 border-t border-app-gray/10 pt-4">
                   <span
                     className={`inline-flex items-center gap-2 rounded-full border px-3 py-1.5 text-xs font-semibold ${
@@ -547,22 +518,18 @@ export default function Asset_Card({
                     }`}
                   >
                     <FaCheckCircle />
-
                     Available (
                     {
                       availableQuantity
                     }
                     )
                   </span>
-
                   <button
                     type="button"
                     onClick={() =>
                       setSelectedAsset({
                         ...asset,
-
                         availableQuantity,
-
                         assignedCount,
                       })
                     }
@@ -577,10 +544,12 @@ export default function Asset_Card({
           },
         )}
       </div>
-
+      {/* Asset Manage */}
       {selectedAsset && (
         <Asset_view
-          assets={selectedAsset}
+          assets={
+            selectedAsset
+          }
           onClose={() =>
             setSelectedAsset(
               null,
@@ -588,10 +557,12 @@ export default function Asset_Card({
           }
         />
       )}
-
+      {/* Transfer */}
       {transferAsset && (
         <Asset_to_Employee
-          asset={transferAsset}
+          asset={
+            transferAsset
+          }
           onClose={() =>
             setTransferAsset(
               null,
@@ -602,7 +573,7 @@ export default function Asset_Card({
     </>
   );
 }
-
+// Info box
 const Info = ({
   label,
   value,
@@ -616,20 +587,22 @@ const Info = ({
     <div className="rounded-lg border border-app-gray/7 p-3">
       <div className="mb-1 flex items-center gap-2 text-xs text-app-gray">
         {icon}
-
-        <span>{label}</span>
+        <span>
+          {label}
+        </span>
       </div>
-
       <p
         className="truncate font-medium text-app-text"
-        title={String(value)}
+        title={
+          String(value)
+        }
       >
         {value}
       </p>
     </div>
   );
 };
-
+// Detail row
 const Row = ({
   icon,
   label,
@@ -645,10 +618,11 @@ const Row = ({
         {icon}
         {label}
       </span>
-
       <span
         className="min-w-0 truncate text-right font-medium text-app-text"
-        title={String(value)}
+        title={
+          String(value)
+        }
       >
         {value}
       </span>

@@ -1,123 +1,182 @@
-import { useEffect, useMemo, useState } from "react";
-import { FiTrash2, FiX } from "react-icons/fi";
+import {
+  useEffect,
+  useMemo,
+  useState,
+} from "react";
+
+import {
+  FiTrash2,
+  FiX,
+} from "react-icons/fi";
+
 import toast from "react-hot-toast";
 
-import { useGetDepartments } from "../../context/useDepartment";
 import {
-  useAssignDepartmentAsset,
-  useGetAssetDepartments,
-  useUnassignDepartmentAsset,
-} from "../../context/useDepartmentAsset";
+  useGetEmployeeFilterOptions,
+} from "../../context/useEmployee";
 
-type DepartmentType = {
-  id: number;
-  name: string;
-};
+import {
+  useGetSingleAsset,
+} from "../../context/useAssets";
 
-type DepartmentAssignmentType = {
-  id: number;
-  assignedAt?: string;
+import {
+  useAssignAssetToDepartment,
+  useUnassignAssetFromDepartment,
+} from "../../context/useDepartment";
 
-  department: {
-    id: number;
-    name: string;
-  };
-};
 
+// Asset type
 type AssetType = {
   id: number;
   assetName: string;
   serialNumber?: string | null;
 };
 
+
+// Props
 type Props = {
   open: boolean;
   onClose: () => void;
   asset: AssetType | null;
 };
 
+
 export default function Assign_to_Department({
   open,
   onClose,
   asset,
 }: Props) {
-  const [departmentId, setDepartmentId] =
-    useState("");
+  const [
+    selectedDepartment,
+    setSelectedDepartment,
+  ] = useState("");
 
+
+  // Current departments
   const {
-    data: departments = [],
+    data: filterOptions,
     isLoading: isDepartmentsLoading,
     isError: isDepartmentsError,
-  } = useGetDepartments();
+  } =
+    useGetEmployeeFilterOptions();
 
+
+  const departments: string[] =
+    filterOptions?.departments || [];
+
+
+  // Get latest asset data
   const {
-    data: assignments = [],
-    isLoading: isAssignmentsLoading,
-    isError: isAssignmentsError,
-  } = useGetAssetDepartments(
-    asset ? String(asset.id) : undefined,
+    data: assetDetails,
+    isLoading:
+      isAssetLoading,
+  } = useGetSingleAsset(
+    asset
+      ? String(asset.id)
+      : undefined,
   );
 
+
+  // Current department assignments
+  const assignments =
+    assetDetails?.departmentAssignments ||
+    [];
+
+
+  // Assign
   const {
-    mutateAsync: assignDepartmentAsset,
+    mutateAsync:
+      assignAssetToDepartment,
     isPending: isAssigning,
-  } = useAssignDepartmentAsset();
+  } =
+    useAssignAssetToDepartment();
 
+
+  // Unassign
   const {
-    mutateAsync: unassignDepartmentAsset,
+    mutateAsync:
+      unassignAssetFromDepartment,
     isPending: isUnassigning,
-  } = useUnassignDepartmentAsset();
+  } =
+    useUnassignAssetFromDepartment();
 
+
+  // Reset
   useEffect(() => {
     if (open) {
-      setDepartmentId("");
+      setSelectedDepartment("");
     }
-  }, [open, asset]);
-
-  const assignedDepartmentIds = useMemo(() => {
-    return new Set(
-      assignments.map(
-        (
-          assignment: DepartmentAssignmentType,
-        ) => assignment.department.id,
-      ),
-    );
-  }, [assignments]);
-
-  const availableDepartments = useMemo(() => {
-    return departments.filter(
-      (department: DepartmentType) =>
-        !assignedDepartmentIds.has(
-          department.id,
-        ),
-    );
   }, [
-    departments,
-    assignedDepartmentIds,
+    open,
+    asset,
   ]);
+
+
+  // Already assigned names
+  const assignedDepartmentNames =
+    useMemo(() => {
+      return new Set<string>(
+        assignments
+          .map(
+            (assignment: any) =>
+              assignment.department
+                ?.name
+                ?.trim()
+                .toLowerCase(),
+          )
+          .filter(Boolean),
+      );
+    }, [
+      assignments,
+    ]);
+
+
+  // Available departments
+  const availableDepartments =
+    useMemo(() => {
+      return departments.filter(
+        (department) =>
+          !assignedDepartmentNames.has(
+            department
+              .trim()
+              .toLowerCase(),
+          ),
+      );
+    }, [
+      departments,
+      assignedDepartmentNames,
+    ]);
+
 
   if (!open || !asset) {
     return null;
   }
 
-  const isBusy =
-    isAssigning || isUnassigning;
 
+  const isBusy =
+    isAssigning ||
+    isUnassigning;
+
+
+  // Close
   const handleClose = () => {
     if (isBusy) {
       return;
     }
 
-    setDepartmentId("");
+    setSelectedDepartment("");
+
     onClose();
   };
 
+
+  // Assign department
   const handleSubmit = async (
     event: React.FormEvent<HTMLFormElement>,
   ) => {
     event.preventDefault();
 
-    if (!departmentId) {
+    if (!selectedDepartment) {
       toast.error(
         "Please select a department.",
       );
@@ -125,44 +184,37 @@ export default function Assign_to_Department({
       return;
     }
 
-    const selectedDepartmentId =
-      Number(departmentId);
-
-    if (
-      assignedDepartmentIds.has(
-        selectedDepartmentId,
-      )
-    ) {
-      toast.error(
-        "This asset is already assigned to the selected department.",
-      );
-
-      return;
-    }
-
     try {
-      await assignDepartmentAsset({
-        assetId: String(asset.id),
-        departmentId:
-          selectedDepartmentId,
+      await assignAssetToDepartment({
+        assetId: Number(asset.id),
+
+        departmentName:
+          selectedDepartment,
       });
 
-      setDepartmentId("");
+      setSelectedDepartment("");
     } catch (error) {
       console.error(
-        "Assign Department Submit Error:",
+        "Assign Department Error:",
         error,
       );
     }
   };
 
+
+  // Unassign department
   const handleUnassign = async (
-    department: DepartmentType,
+    assignment: any,
   ) => {
     try {
-      await unassignDepartmentAsset({
-        assetId: String(asset.id),
-        departmentId: department.id,
+      await unassignAssetFromDepartment({
+        assetId:
+          Number(asset.id),
+
+        departmentId:
+          Number(
+            assignment.departmentId,
+          ),
       });
     } catch (error) {
       console.error(
@@ -171,6 +223,7 @@ export default function Assign_to_Department({
       );
     }
   };
+
 
   return (
     <div
@@ -184,9 +237,9 @@ export default function Assign_to_Department({
         }
       >
         <form onSubmit={handleSubmit}>
+
           {/* Header */}
           <div className="flex items-center justify-between border-b border-app-gray/20 px-6 py-4">
-          
             <div>
               <h2 className="text-lg font-bold">
                 Manage Departments
@@ -208,8 +261,11 @@ export default function Assign_to_Department({
             </button>
           </div>
 
+
           {/* Body */}
           <div className="max-h-[65vh] space-y-5 overflow-y-auto p-6">
+
+            {/* Asset */}
             <div className="rounded-md border border-app-gray/20 bg-app-gray/5 p-4">
               <p className="text-xs font-medium text-app-gray">
                 Asset
@@ -227,7 +283,8 @@ export default function Assign_to_Department({
               )}
             </div>
 
-            {/* Assigned Departments */}
+
+            {/* Assigned departments */}
             <div>
               <div className="mb-3 flex items-center justify-between gap-3">
                 <label className="text-sm font-semibold">
@@ -239,31 +296,27 @@ export default function Assign_to_Department({
                 </span>
               </div>
 
-              {isAssignmentsLoading ? (
-                <div className="flex items-center gap-2 rounded-md border border-app-gray/20 p-4 text-sm text-app-gray">
-                  <span className="h-4 w-4 animate-spin rounded-full border-2 border-app-brand/20 border-t-app-brand" />
 
-                  Loading assigned
-                  departments...
+              {isAssetLoading ? (
+                <div className="rounded-md border border-app-gray/20 p-4 text-sm text-app-gray">
+                  Loading assigned departments...
                 </div>
-              ) : isAssignmentsError ? (
-                <div className="rounded-md border border-red-500/20 bg-red-500/5 p-4 text-sm text-red-500">
-                  Failed to load assigned
-                  departments.
-                </div>
-              ) : assignments.length === 0 ? (
+              ) : assignments.length ===
+                0 ? (
                 <div className="rounded-md border border-app-gray/20 bg-app-gray/5 p-4 text-sm text-app-gray">
-                  This asset has not been
-                  assigned to any department.
+                  This asset has not been assigned
+                  to any department.
                 </div>
               ) : (
                 <div className="space-y-2">
                   {assignments.map(
                     (
-                      assignment: DepartmentAssignmentType,
+                      assignment: any,
                     ) => (
                       <div
-                        key={assignment.id}
+                        key={
+                          assignment.id
+                        }
                         className="flex items-center justify-between gap-3 rounded-md border border-app-gray/20 px-4 py-3"
                       >
                         <div className="min-w-0">
@@ -271,7 +324,7 @@ export default function Assign_to_Department({
                             {
                               assignment
                                 .department
-                                .name
+                                ?.name
                             }
                           </p>
 
@@ -284,10 +337,12 @@ export default function Assign_to_Department({
                           type="button"
                           onClick={() =>
                             handleUnassign(
-                              assignment.department,
+                              assignment,
                             )
                           }
-                          disabled={isBusy}
+                          disabled={
+                            isBusy
+                          }
                           title="Unassign Department"
                           className="shrink-0 rounded-md border border-red-500/20 p-2 text-red-500 transition-colors hover:bg-red-500/10 disabled:cursor-not-allowed disabled:opacity-50"
                         >
@@ -302,20 +357,19 @@ export default function Assign_to_Department({
               )}
             </div>
 
-            {/* Assign New Department */}
+
+            {/* Assign department */}
             <div>
-              <label
-                htmlFor="departmentId"
-                className="mb-2 block text-sm font-semibold"
-              >
+              <label className="mb-2 block text-sm font-semibold">
                 Assign New Department
               </label>
 
               <select
-                id="departmentId"
-                value={departmentId}
+                value={
+                  selectedDepartment
+                }
                 onChange={(event) =>
-                  setDepartmentId(
+                  setSelectedDepartment(
                     event.target.value,
                   )
                 }
@@ -339,13 +393,20 @@ export default function Assign_to_Department({
 
                 {availableDepartments.map(
                   (
-                    department: DepartmentType,
+                    department:
+                      string,
                   ) => (
                     <option
-                      key={department.id}
-                      value={department.id}
+                      key={
+                        department
+                      }
+                      value={
+                        department
+                      }
                     >
-                      {department.name}
+                      {
+                        department
+                      }
                     </option>
                   ),
                 )}
@@ -356,21 +417,13 @@ export default function Assign_to_Department({
                   Failed to load departments.
                 </p>
               )}
-
-              {!isDepartmentsLoading &&
-                !isDepartmentsError &&
-                departments.length === 0 && (
-                  <p className="mt-1.5 text-xs text-app-gray">
-                    No departments found.
-                    Please add a department
-                    first.
-                  </p>
-                )}
             </div>
           </div>
 
+
           {/* Footer */}
           <div className="flex flex-col-reverse gap-3 border-t border-app-gray/20 px-6 py-4 sm:flex-row sm:justify-end">
+
             <button
               type="button"
               onClick={handleClose}
@@ -384,7 +437,7 @@ export default function Assign_to_Department({
               type="submit"
               disabled={
                 isBusy ||
-                !departmentId ||
+                !selectedDepartment ||
                 isDepartmentsLoading ||
                 isDepartmentsError
               }

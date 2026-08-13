@@ -122,6 +122,7 @@ const Navbar = () => {
       roles: ["ADMIN"],
     },
 
+    
     {
       name: "Vacation Records",
       icon: <LuClipboardList size={18} />,

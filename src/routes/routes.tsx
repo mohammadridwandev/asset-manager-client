@@ -21,7 +21,7 @@ import Invoice_Update from "../components/Invoices_Compo/Invoice_Update";
 import Printer_Page from "../components/Invoices_Compo/Printer_Page";
 import RoleRoute from "./RoleRoute";
 import Department from "../pages/department/Department";
-import Depart_asset_list from "../components/Department/Depart_asset_list";
+import Depart_asset_list from "../components/Department/Department_Asset_List";
 import EmployeeVacation from "../pages/employee_vacation/EmployeeVacation";
 
 
@@ -163,7 +163,8 @@ const router = createBrowserRouter(
 
 
         {
-          path: "department/:departmentId/assets",
+         
+          path: "department-assets/:departmentName",
           element: (
             <RoleRoute roles={["ADMIN"]}>
               <Depart_asset_list />

@@ -288,21 +288,19 @@ export default function Vacation_Department_Assets() {
       ========================= */}
 
       <div className="flex items-center gap-3">
+        
         <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-app-brand/10 text-app-brand">
           <FiPackage
             size={20}
           />
         </div>
-
         <div>
           <h3 className="font-semibold text-app-text">
             Vacation Department Assets
           </h3>
 
           <p className="text-sm text-app-gray">
-            Move employee assets
-            to a department before
-            vacation
+            Move employee assets to a department before vacation
           </p>
         </div>
       </div>

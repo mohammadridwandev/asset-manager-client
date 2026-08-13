@@ -1,340 +1,505 @@
-import { useState } from "react";
 import {
-  FiBarChart,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
+
+import {
+  FiCheck,
+  FiChevronDown,
   FiSearch,
   FiX,
 } from "react-icons/fi";
 
 import {
+  useGetEmployeeFilterOptions,
+} from "../../context/useEmployee";
+
+import {
   useAssignAssetToDepartment,
-  useGetDepartments,
 } from "../../context/useDepartment";
 
-import { useDebounce } from "../../context/useDebounce";
 
 type Props = {
   asset: any;
   onClose: () => void;
 };
 
+
 export default function Asset_to_Department({
   asset,
   onClose,
 }: Props) {
-  const [searchText, setSearchText] =
-    useState("");
+  const dropdownRef =
+    useRef<HTMLDivElement | null>(null);
 
-  // Already assigned departments
-  const [assignedDepartmentIds, setAssignedDepartmentIds] =
-    useState<number[]>(
-      asset?.departmentAssignments?.map(
-        (assignment: any) =>
-          Number(assignment.departmentId),
-      ) || [],
-    );
+  const [
+    isDropdownOpen,
+    setIsDropdownOpen,
+  ] = useState(false);
 
-  const debouncedSearchText =
-    useDebounce(
-      searchText.trim(),
-      400,
-    );
+  const [
+    searchText,
+    setSearchText,
+  ] = useState("");
 
+  const [
+    selectedDepartment,
+    setSelectedDepartment,
+  ] = useState("");
+
+
+  // Get departments
   const {
-    data: departments = [],
+    data: filterOptions,
     isLoading,
     isError,
-  } = useGetDepartments();
+  } =
+    useGetEmployeeFilterOptions();
 
+
+  const departments: string[] =
+    filterOptions?.departments || [];
+
+
+  // Assign asset
   const assignDepartment =
     useAssignAssetToDepartment();
 
-  // Search না করলে কিছু show হবে না
+
+  // Already assigned departments
+  const assignedDepartmentNames =
+    useMemo(() => {
+      if (
+        !Array.isArray(
+          asset?.departmentAssignments,
+        )
+      ) {
+        return new Set<string>();
+      }
+
+      return new Set<string>(
+        asset.departmentAssignments
+          .map(
+            (assignment: any) =>
+              assignment.department?.name
+                ?.trim()
+                .toLowerCase(),
+          )
+          .filter(Boolean),
+      );
+    }, [
+      asset?.departmentAssignments,
+    ]);
+
+
+  // Remove already assigned departments
+  const availableDepartments =
+    useMemo(() => {
+      return departments.filter(
+        (department) =>
+          !assignedDepartmentNames.has(
+            department
+              .trim()
+              .toLowerCase(),
+          ),
+      );
+    }, [
+      departments,
+      assignedDepartmentNames,
+    ]);
+
+
+  // Search departments
   const filteredDepartments =
-    !debouncedSearchText
-      ? []
-      : departments.filter(
-          (department: any) =>
-            department.name
-              ?.toLowerCase()
-              .includes(
-                debouncedSearchText.toLowerCase(),
-              ),
-        );
+    useMemo(() => {
+      const keyword =
+        searchText
+          .trim()
+          .toLowerCase();
 
-  const isTyping =
-    searchText.trim() !==
-    debouncedSearchText;
+      if (!keyword) {
+        return availableDepartments;
+      }
 
-  const hasSearchText =
-    searchText.trim().length > 0;
+      return availableDepartments.filter(
+        (department) =>
+          department
+            .toLowerCase()
+            .includes(keyword),
+      );
+    }, [
+      availableDepartments,
+      searchText,
+    ]);
 
-  // =========================
-  // ASSIGN DEPARTMENT
-  // =========================
 
-  const handleAssign = (
-    department: any,
-  ) => {
-    const departmentId =
-      Number(department.id);
+  // Close dropdown outside
+  useEffect(() => {
+    const handleOutsideClick = (
+      event: MouseEvent,
+    ) => {
+      if (
+        dropdownRef.current &&
+        !dropdownRef.current.contains(
+          event.target as Node,
+        )
+      ) {
+        setIsDropdownOpen(false);
+        setSearchText("");
+      }
+    };
 
-    // Already assigned
-    if (
-      assignedDepartmentIds.includes(
-        departmentId,
-      )
-    ) {
-      return;
-    }
-
-    assignDepartment.mutate(
-      {
-        assetId: Number(
-          asset.id,
-        ),
-
-        departmentId,
-      },
-      {
-        onSuccess: () => {
-          // Local UI update
-          setAssignedDepartmentIds(
-            (previous) => [
-              ...previous,
-              departmentId,
-            ],
-          );
-
-          // Modal close হবে না
-          // আরেকটা department assign করা যাবে
-        },
-      },
+    document.addEventListener(
+      "mousedown",
+      handleOutsideClick,
     );
+
+    return () => {
+      document.removeEventListener(
+        "mousedown",
+        handleOutsideClick,
+      );
+    };
+  }, []);
+
+
+  // Select department
+  const handleSelectDepartment = (
+    department: string,
+  ) => {
+    setSelectedDepartment(
+      department,
+    );
+
+    setIsDropdownOpen(false);
+
+    setSearchText("");
   };
 
-  const handleClose = () => {
-    if (
-      assignDepartment.isPending
-    ) {
+
+  // Assign department
+  const handleAssign = async () => {
+    if (!selectedDepartment) {
       return;
     }
 
-    onClose();
+    try {
+      await assignDepartment.mutateAsync({
+        assetId: Number(asset.id),
+
+        departmentName:
+          selectedDepartment,
+      });
+
+      onClose();
+    } catch (error) {
+      console.error(
+        "Assign Department Error:",
+        error,
+      );
+    }
   };
+
 
   return (
-    <div
-      className="fixed inset-0 z-[60] flex items-center justify-center bg-black/40 px-4 backdrop-blur-sm"
-      onClick={handleClose}
-    >
-      <div
-        className="w-full max-w-lg rounded-xl border border-app-gray/20 bg-app-bg p-6 shadow-xl"
-        onClick={(event) =>
-          event.stopPropagation()
-        }
-      >
-        {/* Header */}
-        <div className="mb-4 flex items-center justify-between border-b border-app-gray/10 pb-4">
-          <div>
-            <h3 className="flex items-center gap-2 text-lg font-bold text-app-text">
-              <FiBarChart className="text-app-brand" />
+    <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/50 p-4 backdrop-blur-sm">
 
+      <div className="w-full max-w-md rounded-xl border border-app-gray/20 bg-app-bg shadow-xl">
+
+        {/* Header */}
+        <div className="flex items-center justify-between border-b border-app-gray/20 p-5">
+
+          <div>
+            <h2 className="text-lg font-bold text-app-text">
               Assign Department
-            </h3>
+            </h2>
 
             <p className="mt-1 text-sm text-app-gray">
-              Assign this asset to
-              departments
+              {asset?.assetName ||
+                "Asset"}
             </p>
           </div>
 
+
           <button
             type="button"
-            onClick={handleClose}
+            onClick={onClose}
             disabled={
               assignDepartment.isPending
             }
             className="cursor-pointer rounded-md p-2 text-app-gray transition hover:bg-app-gray/10 hover:text-app-text disabled:cursor-not-allowed disabled:opacity-50"
           >
-            <FiX size={19} />
+            <FiX size={20} />
           </button>
+
         </div>
 
-        {/* Asset Information */}
-        <div className="mb-5 rounded-lg border border-app-gray/20 bg-app-gray/5 p-4">
-          <p className="text-xs text-app-gray">
-            Asset
-          </p>
 
-          <h4 className="mt-1 font-semibold text-app-text">
-            {asset?.assetName ||
-              "Unnamed Asset"}
-          </h4>
+        {/* Body */}
+        <div className="p-5">
 
-          {asset?.serialNumber && (
-            <p className="mt-1 text-xs text-app-gray">
-              Serial:{" "}
-              {
-                asset.serialNumber
-              }
+          {/* Asset info */}
+          <div className="mb-5 rounded-lg border border-app-gray/20 bg-app-gray/5 p-4">
+
+            <p className="text-xs text-app-gray">
+              Asset
             </p>
-          )}
-        </div>
 
-        {/* Search */}
-        <div className="relative mb-4">
-          <FiSearch
-            size={17}
-            className="pointer-events-none absolute top-1/2 left-3.5 -translate-y-1/2 text-app-gray"
-          />
+            <p className="mt-1 font-semibold text-app-text">
+              {asset?.assetName ||
+                "Unnamed Asset"}
+            </p>
 
-          <input
-            type="text"
-            value={searchText}
-            autoComplete="off"
-            disabled={
-              assignDepartment.isPending
-            }
-            onChange={(event) =>
-              setSearchText(
-                event.target.value,
-              )
-            }
-            placeholder="Search department..."
-            className="w-full rounded-lg border border-app-gray/20 bg-transparent py-3 pr-4 pl-10 text-sm outline-none transition focus:border-app-brand disabled:cursor-not-allowed disabled:opacity-50"
-          />
-        </div>
-
-        {/* Department List */}
-        <div className="max-h-80 space-y-2 overflow-y-auto">
-          {!hasSearchText ? (
-            <div className="py-8 text-center">
-              <FiSearch
-                size={24}
-                className="mx-auto mb-2 text-app-gray"
-              />
-
-              <p className="text-sm font-medium text-app-text">
-                Search Department
-              </p>
-
+            {asset?.serialNumber && (
               <p className="mt-1 text-xs text-app-gray">
-                Type a department
-                name
+                Serial:{" "}
+                {asset.serialNumber}
               </p>
-            </div>
-          ) : isTyping ? (
-            <div className="flex items-center justify-center gap-2 py-8 text-sm text-app-brand">
-              <span className="h-4 w-4 animate-spin rounded-full border-2 border-app-brand/20 border-t-app-brand" />
+            )}
 
-              Searching...
-            </div>
-          ) : isLoading ? (
-            <div className="flex items-center justify-center gap-2 py-8 text-sm text-app-brand">
-              <span className="h-4 w-4 animate-spin rounded-full border-2 border-app-brand/20 border-t-app-brand" />
+          </div>
 
-              Loading
-              departments...
-            </div>
-          ) : isError ? (
-            <div className="rounded-lg border border-red-500/20 bg-red-500/5 p-4 text-center text-sm text-red-500">
-              Failed to load
-              departments.
-            </div>
-          ) : filteredDepartments.length >
-            0 ? (
-            filteredDepartments.map(
-              (
-                department: any,
-              ) => {
-                const isAssigned =
-                  assignedDepartmentIds.includes(
-                    Number(
-                      department.id,
-                    ),
-                  );
 
-                return (
-                  <div
-                    key={
-                      department.id
+          {/* Department label */}
+          <label className="mb-2 block text-sm font-medium text-app-text">
+            Select Department
+          </label>
+
+
+          {/* Loading */}
+          {isLoading && (
+            <div className="rounded-md border border-app-gray/30 px-4 py-3 text-sm text-app-gray">
+              Loading departments...
+            </div>
+          )}
+
+
+          {/* Error */}
+          {isError && (
+            <div className="rounded-md border border-red-500/20 bg-red-500/5 px-4 py-3 text-sm text-red-500">
+              Failed to load departments.
+            </div>
+          )}
+
+
+          {/* Custom dropdown */}
+          {!isLoading &&
+            !isError && (
+              <div
+                ref={dropdownRef}
+                className="relative"
+              >
+
+                {/* Dropdown button */}
+                <button
+                  type="button"
+                  disabled={
+                    assignDepartment.isPending
+                  }
+                  onClick={() =>
+                    setIsDropdownOpen(
+                      (previous) =>
+                        !previous,
+                    )
+                  }
+                  className="flex w-full cursor-pointer items-center justify-between rounded-md border border-app-gray/30 bg-app-bg px-4 py-3 text-left text-sm text-app-text outline-none transition hover:border-app-brand focus:border-app-brand disabled:cursor-not-allowed disabled:opacity-50"
+                >
+                  <span
+                    className={
+                      selectedDepartment
+                        ? "text-app-text"
+                        : "text-app-gray"
                     }
-                    className="flex items-center justify-between gap-3 rounded-lg border border-app-gray/20 p-3 transition hover:border-app-brand/30 hover:bg-app-brand/5"
                   >
-                    <div className="flex min-w-0 items-center gap-3">
-                      <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-app-brand/10 text-app-brand">
-                        <FiBarChart />
-                      </div>
+                    {selectedDepartment ||
+                      "Select Department"}
+                  </span>
 
-                      <div className="min-w-0">
-                        <h4 className="truncate text-sm font-semibold text-app-text">
-                          {
-                            department.name
+                  <FiChevronDown
+                    size={18}
+                    className={`shrink-0 text-app-gray transition-transform ${
+                      isDropdownOpen
+                        ? "rotate-180"
+                        : ""
+                    }`}
+                  />
+                </button>
+
+
+                {/* Dropdown */}
+                {isDropdownOpen && (
+                  <div className="absolute top-full right-0 left-0 z-[80] mt-1 overflow-hidden rounded-md border border-app-gray/20 bg-app-bg shadow-lg">
+
+                    {/* Search */}
+                    <div className="border-b border-app-gray/20 p-2">
+
+                      <div className="relative">
+
+                        <FiSearch
+                          size={16}
+                          className="pointer-events-none absolute top-1/2 left-3 -translate-y-1/2 text-app-gray"
+                        />
+
+                        <input
+                          type="text"
+                          value={
+                            searchText
                           }
-                        </h4>
+                          autoFocus
+                          onChange={(
+                            event,
+                          ) =>
+                            setSearchText(
+                              event
+                                .target
+                                .value,
+                            )
+                          }
+                          placeholder="Search department..."
+                          className="w-full rounded-md border border-app-gray/20 bg-transparent py-2 pr-3 pl-9 text-sm text-app-text outline-none placeholder:text-app-gray/60 focus:border-app-brand"
+                        />
 
-                        <p className="text-xs text-app-gray">
-                          Department
-                        </p>
                       </div>
+
                     </div>
 
-                    <button
-                      type="button"
-                      disabled={
-                        isAssigned ||
-                        assignDepartment.isPending
-                      }
-                      onClick={() =>
-                        handleAssign(
-                          department,
-                        )
-                      }
-                      className={`shrink-0 rounded-md px-4 py-2 text-xs font-semibold transition ${
-                        isAssigned
-                          ? "cursor-not-allowed bg-green-500/10 text-green-600"
-                          : "cursor-pointer bg-app-brand text-app-secondary hover:opacity-90"
-                      } disabled:opacity-70`}
-                    >
-                      {isAssigned
-                        ? "Assigned"
-                        : assignDepartment.isPending
-                          ? "Assigning..."
-                          : "Assign"}
-                    </button>
-                  </div>
-                );
-              },
-            )
-          ) : (
-            <div className="py-8 text-center">
-              <p className="text-sm font-medium text-app-text">
-                No department
-                found
-              </p>
 
-              <p className="mt-1 text-xs text-app-gray">
-                Try another
-                department name.
+                    {/* Department options */}
+                    <div className="max-h-52 overflow-y-auto p-1">
+
+                      {filteredDepartments.length ===
+                      0 ? (
+                        <div className="px-3 py-6 text-center text-sm text-app-gray">
+                          No departments
+                          found.
+                        </div>
+                      ) : (
+                        filteredDepartments.map(
+                          (
+                            department,
+                          ) => {
+                            const isSelected =
+                              selectedDepartment ===
+                              department;
+
+                            return (
+                              <button
+                                key={
+                                  department
+                                }
+                                type="button"
+                                onClick={() =>
+                                  handleSelectDepartment(
+                                    department,
+                                  )
+                                }
+                                className={`flex w-full cursor-pointer items-center justify-between rounded-md px-3 py-2.5 text-left text-sm transition ${
+                                  isSelected
+                                    ? "bg-app-brand/10 font-medium text-app-brand"
+                                    : "text-app-text hover:bg-app-gray/10"
+                                }`}
+                              >
+                                <span className="truncate">
+                                  {
+                                    department
+                                  }
+                                </span>
+
+                                {isSelected && (
+                                  <FiCheck
+                                    size={
+                                      16
+                                    }
+                                    className="shrink-0 text-app-brand"
+                                  />
+                                )}
+                              </button>
+                            );
+                          },
+                        )
+                      )}
+
+                    </div>
+
+                  </div>
+                )}
+
+              </div>
+            )}
+
+
+          {/* No departments */}
+          {!isLoading &&
+            !isError &&
+            availableDepartments.length ===
+              0 && (
+              <p className="mt-2 text-xs text-app-gray">
+                No available departments.
               </p>
+            )}
+
+
+          {/* Selected department */}
+          {selectedDepartment && (
+            <div className="mt-4 flex items-center gap-3 rounded-md border border-app-brand/20 bg-app-brand/5 px-4 py-3">
+
+              <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-app-brand text-white">
+                <FiCheck size={13} />
+              </div>
+
+              <div className="min-w-0">
+                <p className="text-xs text-app-gray">
+                  Selected Department
+                </p>
+
+                <p className="truncate text-sm font-semibold text-app-text">
+                  {selectedDepartment}
+                </p>
+              </div>
+
             </div>
           )}
+
         </div>
 
+
         {/* Footer */}
-        <div className="mt-5 flex justify-end border-t border-app-gray/10 pt-4">
+        <div className="flex items-center justify-end gap-3 border-t border-app-gray/20 p-5">
+
           <button
             type="button"
-            onClick={handleClose}
+            onClick={onClose}
             disabled={
               assignDepartment.isPending
             }
-            className="cursor-pointer rounded-md border border-app-gray/20 px-5 py-2.5 text-sm font-medium transition hover:bg-app-gray/5 disabled:cursor-not-allowed disabled:opacity-50"
+            className="cursor-pointer rounded-md border border-app-gray/30 px-4 py-2 text-sm font-medium text-app-text transition hover:bg-app-gray/5 disabled:cursor-not-allowed disabled:opacity-50"
           >
-            Close
+            Cancel
           </button>
+
+
+          <button
+            type="button"
+            onClick={
+              handleAssign
+            }
+            disabled={
+              !selectedDepartment ||
+              assignDepartment.isPending
+            }
+            className="cursor-pointer rounded-md bg-app-brand px-4 py-2 text-sm font-semibold text-white transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
+          >
+            {assignDepartment.isPending
+              ? "Assigning..."
+              : "Assign Department"}
+          </button>
+
         </div>
+
       </div>
+
     </div>
   );
 }

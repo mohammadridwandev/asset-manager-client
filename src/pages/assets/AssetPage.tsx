@@ -3,95 +3,149 @@ import {
   FiPlus,
   FiSearch,
 } from "react-icons/fi";
-
 import Add_Asset from "../../components/Asset_Compo/Add_Asset";
-
 import {
   useEffect,
   useRef,
   useState,
 } from "react";
-
-import { MdKeyboardArrowRight } from "react-icons/md";
-
+import {
+  MdKeyboardArrowRight,
+} from "react-icons/md";
 import Asset_Card from "../../components/Asset_Compo/Asset_Card";
-
 import {
   useGetAssets,
   useGetAssetFilterOptions,
 } from "../../context/useAssets";
-
+import {
+  useGetEmployeeFilterOptions,
+} from "../../context/useEmployee";
 import Asset_Import from "../../components/Asset_Compo/Asset_Import";
 import Asset_Export from "../../components/Asset_Compo/Asset_Export";
 import Asset_Pagination from "../../components/Asset_Compo/Asset_Pagination";
-
-import { Helmet } from "react-helmet-async";
-
+import {
+  Helmet,
+} from "react-helmet-async";
 import DataLoading from "../../DataLoading";
-
-import { useDebounce } from "../../context/useDebounce";
-
+import {
+  useDebounce,
+} from "../../context/useDebounce";
+type DepartmentCountType = {
+  department: string;
+  count: number;
+};
 export default function AssetPage() {
-  const [assetOpen, setAssetOpen] =
-    useState(false);
-
-  const [searchText, setSearchText] =
-    useState("");
-
-  // =========================
-  // DEPARTMENT ASSET FILTER
-  // =========================
-  // false = সব asset
-  // true = শুধু department assigned asset
   const [
-    departmentOnly,
-    setDepartmentOnly,
+    assetOpen,
+    setAssetOpen,
   ] = useState(false);
-
-  // Search typing শেষ হওয়ার 400ms পরে API request যাবে
+  const [
+    searchText,
+    setSearchText,
+  ] = useState("");
   const debouncedSearchText =
     useDebounce(
       searchText.trim(),
       400,
     );
-
-  const [page, setPage] =
-    useState(1);
-
+  const [
+    page,
+    setPage,
+  ] = useState(1);
   const assetListRef =
-    useRef<HTMLDivElement>(null);
-
+    useRef<HTMLDivElement>(
+      null,
+    );
+  // Asset type filter
   const [
     assetTypeOpen,
     setAssetTypeOpen,
   ] = useState(false);
-
+  // Keep backend value unchanged
   const [
     selectedType,
     setSelectedType,
   ] = useState("All Types");
-
+  // Assignment filter
   const [
     assignmentOpen,
     setAssignmentOpen,
   ] = useState(false);
-
   const [
     selectedAssignment,
     setSelectedAssignment,
-  ] = useState("All Status");
-
+  ] = useState(
+    "All Status",
+  );
   const assignmentTypes = [
     "Assigned",
     "Unassigned",
+     "Available",
   ];
-
-  // =========================
-  // GET ASSETS
-  // =========================
-  // NEW:
-  // departmentOnly backend-এ পাঠানো হচ্ছে।
-  // true হলে backend শুধু department assigned assets return করবে।
+  // Employee department filter
+  const [
+    departmentOpen,
+    setDepartmentOpen,
+  ] = useState(false);
+  const [
+    selectedDepartment,
+    setSelectedDepartment,
+  ] = useState(
+    "All Departments",
+  );
+  // Direct department filter
+  const [
+    directDepartmentOpen,
+    setDirectDepartmentOpen,
+  ] = useState(false);
+  const [
+    selectedDirectDepartment,
+    setSelectedDirectDepartment,
+  ] = useState(
+    "All Assigned Departments",
+  );
+  // Display labels only
+  const employeeDepartmentLabel =
+    selectedDepartment ===
+    "All Departments"
+      ? "All Employee Departments"
+      : selectedDepartment;
+  const directDepartmentLabel =
+    selectedDirectDepartment ===
+    "All Assigned Departments"
+      ? "All Assigned Departments"
+      : selectedDirectDepartment;
+  const assetTypeLabel =
+    selectedType === "All Types"
+      ? "All Asset Types"
+      : selectedType;
+  const assignmentLabel =
+    selectedAssignment ===
+    "All Status"
+      ? "All Assignment Status"
+      : selectedAssignment;
+  // Active department
+  const activeDepartmentName =
+    selectedDirectDepartment !==
+    "All Assigned Departments"
+      ? selectedDirectDepartment
+      : selectedDepartment !==
+          "All Departments"
+        ? selectedDepartment
+        : "";
+  // DIRECT or EMPLOYEE
+  const activeDepartmentSource:
+    | "DIRECT"
+    | "EMPLOYEE"
+    | "" =
+    selectedDirectDepartment !==
+    "All Assigned Departments"
+      ? "DIRECT"
+      : selectedDepartment !==
+          "All Departments"
+        ? "EMPLOYEE"
+        : "";
+  // Get assets
   const {
     data,
     isLoading,
@@ -103,15 +157,11 @@ export default function AssetPage() {
     debouncedSearchText,
     selectedType,
     selectedAssignment,
-
-    // NEW
-    departmentOnly,
+    false,
+    activeDepartmentName,
+    activeDepartmentSource,
   );
-
-  // =========================
-  // GET FILTER OPTIONS
-  // =========================
-
+  // Asset filter options
   const {
     data: filterOptions,
     isLoading:
@@ -120,36 +170,44 @@ export default function AssetPage() {
       filterOptionsError,
   } =
     useGetAssetFilterOptions();
-
+  // Employee departments
+  const {
+    data:
+      employeeFilterOptions,
+    isLoading:
+      departmentsLoading,
+    isError:
+      departmentsError,
+  } =
+    useGetEmployeeFilterOptions();
   const assets =
     data?.assets || [];
-
   const pagination =
     data?.pagination;
-
-  const assetTypes:
-    string[] =
+  // Asset types
+  const assetTypes: string[] =
     filterOptions?.assetTypes ||
     [];
-
-  // =========================
-  // ASSET TYPE
-  // =========================
-
+  // Direct department counts
+  const directDepartmentCounts:
+    DepartmentCountType[] =
+    filterOptions
+      ?.directDepartmentCounts ||
+    [];
+  // Employee departments
+  const departments: string[] =
+    employeeFilterOptions
+      ?.departments || [];
+  // Select asset type
   const handleSelect = (
     assetType: string,
   ) => {
     setSelectedType(
       assetType,
     );
-
     setAssetTypeOpen(false);
   };
-
-  // =========================
-  // ASSIGNMENT FILTER
-  // =========================
-
+  // Select assignment status
   const handleAssignmentSelect =
     (
       assignmentType: string,
@@ -157,47 +215,63 @@ export default function AssetPage() {
       setSelectedAssignment(
         assignmentType,
       );
-
-      setAssignmentOpen(false);
+      setAssignmentOpen(
+        false,
+      );
     };
-
-  // =========================
-  // RESET PAGE
-  // =========================
-  // Search / Type / Assignment / Department filter change হলে
-  // সবসময় page 1 থেকে শুরু হবে
+  // Select employee department
+  const handleDepartmentSelect =
+    (
+      department: string,
+    ) => {
+      setSelectedDepartment(
+        department,
+      );
+      // Clear direct filter
+      setSelectedDirectDepartment(
+        "All Assigned Departments",
+      );
+      setDepartmentOpen(false);
+    };
+  // Select direct department
+  const handleDirectDepartmentSelect =
+    (
+      department: string,
+    ) => {
+      setSelectedDirectDepartment(
+        department,
+      );
+      // Clear employee filter
+      setSelectedDepartment(
+        "All Departments",
+      );
+      setDirectDepartmentOpen(
+        false,
+      );
+    };
+  // Reset page after filter change
   useEffect(() => {
     setPage(1);
   }, [
     debouncedSearchText,
     selectedType,
     selectedAssignment,
-    departmentOnly,
+    selectedDepartment,
+    selectedDirectDepartment,
   ]);
-
-  // =========================
-  // PAGE CHANGE
-  // =========================
-
+  // Pagination
   const handlePageChange = (
     newPage: number,
   ) => {
     setPage(newPage);
-
     setTimeout(() => {
-      assetListRef.current?.scrollIntoView(
-        {
+      assetListRef.current
+        ?.scrollIntoView({
           behavior: "smooth",
           block: "start",
-        },
-      );
+        });
     }, 100);
   };
-
-  // =========================
-  // INITIAL LOADING
-  // =========================
-
   if (
     isLoading &&
     !data
@@ -209,11 +283,6 @@ export default function AssetPage() {
       />
     );
   }
-
-  // =========================
-  // ERROR
-  // =========================
-
   if (
     isError &&
     !data
@@ -225,27 +294,23 @@ export default function AssetPage() {
       </div>
     );
   }
-
   return (
     <>
       <Helmet>
         <title>
-          Asset Manager | Assets
+          Asset Manager |
+          Assets
         </title>
       </Helmet>
 
       <div className="mt-3 bg-app-bg pb-16 text-app-text transition-colors duration-300">
         <div className="py-4">
-          {/* =========================
-              PAGE HEADER
-          ========================= */}
-
+          {/* Header */}
           <div className="mb-8 flex flex-col justify-between gap-6 lg:flex-row lg:items-center">
             <div>
               <h1 className="text-2xl font-bold tracking-tight">
                 Asset Management
               </h1>
-
               <p className="mt-1 text-sm text-app-gray opacity-80">
                 Track and manage
                 company assets
@@ -254,14 +319,14 @@ export default function AssetPage() {
 
             <div className="flex flex-wrap items-center gap-2 md:gap-3">
               <Asset_Export />
-
               <Asset_Import />
-
               <button
                 type="button"
                 onClick={() =>
                   setAssetOpen(
-                    (previous) =>
+                    (
+                      previous,
+                    ) =>
                       !previous,
                   )
                 }
@@ -272,7 +337,6 @@ export default function AssetPage() {
                     <FiMinus
                       size={18}
                     />
-
                     <span>
                       Close
                     </span>
@@ -282,7 +346,6 @@ export default function AssetPage() {
                     <FiPlus
                       size={18}
                     />
-
                     <span>
                       Add Asset
                     </span>
@@ -290,27 +353,22 @@ export default function AssetPage() {
                 )}
               </button>
             </div>
+
           </div>
 
-          {/* =========================
-              SEARCH + FILTERS
-          ========================= */}
-
-          <div className="mb-8 flex flex-col items-stretch gap-3 sm:flex-row sm:items-center">
-            {/* =========================
-                SEARCH
-            ========================= */}
-
-            <div className="relative flex-1">
+          {/* Search */}
+          <div className="mb-3">
+            <div className="relative w-full">
               <div className="pointer-events-none absolute inset-y-0 left-4 flex items-center text-app-gray opacity-60">
                 <FiSearch
                   size={18}
                 />
               </div>
-
               <input
                 type="text"
-                value={searchText}
+                value={
+                  searchText
+                }
                 onChange={(
                   event,
                 ) =>
@@ -322,70 +380,257 @@ export default function AssetPage() {
                 placeholder="Search by asset name, serial number, invoice number, type, employee name, email, or Iqama..."
                 className="w-full rounded-md border border-app-gray/30 bg-transparent py-2.5 pr-30 pl-12 text-sm outline-none transition-all placeholder:text-app-gray/50 focus:border-app-brand"
               />
-
               {isFetching &&
                 !isLoading && (
                   <div className="pointer-events-none absolute inset-y-0 right-4 flex items-center gap-2 text-xs font-medium text-app-brand">
                     <span className="h-4 w-4 animate-spin rounded-full border-2 border-app-brand/20 border-t-app-brand" />
-
                     <span className="hidden lg:inline">
                       Loading...
                     </span>
                   </div>
                 )}
             </div>
+          </div>
 
-            {/* =========================
-                DEPARTMENT ASSETS FILTER
-            ========================= */}
-            {/* NEW:
-                Click করলে backend থেকে শুধু department assigned assets আসবে
-            */}
-
-            <button
-              type="button"
-              onClick={() =>
-                setDepartmentOnly(
-                  (previous) =>
-                    !previous,
-                )
-              }
-              className={`w-full cursor-pointer whitespace-nowrap rounded-md border px-4 py-2.5 text-sm font-medium transition sm:w-auto ${
-                departmentOnly
-                  ? "border-app-brand bg-app-brand text-white"
-                  : "border-app-gray/30 bg-transparent text-app-text hover:border-app-brand hover:text-app-brand"
-              }`}
-            >
-              {departmentOnly
-                ? "All Assets"
-                : "Department Assets"}
-            </button>
-
-            {/* =========================
-                ASSET TYPE FILTER
-            ========================= */}
-
-            <div className="relative">
+          {/* Filters */}
+          <div className="mb-8 grid w-full grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4">
+            {/* Employee Department */}
+            <div className="relative w-full">
               <button
                 type="button"
                 onClick={() => {
-                  setAssetTypeOpen(
-                    (previous) =>
+                  setDepartmentOpen(
+                    (
+                      previous,
+                    ) =>
                       !previous,
                   );
-
+                  setDirectDepartmentOpen(
+                    false,
+                  );
+                  setAssetTypeOpen(
+                    false,
+                  );
                   setAssignmentOpen(
                     false,
                   );
                 }}
-                className="flex w-full items-center justify-between rounded-md border border-app-gray/30 bg-transparent px-4 py-2.5 text-left text-sm font-medium shadow-xs hover:bg-app-gray/5 focus:outline-none sm:w-48"
+                className="flex min-h-14 w-full cursor-pointer items-center justify-between rounded-md border border-app-gray/30 bg-transparent px-4 py-2.5 text-left shadow-xs transition hover:bg-app-gray/5 focus:outline-none"
               >
-                <span className="truncate">
-                  {selectedType}
-                </span>
-
+                <div className="min-w-0">
+                  <p className="truncate text-sm font-medium text-app-text">
+                    {
+                      employeeDepartmentLabel
+                    }
+                  </p>
+                  <p className="mt-0.5 text-[10px] font-normal text-app-gray">
+                    Employee Department
+                  </p>
+                </div>
                 <MdKeyboardArrowRight
-                  className={`shrink-0 transform transition-transform duration-200 ${
+                  className={`shrink-0 transform text-app-gray transition-transform duration-200 ${
+                    departmentOpen
+                      ? "rotate-90"
+                      : ""
+                  }`}
+                  size={18}
+                />
+              </button>
+              {departmentOpen && (
+                <ul className="absolute z-30 mt-1 max-h-64 w-full overflow-y-auto rounded-lg border border-app-gray/20 bg-app-bg py-1 text-sm shadow-md">
+                  <li
+                    className="cursor-pointer px-4 py-2 font-semibold transition-colors hover:bg-app-brand hover:text-white"
+                    onClick={() =>
+                      handleDepartmentSelect(
+                        "All Departments",
+                      )
+                    }
+                  >
+                    All Employee
+                    Departments
+                  </li>
+                  {departmentsLoading ? (
+                    <li className="px-4 py-2 text-app-gray">
+                      Loading
+                      departments...
+                    </li>
+                  ) : departmentsError ? (
+                    <li className="px-4 py-2 text-red-500">
+                      Failed to load
+                      departments
+                    </li>
+                  ) : departments.length >
+                    0 ? (
+                    departments.map(
+                      (
+                        department:
+                          string,
+                      ) => (
+                        <li
+                          key={
+                            department
+                          }
+                          className="cursor-pointer px-4 py-2 transition-colors hover:bg-app-brand hover:text-white"
+                          onClick={() =>
+                            handleDepartmentSelect(
+                              department,
+                            )
+                          }
+                        >
+                          {
+                            department
+                          }
+                        </li>
+                      ),
+                    )
+                  ) : (
+                    <li className="px-4 py-2 text-app-gray">
+                      No employee
+                      departments found
+                    </li>
+                  )}
+                </ul>
+              )}
+            </div>
+            {/* Direct Department */}
+            <div className="relative w-full">
+              <button
+                type="button"
+                onClick={() => {
+                  setDirectDepartmentOpen(
+                    (
+                      previous,
+                    ) =>
+                      !previous,
+                  );
+                  setDepartmentOpen(
+                    false,
+                  );
+                  setAssetTypeOpen(
+                    false,
+                  );
+                  setAssignmentOpen(
+                    false,
+                  );
+                }}
+                className="flex min-h-14 w-full cursor-pointer items-center justify-between rounded-md border border-app-gray/30 bg-transparent px-4 py-2.5 text-left shadow-xs transition hover:bg-app-gray/5 focus:outline-none"
+              >
+                <div className="min-w-0">
+                  <p className="truncate text-sm font-medium text-app-text">
+                    {
+                      directDepartmentLabel
+                    }
+                  </p>
+                  <p className="mt-0.5 text-[10px] font-normal text-app-gray">
+                    Assigned Department
+                  </p>
+                </div>
+                <MdKeyboardArrowRight
+                  className={`shrink-0 transform text-app-gray transition-transform duration-200 ${
+                    directDepartmentOpen
+                      ? "rotate-90"
+                      : ""
+                  }`}
+                  size={18}
+                />
+              </button>
+              {directDepartmentOpen && (
+                <ul className="absolute z-30 mt-1 max-h-64 w-full overflow-y-auto rounded-lg border border-app-gray/20 bg-app-bg py-1 text-sm shadow-md">
+                  <li
+                    className="cursor-pointer px-4 py-2 font-semibold transition-colors hover:bg-app-brand hover:text-white"
+                    onClick={() =>
+                      handleDirectDepartmentSelect(
+                        "All Assigned Departments",
+                      )
+                    }
+                  >
+                    All Assigned Departments
+                  </li>
+                  {filterOptionsLoading ? (
+                    <li className="px-4 py-2 text-app-gray">
+                      Loading
+                      departments...
+                    </li>
+                  ) : filterOptionsError ? (
+                    <li className="px-4 py-2 text-red-500">
+                      Failed to load
+                      department assets
+                    </li>
+                  ) : directDepartmentCounts.length >
+                    0 ? (
+                    directDepartmentCounts.map(
+                      (
+                        item:
+                          DepartmentCountType,
+                      ) => (
+                        <li
+                          key={
+                            item.department
+                          }
+                          onClick={() =>
+                            handleDirectDepartmentSelect(
+                              item.department,
+                            )
+                          }
+                          className="flex cursor-pointer items-center justify-between gap-3 px-4 py-2 transition-colors hover:bg-app-brand hover:text-white"
+                        >
+                          <span className="min-w-0 truncate">
+                            {
+                              item.department
+                            }
+                          </span>
+                          <span className="shrink-0 rounded-md bg-app-gray/10 px-2 py-0.5 text-xs font-bold">
+                            {
+                              item.count
+                            }
+                          </span>
+                        </li>
+                      ),
+                    )
+                  ) : (
+                    <li className="px-4 py-2 text-app-gray">
+                      No direct
+                      department assets
+                    </li>
+                  )}
+                </ul>
+              )}
+            </div>
+            {/* Asset Type */}
+            <div className="relative w-full">
+              <button
+                type="button"
+                onClick={() => {
+                  setAssetTypeOpen(
+                    (
+                      previous,
+                    ) =>
+                      !previous,
+                  );
+                  setAssignmentOpen(
+                    false,
+                  );
+                  setDepartmentOpen(
+                    false,
+                  );
+                  setDirectDepartmentOpen(
+                    false,
+                  );
+                }}
+                className="flex min-h-14 w-full cursor-pointer items-center justify-between rounded-md border border-app-gray/30 bg-transparent px-4 py-2.5 text-left shadow-xs transition hover:bg-app-gray/5 focus:outline-none"
+              >
+                <div className="min-w-0">
+                  <p className="truncate text-sm font-medium text-app-text">
+                    {
+                      assetTypeLabel
+                    }
+                  </p>
+                  <p className="mt-0.5 text-[10px] font-normal text-app-gray">
+                    Asset Type
+                  </p>
+                </div>
+                <MdKeyboardArrowRight
+                  className={`shrink-0 transform text-app-gray transition-transform duration-200 ${
                     assetTypeOpen
                       ? "rotate-90"
                       : ""
@@ -393,9 +638,8 @@ export default function AssetPage() {
                   size={18}
                 />
               </button>
-
               {assetTypeOpen && (
-                <ul className="absolute z-20 mt-1 max-h-64 w-full overflow-y-auto rounded-lg border border-app-gray/20 bg-app-bg py-1 text-sm shadow-md sm:w-48">
+                <ul className="absolute z-20 mt-1 max-h-64 w-full overflow-y-auto rounded-lg border border-app-gray/20 bg-app-bg py-1 text-sm shadow-md">
                   <li
                     className="cursor-pointer px-4 py-2 font-semibold transition-colors hover:bg-app-brand hover:text-white"
                     onClick={() =>
@@ -404,9 +648,8 @@ export default function AssetPage() {
                       )
                     }
                   >
-                    All Types
+                    All Asset Types
                   </li>
-
                   {filterOptionsLoading ? (
                     <li className="px-4 py-2 text-app-gray">
                       Loading asset
@@ -450,34 +693,41 @@ export default function AssetPage() {
                 </ul>
               )}
             </div>
-
-            {/* =========================
-                ASSIGNMENT FILTER
-            ========================= */}
-
-            <div className="relative">
+            {/* Assignment Status */}
+            <div className="relative w-full">
               <button
                 type="button"
                 onClick={() => {
                   setAssignmentOpen(
-                    (previous) =>
+                    (
+                      previous,
+                    ) =>
                       !previous,
                   );
-
                   setAssetTypeOpen(
                     false,
                   );
+                  setDepartmentOpen(
+                    false,
+                  );
+                  setDirectDepartmentOpen(
+                    false,
+                  );
                 }}
-                className="flex w-full items-center justify-between rounded-md border border-app-gray/30 bg-transparent px-4 py-2.5 text-left text-sm font-medium shadow-xs hover:bg-app-gray/5 focus:outline-none sm:w-48"
+                className="flex min-h-14 w-full cursor-pointer items-center justify-between rounded-md border border-app-gray/30 bg-transparent px-4 py-2.5 text-left shadow-xs transition hover:bg-app-gray/5 focus:outline-none"
               >
-                <span>
-                  {
-                    selectedAssignment
-                  }
-                </span>
-
+                <div className="min-w-0">
+                  <p className="truncate text-sm font-medium text-app-text">
+                    {
+                      assignmentLabel
+                    }
+                  </p>
+                  <p className="mt-0.5 text-[10px] font-normal text-app-gray">
+                    Assignment Status
+                  </p>
+                </div>
                 <MdKeyboardArrowRight
-                  className={`shrink-0 transform transition-transform duration-200 ${
+                  className={`shrink-0 transform text-app-gray transition-transform duration-200 ${
                     assignmentOpen
                       ? "rotate-90"
                       : ""
@@ -485,9 +735,8 @@ export default function AssetPage() {
                   size={18}
                 />
               </button>
-
               {assignmentOpen && (
-                <ul className="absolute z-20 mt-1 w-full rounded-lg border border-app-gray/20 bg-app-bg py-1 text-sm shadow-md sm:w-48">
+                <ul className="absolute z-20 mt-1 w-full rounded-lg border border-app-gray/20 bg-app-bg py-1 text-sm shadow-md">
                   <li
                     className="cursor-pointer px-4 py-2 font-semibold transition-colors hover:bg-app-brand hover:text-white"
                     onClick={() =>
@@ -496,9 +745,8 @@ export default function AssetPage() {
                       )
                     }
                   >
-                    All Status
+                    All Assignment Status
                   </li>
-
                   {assignmentTypes.map(
                     (
                       assignmentType,
@@ -525,10 +773,41 @@ export default function AssetPage() {
             </div>
           </div>
 
-          {/* =========================
-              ADD ASSET
-          ========================= */}
+          {/* Active Department Filter */}
+          {activeDepartmentName && (
+            <div className="mb-5 flex flex-wrap items-center gap-2 rounded-lg border border-app-brand/15 bg-app-brand/5 px-4 py-3">
+              <span className="text-xs text-app-gray">
+                Active Filter:
+              </span>
+              <span className="text-sm font-semibold text-app-brand">
+                {
+                  activeDepartmentName
+                }
+              </span>
+              <span className="rounded-md border border-app-brand/20 px-2 py-0.5 text-[10px] font-bold text-app-brand">
+                {activeDepartmentSource ===
+                "DIRECT"
+                  ? "Assigned Department"
+                  : "Employee Department"}
+              </span>
+              <button
+                type="button"
+                onClick={() => {
+                  setSelectedDepartment(
+                    "All Departments",
+                  );
+                  setSelectedDirectDepartment(
+                    "All Assigned Departments",
+                  );
+                }}
+                className="ml-auto cursor-pointer text-xs font-semibold text-app-brand hover:underline"
+              >
+                Clear
+              </button>
+            </div>
+          )}
 
+          {/* Add Asset */}
           <div className="transition-all duration-300">
             {assetOpen && (
               <Add_Asset
@@ -540,19 +819,13 @@ export default function AssetPage() {
           </div>
         </div>
 
-        {/* =========================
-            ASSET LIST
-        ========================= */}
-
+        {/* Asset List */}
         <div>
           <div
             ref={assetListRef}
             className="scroll-mt-24"
           >
             <Asset_Card
-              // NEW:
-              // backend already filter করছে
-              // তাই frontend filteredAssets আর লাগবে না
               assets={assets}
               totalAssets={
                 pagination?.totalData
@@ -560,15 +833,12 @@ export default function AssetPage() {
               isLoading={
                 isLoading
               }
-              isError={isError}
+              isError={
+                isError
+              }
             />
           </div>
-
-          {/* =========================
-              PAGINATION
-          ========================= */}
-          {/* সব mode-এই pagination থাকবে */}
-
+          {/* Pagination */}
           <Asset_Pagination
             currentPage={
               pagination?.currentPage ||
@@ -583,7 +853,8 @@ export default function AssetPage() {
               false
             }
             hasPreviousPage={
-              pagination?.hasPreviousPage ||
+              pagination
+                ?.hasPreviousPage ||
               false
             }
             onPageChange={
@@ -591,6 +862,8 @@ export default function AssetPage() {
             }
           />
         </div>
+
+
       </div>
     </>
   );

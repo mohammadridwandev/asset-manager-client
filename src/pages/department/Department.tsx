@@ -1,7 +1,7 @@
 import { LuBuilding2 } from "react-icons/lu";
 
-import Add_Department from "../../components/Department/Add_Department";
-import Department_Asset from "../../components/Department/Department_Asset";
+
+import All_Department from "../../components/Department/All_Department";
 
 
 export default function Department() {
@@ -31,15 +31,11 @@ export default function Department() {
         </div>
       </div>
 
-      {/* =========================
-          DEPARTMENT CONTENT
-      ========================= */}
-
    
 
-      <Add_Department />
+      <All_Department></All_Department>
 
-      <Department_Asset />
+      
 
    
 
