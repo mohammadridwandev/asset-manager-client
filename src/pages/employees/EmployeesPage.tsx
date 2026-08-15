@@ -3,6 +3,7 @@ import { useEffect, useRef, useState } from "react";
 import { FiPlus, FiSearch, FiMinus } from "react-icons/fi";
 
 import { MdKeyboardArrowRight } from "react-icons/md";
+
 import { Helmet } from "react-helmet-async";
 
 import Add_Employee from "../../components/Employee_comp/Add_Employee";
@@ -16,6 +17,7 @@ import {
   useGetEmployee,
   useGetEmployeeFilterOptions,
 } from "../../context/useEmployee";
+
 import { useDebounce } from "../../context/useDebounce";
 
 const EmployeesPage = () => {
@@ -23,26 +25,36 @@ const EmployeesPage = () => {
 
   const [searchText, setSearchText] = useState("");
 
-  // Search input থামার 400ms পরে API request যাবে
+  // Search delay
   const debouncedSearchText = useDebounce(searchText.trim(), 400);
 
+  // Department filter
   const [departmentOpen, setDepartmentOpen] = useState(false);
 
   const [selectedDepartment, setSelectedDepartment] =
     useState("All Departments");
 
+  // Position filter
   const [positionOpen, setPositionOpen] = useState(false);
 
   const [selectedPosition, setSelectedPosition] = useState("All Positions");
 
+  // Status filter
   const [statusOpen, setStatusOpen] = useState(false);
 
   const [selectedStatus, setSelectedStatus] = useState("All Status");
+
+  // Asset document filter
+  const [assetDocOpen, setAssetDocOpen] = useState(false);
+
+  const [selectedAssetDocStatus, setSelectedAssetDocStatus] =
+    useState("All Asset Docs");
 
   const [page, setPage] = useState(1);
 
   const employeeListRef = useRef<HTMLDivElement>(null);
 
+  // Employee list
   const { data, isLoading, isFetching, isError } = useGetEmployee(
     page,
     10,
@@ -50,8 +62,11 @@ const EmployeesPage = () => {
     selectedDepartment,
     selectedPosition,
     selectedStatus,
+
+    selectedAssetDocStatus === "All Asset Docs" ? "" : selectedAssetDocStatus,
   );
 
+  // Filter options
   const {
     data: filterOptions,
     isLoading: filterOptionsLoading,
@@ -59,12 +74,12 @@ const EmployeesPage = () => {
   } = useGetEmployeeFilterOptions();
 
   const employees = data?.employees || [];
+
   const pagination = data?.pagination;
 
   const departments: string[] = filterOptions?.departments || [];
 
   const positions: string[] = filterOptions?.positions || [];
-
 
   const employeeStatuses = [
     {
@@ -83,8 +98,7 @@ const EmployeesPage = () => {
     },
   ];
 
-  
-  // Search বা filter change হলে page 1-এ যাবে
+  // Reset pagination on filter change
   useEffect(() => {
     setPage(1);
   }, [
@@ -92,8 +106,10 @@ const EmployeesPage = () => {
     selectedDepartment,
     selectedPosition,
     selectedStatus,
+    selectedAssetDocStatus,
   ]);
 
+  // Change page
   const handlePageChange = (newPage: number) => {
     setPage(newPage);
 
@@ -130,6 +146,7 @@ const EmployeesPage = () => {
 
       <div>
         <div className="py-4 md:py-8">
+          {/* Header */}
           <div className="mb-8 flex flex-col justify-between gap-6 lg:flex-row lg:items-center">
             <div>
               <h1 className="text-2xl font-bold tracking-tight">
@@ -154,11 +171,13 @@ const EmployeesPage = () => {
                 {openEmployee ? (
                   <>
                     <FiMinus size={18} />
+
                     <span>Close</span>
                   </>
                 ) : (
                   <>
                     <FiPlus size={18} />
+
                     <span>Add Employees</span>
                   </>
                 )}
@@ -166,7 +185,7 @@ const EmployeesPage = () => {
             </div>
           </div>
 
-          {/* ========================= UPDATED: FULL WIDTH SEARCH ========================= */}
+          {/* Search */}
           <div className="mb-3 w-full">
             <div className="relative w-full">
               <div className="pointer-events-none absolute inset-y-0 left-4 flex items-center text-app-gray">
@@ -191,8 +210,8 @@ const EmployeesPage = () => {
             </div>
           </div>
 
-          {/* ========================= UPDATED: FULL WIDTH RESPONSIVE FILTERS ========================= */}
-          <div className="grid w-full grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-3">
+          {/* Filters */}
+          <div className="grid w-full grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-4">
             {/* Department Filter */}
             <div className="relative w-full">
               <button
@@ -201,7 +220,10 @@ const EmployeesPage = () => {
                   setDepartmentOpen((previous) => !previous);
 
                   setPositionOpen(false);
+
                   setStatusOpen(false);
+
+                  setAssetDocOpen(false);
                 }}
                 className="flex w-full items-center justify-between rounded-md border border-app-gray/30 bg-transparent px-4 py-2.5 text-left text-sm font-medium shadow-xs hover:bg-app-gray/5 focus:outline-none"
               >
@@ -267,7 +289,10 @@ const EmployeesPage = () => {
                   setPositionOpen((previous) => !previous);
 
                   setDepartmentOpen(false);
+
                   setStatusOpen(false);
+
+                  setAssetDocOpen(false);
                 }}
                 className="flex w-full items-center justify-between rounded-md border border-app-gray/30 bg-transparent px-4 py-2.5 text-left text-sm font-medium shadow-xs hover:bg-app-gray/5 focus:outline-none"
               >
@@ -333,7 +358,10 @@ const EmployeesPage = () => {
                   setStatusOpen((previous) => !previous);
 
                   setDepartmentOpen(false);
+
                   setPositionOpen(false);
+
+                  setAssetDocOpen(false);
                 }}
                 className="flex w-full items-center justify-between rounded-md border border-app-gray/30 bg-transparent px-4 py-2.5 text-left text-sm font-medium shadow-xs hover:bg-app-gray/5 focus:outline-none"
               >
@@ -376,14 +404,92 @@ const EmployeesPage = () => {
                 </ul>
               )}
             </div>
+
+            {/* Asset Document Filter */}
+            <div className="relative w-full">
+              <button
+                type="button"
+                onClick={() => {
+                  setAssetDocOpen((previous) => !previous);
+
+                  setDepartmentOpen(false);
+
+                  setPositionOpen(false);
+
+                  setStatusOpen(false);
+                }}
+                className="flex w-full items-center justify-between rounded-md border border-app-gray/30 bg-transparent px-4 py-2.5 text-left text-sm font-medium shadow-xs hover:bg-app-gray/5 focus:outline-none"
+              >
+           
+
+
+<span className="truncate">
+  {selectedAssetDocStatus === "HAS_DOC"
+    ? "Documents Available"
+    : selectedAssetDocStatus === "NO_DOC"
+      ? "No Documents"
+      : "All Document Status"}
+</span>
+
+
+
+
+
+                <MdKeyboardArrowRight
+                  className={`shrink-0 transform transition-transform duration-200 ${
+                    assetDocOpen ? "rotate-90" : ""
+                  }`}
+                  size={18}
+                />
+              </button>
+
+              {assetDocOpen && (
+                <ul className="absolute z-20 mt-1 w-full rounded-lg border border-app-gray/20 bg-app-bg py-1 text-sm shadow-md">
+                  <li
+                    className="cursor-pointer px-4 py-2 font-semibold transition-colors hover:bg-app-brand hover:text-white"
+                    onClick={() => {
+                      setSelectedAssetDocStatus("All Asset Docs");
+
+                      setAssetDocOpen(false);
+                    }}
+                  >
+                    All Asset Docs
+                  </li>
+
+                  <li
+                    className="cursor-pointer px-4 py-2 transition-colors hover:bg-app-brand hover:text-white"
+                    onClick={() => {
+                      setSelectedAssetDocStatus("HAS_DOC");
+
+                      setAssetDocOpen(false);
+                    }}
+                  >
+                    Documents available
+                  </li>
+
+                  <li
+                    className="cursor-pointer px-4 py-2 transition-colors hover:bg-app-brand hover:text-white"
+                    onClick={() => {
+                      setSelectedAssetDocStatus("NO_DOC");
+
+                      setAssetDocOpen(false);
+                    }}
+                  >
+                    Documents unavailable
+                  </li>
+                </ul>
+              )}
+            </div>
           </div>
 
+          {/* Add employee */}
           <div className="transition-all duration-700">
             {openEmployee && <Add_Employee setOpenEmployee={setOpenEmployee} />}
           </div>
         </div>
       </div>
 
+      {/* Employee cards */}
       <div ref={employeeListRef} className="scroll-mt-24">
         <Employee_Card
           employees={employees}
@@ -391,6 +497,7 @@ const EmployeesPage = () => {
         />
       </div>
 
+      {/* Pagination */}
       <Pagination_Employee
         currentPage={pagination?.currentPage || 1}
         totalPages={pagination?.totalPages || 1}

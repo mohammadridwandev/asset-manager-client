@@ -1,136 +1,71 @@
 import { FiSearch } from "react-icons/fi";
 
-import {
-  useMemo,
-  useState,
-} from "react";
+import { useMemo, useState } from "react";
 
-import {
-  useNavigate,
-} from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 
 import { Helmet } from "react-helmet-async";
-
 import DataLoading from "../../DataLoading";
+import { useGetAssetFilterOptions } from "../../context/useAssets";
 
-import {
-  useGetEmployeeFilterOptions,
-} from "../../context/useEmployee";
+import { useDebounce } from "../../context/useDebounce";
 
-import {
-  useGetAssets,
-} from "../../context/useAssets";
-
-import {
-  useDebounce,
-} from "../../context/useDebounce";
-
+type DepartmentCountType = {
+  department: string;
+  count: number;
+};
 
 export default function All_Department() {
   const navigate = useNavigate();
 
-  const [searchText, setSearchText] =
-    useState("");
+  const [searchText, setSearchText] = useState("");
 
-  const debouncedSearchText =
-    useDebounce(
-      searchText.trim(),
-      400,
-    );
+  const debouncedSearchText = useDebounce(searchText.trim(), 400);
 
-  // Same departments as AssetPage
+  // Get only departments with assigned assets
   const {
     data: filterOptions,
-    isLoading:
-      departmentsLoading,
-    isError:
-      departmentsError,
-  } =
-    useGetEmployeeFilterOptions();
+    isLoading,
+    isError,
+  } = useGetAssetFilterOptions();
 
-  const departments: string[] =
-    filterOptions?.departments || [];
+  const directDepartmentCounts: DepartmentCountType[] =
+    filterOptions?.directDepartmentCounts || [];
 
-  // Get assets
-  const {
-    data: assetData,
-    isLoading: assetsLoading,
-    isError: assetsError,
-  } = useGetAssets(
-    1,
-    100,
-    "",
-    "",
-    "",
-  );
+  // Search assigned departments
+  const filteredDepartments = useMemo(() => {
+    const keyword = debouncedSearchText.toLowerCase();
 
-  const assets =
-    assetData?.assets || [];
+    if (!keyword) {
+      return directDepartmentCounts;
+    }
 
-  // Search departments
-  const filteredDepartments =
-    useMemo(() => {
-      const keyword =
-        debouncedSearchText
-          .toLowerCase();
-
-      if (!keyword) {
-        return departments;
-      }
-
-      return departments.filter(
-        (department: string) =>
-          department
-            .toLowerCase()
-            .includes(keyword),
-      );
-    }, [
-      departments,
-      debouncedSearchText,
-    ]);
-
-  // Count assigned assets
-  const getDepartmentAssetCount = (
-    departmentName: string,
-  ) => {
-    return assets.filter(
-      (asset: any) =>
-        Array.isArray(
-          asset.departmentAssignments,
-        ) &&
-        asset.departmentAssignments.some(
-          (assignment: any) =>
-            assignment.department?.name
-              ?.trim()
-              .toLowerCase() ===
-            departmentName
-              .trim()
-              .toLowerCase(),
-        ),
-    ).length;
-  };
+    return directDepartmentCounts.filter((item) =>
+      item.department.toLowerCase().includes(keyword),
+    );
+  }, [directDepartmentCounts, debouncedSearchText]);
 
   // Open department asset list
-  const handleOpenDepartment = (
-    departmentName: string,
-  ) => {
+  const handleOpenDepartment = (departmentName: string) => {
     navigate(
-      `/dashboard/department-assets/${encodeURIComponent(
-        departmentName,
-      )}`,
+      `/dashboard/department-assets/${encodeURIComponent(departmentName)}`,
     );
   };
 
-  if (departmentsLoading) {
+
+
+  if (isLoading) {
     return (
       <DataLoading
         title="Loading Departments"
-        message="Fetching department data..."
+        message="Fetching assigned department assets..."
       />
     );
   }
 
-  if (departmentsError) {
+
+
+  if (isError) {
     return (
       <div className="flex min-h-75 items-center justify-center text-lg font-medium text-red-500">
         Failed to load department data!
@@ -138,12 +73,13 @@ export default function All_Department() {
     );
   }
 
+  
+
+
   return (
     <>
       <Helmet>
-        <title>
-          Asset Manager | Departments
-        </title>
+        <title>Asset Manager | Departments</title>
       </Helmet>
 
       <div className="pb-16">
@@ -151,11 +87,11 @@ export default function All_Department() {
           {/* Header */}
           <div className="mb-8">
             <h1 className="text-2xl font-bold tracking-tight">
-              Departments
+              Assigned Departments
             </h1>
 
             <p className="mt-1 text-sm text-app-gray opacity-80">
-              View company departments
+              View departments with directly assigned assets
             </p>
           </div>
 
@@ -168,94 +104,60 @@ export default function All_Department() {
             <input
               type="text"
               value={searchText}
-              onChange={(event) =>
-                setSearchText(
-                  event.target.value,
-                )
-              }
-              placeholder="Search department..."
+              onChange={(event) => setSearchText(event.target.value)}
+              placeholder="Search assigned department..."
               className="w-full rounded-md border border-app-gray/30 bg-transparent py-2.5 pr-4 pl-12 text-sm outline-none transition-all placeholder:text-app-gray/50 focus:border-app-brand"
             />
           </div>
 
           {/* Total */}
           <div className="mb-4 text-sm text-app-gray">
-            Total Departments:{" "}
+            Total Assigned Departments:{" "}
             <span className="font-semibold text-app-text">
-              {
-                filteredDepartments.length
-              }
+              {filteredDepartments.length}
             </span>
           </div>
 
-          {assetsError && (
-            <div className="mb-4 rounded-md border border-red-500/20 bg-red-500/5 px-4 py-3 text-sm text-red-500">
-              Failed to load asset counts.
-            </div>
-          )}
-
           {/* Department Cards */}
-          {filteredDepartments.length ===
-          0 ? (
+          {filteredDepartments.length === 0 ? (
             <div className="rounded-md border border-app-gray/20 px-4 py-12 text-center text-sm text-app-gray">
               {searchText.trim()
-                ? "No matching departments found."
-                : "No departments found."}
+                ? "No matching assigned departments found."
+                : "No department assets found."}
             </div>
           ) : (
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-              {filteredDepartments.map(
-                (
-                  department: string,
-                ) => {
-                  const assetCount =
-                    getDepartmentAssetCount(
-                      department,
-                    );
+              {filteredDepartments.map((item: DepartmentCountType) => (
+                <button
+                  key={item.department}
+                  type="button"
+                  onClick={() => handleOpenDepartment(item.department)}
+                  className="group min-h-28 cursor-pointer rounded-md border border-app-gray/20 bg-app-bg p-5 text-left transition-all hover:border-app-brand hover:shadow-sm"
+                >
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="min-w-0">
+                      <h3
+                        className="truncate text-base font-semibold text-app-text transition-colors group-hover:text-app-brand"
+                        title={item.department}
+                      >
+                        {item.department}
+                      </h3>
 
-                  return (
-                    <button
-                      key={department}
-                      type="button"
-                      onClick={() =>
-                        handleOpenDepartment(
-                          department,
-                        )
-                      }
-                      className="group min-h-28 cursor-pointer rounded-md border border-app-gray/20 bg-app-bg p-5 text-left transition-all hover:border-app-brand hover:shadow-sm"
-                    >
-                      <div className="flex items-start justify-between gap-3">
-                        <div className="min-w-0">
-                          <h3 className="truncate text-base font-semibold text-app-text transition-colors group-hover:text-app-brand">
-                            {department}
-                          </h3>
-
-                          <p className="mt-1 text-xs text-app-gray">
-                            Department
-                          </p>
-                        </div>
-
-                        <span className="rounded-md bg-app-brand/10 px-2.5 py-1 text-xs font-semibold text-app-brand">
-                          {assetsLoading
-                            ? "..."
-                            : assetCount}
-                        </span>
-                      </div>
-
-                      <p className="mt-4 text-xs font-medium text-app-brand">
-                        {assetsLoading
-                          ? "Loading assets..."
-                          : `${assetCount} ${
-                              assetCount ===
-                              1
-                                ? "Asset"
-                                : "Assets"
-                            }`}
+                      <p className="mt-1 text-xs text-app-gray">
+                        Assigned Department
                       </p>
-                    </button>
-                  );
-                },
-              )}
+                    </div>
+
+                    <span className="shrink-0 rounded-md bg-app-brand/10 px-2.5 py-1 text-xs font-semibold text-app-brand">
+                      {item.count}
+                    </span>
+                  </div>
+
+                  <p className="mt-4 text-xs font-medium text-app-brand">
+                    {item.count} {item.count === 1 ? "Asset" : "Assets"}
+                  </p>
+                </button>
+              ))}
             </div>
           )}
         </div>

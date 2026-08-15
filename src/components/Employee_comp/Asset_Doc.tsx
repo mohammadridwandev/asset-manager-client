@@ -68,6 +68,7 @@ export default function Asset_Doc({
     return `${API_FILE_URL.replace(/\/$/, "")}/${fileUrl.replace(/^\//, "")}`;
   };
 
+
   // File size format
   const formatFileSize = (size?: number | null) => {
     if (!size) return "";
@@ -82,6 +83,7 @@ export default function Asset_Doc({
 
     return `${(size / (1024 * 1024)).toFixed(1)} MB`;
   };
+
 
   // Select multiple images
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -253,6 +255,11 @@ export default function Asset_Doc({
       setDeletingId(null);
     }
   };
+
+
+
+  
+
 
 
 

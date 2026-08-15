@@ -103,6 +103,8 @@ export const useGetSingleEmployee = (id?: string) => {
   });
 };
 
+
+
 export const useGetEmployee = (
   page: number = 1,
   limit: number = 10,
@@ -111,7 +113,9 @@ export const useGetEmployee = (
   position: string = "",
   status: string = "",
 
-  // UPDATED:
+  // Asset document filter
+  assetDocStatus: string = "",
+
   // false হলে employee API request যাবে না
   enabled: boolean = true,
 ) => {
@@ -124,6 +128,7 @@ export const useGetEmployee = (
       department,
       position,
       status,
+      assetDocStatus,
     ],
 
     queryFn: async ({ signal }) => {
@@ -138,6 +143,9 @@ export const useGetEmployee = (
               department,
               position,
               status,
+
+              // Asset document filter
+              assetDocStatus,
             },
 
             signal,
@@ -160,13 +168,11 @@ export const useGetEmployee = (
       };
     },
 
-    // নতুন result আসা পর্যন্ত previous data রাখবে
+    // Keep previous result while loading
     placeholderData: (
       previousData,
     ) => previousData,
 
-    // UPDATED:
-    // false হলে এই query run করবে না
     enabled,
 
     refetchOnWindowFocus: false,
@@ -174,6 +180,11 @@ export const useGetEmployee = (
     retry: 1,
   });
 };
+
+
+
+
+
 
 export const useUpdateEmployee = () => {
   const queryClient = useQueryClient();

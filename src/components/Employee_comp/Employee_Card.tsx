@@ -43,6 +43,9 @@ export default function Employee_Card({
     return `${API_BASE_URL.replace(/\/$/, "")}/${image.replace(/^\//, "")}`;
   };
 
+
+
+
   return (
     <>
       <div>
@@ -103,6 +106,7 @@ export default function Employee_Card({
                           employeeId={employee.id}
                           initialDocuments={employee.assetDocuments || []}
                         />
+                        
 
                         {employee.note ? (
                           <button
